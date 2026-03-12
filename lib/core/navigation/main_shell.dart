@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../features/home/presentation/screens/explore_screen.dart';
 import '../../features/itinerary/presentation/screens/itinerary_screen.dart';
+import '../../features/trip_planner/presentation/screens/trip_planner_screen.dart';
 
 /// Shell chính chứa Bottom Navigation Bar + IndexedStack các tab.
 ///
@@ -44,7 +45,11 @@ class _MainShellState extends State<MainShell> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // TODO: Mở màn tạo lịch trình mới.
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const TripPlannerScreen(),
+            ),
+          );
         },
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
