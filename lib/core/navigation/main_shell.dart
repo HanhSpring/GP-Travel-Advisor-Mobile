@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../features/home/presentation/screens/explore_screen.dart';
 import '../../features/itinerary/presentation/screens/itinerary_screen.dart';
+import '../../features/profile/presentation/screens/profile_screen.dart';
+import '../../features/profile/presentation/cubit/profile_cubit.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../core/di/injection_container.dart';
 
 /// Shell chính chứa Bottom Navigation Bar + IndexedStack các tab.
 ///
@@ -19,12 +23,15 @@ class _MainShellState extends State<MainShell> {
 
   /// Danh sách các trang tương ứng với tab navigation.
   /// Index 2 bỏ trống (FAB slot).
-  final List<Widget> _pages = const [
-    ExploreScreen(),        // 0 — Khám phá
-    ItineraryScreen(),      // 1 — Lịch trình
-    SizedBox.shrink(),      // 2 — placeholder cho FAB
-    _PlaceholderTab(title: 'Đã lưu', icon: Icons.favorite), // 3
-    _PlaceholderTab(title: 'Cá nhân', icon: Icons.person),   // 4
+  final List<Widget> _pages = [
+    const ExploreScreen(),        // 0 — Khám phá
+    const ItineraryScreen(),      // 1 — Lịch trình
+    const SizedBox.shrink(),      // 2 — placeholder cho FAB
+    const _PlaceholderTab(title: 'Đã lưu', icon: Icons.favorite), // 3
+    BlocProvider(                 // 4 - Cá nhân
+      create: (_) => sl<ProfileCubit>()..loadProfile(),
+      child: const ProfileScreen(),
+    ),
   ];
 
   @override

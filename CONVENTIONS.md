@@ -46,3 +46,5 @@ Code sạch, có comment giải thích các đoạn logic phức tạp cho sinh 
 
 Ưu tiên tính Immutable (Bất biến).
 
+Lưu ý:chú ý đọc và Trước khi tạo Widget mới, hãy quét thư mục lib/core/widgets/ hoặc các feature đã có. Nếu đã có Component (Header, Button, SearchBar) tương đồng > 80%, hãy tái sử dụng và tùy chỉnh bằng tham số (parameters) thay vì tạo file mới.
+

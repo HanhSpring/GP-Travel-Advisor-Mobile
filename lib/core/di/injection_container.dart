@@ -15,6 +15,12 @@ import '../../features/itinerary/data/repositories/itinerary_repository_impl.dar
 import '../../features/itinerary/domain/repositories/itinerary_repository.dart';
 import '../../features/itinerary/domain/usecases/itinerary_usecases.dart';
 import '../../features/itinerary/presentation/cubit/itinerary_cubit.dart';
+import '../../features/profile/data/datasources/profile_datasource.dart';
+import '../../features/profile/data/repositories/profile_repository_impl.dart';
+import '../../features/profile/domain/repositories/profile_repository.dart';
+import '../../features/profile/domain/usecases/get_profile_usecase.dart';
+import '../../features/profile/domain/usecases/get_recent_activities_usecase.dart';
+import '../../features/profile/presentation/cubit/profile_cubit.dart';
 import '../network/dio_client.dart';
 
 final sl = GetIt.instance;
@@ -107,6 +113,34 @@ Future<void> initDependencies() async {
       getItineraries: sl<GetItinerariesUseCase>(),
       getSummary: sl<GetItinerarySummaryUseCase>(),
       deleteItinerary: sl<DeleteItineraryUseCase>(),
+    ),
+  );
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // ── Profile Feature ────────────────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // ── Profile DataSource ───────────────────────────────────────────────────
+  sl.registerLazySingleton<ProfileDataSource>(
+    () => MockProfileDataSource(),
+  );
+
+  // ── Profile Repository ───────────────────────────────────────────────────
+  sl.registerLazySingleton<ProfileRepository>(
+    () => ProfileRepositoryImpl(sl<ProfileDataSource>()),
+  );
+
+  // ── Profile UseCases ─────────────────────────────────────────────────────
+  sl.registerLazySingleton(
+      () => GetProfileUseCase(sl<ProfileRepository>()));
+  sl.registerLazySingleton(
+      () => GetRecentActivitiesUseCase(sl<ProfileRepository>()));
+
+  // ── Profile Cubit ────────────────────────────────────────────────────────
+  sl.registerFactory(
+    () => ProfileCubit(
+      getProfile: sl<GetProfileUseCase>(),
+      getRecentActivities: sl<GetRecentActivitiesUseCase>(),
     ),
   );
 }
