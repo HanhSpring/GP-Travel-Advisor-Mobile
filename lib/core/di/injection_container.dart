@@ -21,6 +21,11 @@ import '../../features/profile/domain/repositories/profile_repository.dart';
 import '../../features/profile/domain/usecases/get_profile_usecase.dart';
 import '../../features/profile/domain/usecases/get_recent_activities_usecase.dart';
 import '../../features/profile/presentation/cubit/profile_cubit.dart';
+import '../../features/review/data/datasources/review_datasource.dart';
+import '../../features/review/data/repositories/review_repository_impl.dart';
+import '../../features/review/domain/repositories/review_repository.dart';
+import '../../features/review/domain/usecases/get_itinerary_for_review_usecase.dart';
+import '../../features/review/presentation/cubit/review_cubit.dart';
 import '../network/dio_client.dart';
 
 final sl = GetIt.instance;
@@ -141,6 +146,27 @@ Future<void> initDependencies() async {
     () => ProfileCubit(
       getProfile: sl<GetProfileUseCase>(),
       getRecentActivities: sl<GetRecentActivitiesUseCase>(),
+    ),
+  );
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // ── Review Feature ────────────────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════════════════
+
+  sl.registerLazySingleton<ReviewDataSource>(
+    () => MockReviewDataSource(),
+  );
+
+  sl.registerLazySingleton<ReviewRepository>(
+    () => ReviewRepositoryImpl(sl<ReviewDataSource>()),
+  );
+
+  sl.registerLazySingleton(
+      () => GetItineraryForReviewUseCase(sl<ReviewRepository>()));
+
+  sl.registerFactory(
+    () => ReviewCubit(
+      getItineraryForReview: sl<GetItineraryForReviewUseCase>(),
     ),
   );
 }

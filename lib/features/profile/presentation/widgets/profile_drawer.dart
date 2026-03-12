@@ -8,6 +8,7 @@ import '../../../../features/profile/domain/entities/activity_item_entity.dart';
 import '../../../../features/profile/domain/entities/profile_entity.dart';
 import '../../../../features/profile/presentation/cubit/profile_cubit.dart';
 import '../../../../features/profile/presentation/cubit/profile_state.dart';
+import '../../../../features/review/presentation/screens/rate_itinerary_screen.dart';
 
 class ProfileDrawer extends StatelessWidget {
   const ProfileDrawer({super.key});
@@ -95,39 +96,55 @@ class _DrawerContent extends StatelessWidget {
               ),
             ),
             const Divider(height: 1, color: Color(0xFFF3F4F6)),
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
 
             // Lịch trình
-            _SectionTitle(title: 'LỊCH TRÌNH & ĐỊA ĐIỂM', color: AppColors.primary),
-            const SizedBox(height: 12),
-            const _HighlightTile(
-                icon: Icons.calendar_today_outlined, label: 'Địa điểm sắp đến'),
+            const _PillHeader(
+                icon: Icons.calendar_today_outlined, label: 'LỊCH TRÌNH & ĐỊA ĐIỂM'),
+            const _SubHeader(label: 'Sắp đến'),
             ...itineraryItems
-                .map((e) => _ActivityTile(item: e, icon: Icons.bed_outlined)),
-            const SizedBox(height: 24),
+                .map((e) => _ActivityTile(item: e, icon: Icons.bed_outlined, isImage: false)),
+            const SizedBox(height: 16),
 
             // Đánh giá
-            _SectionTitle(
-                title: 'ĐỊA ĐIỂM ĐÃ ĐÁNH GIÁ', color: Colors.grey.shade500),
-            const SizedBox(height: 12),
-            const _HighlightTile(
-                icon: Icons.star_border_rounded, label: 'Đã đánh giá'),
+            const _PillHeader(
+                icon: Icons.star_border_rounded, label: 'ĐÁNH GIÁ ĐỊA ĐIỂM'),
+            const _SubHeader(label: 'Đã đánh giá'),
             ...ratedItems.map((e) => _ActivityTile(
-                item: e, icon: Icons.location_on_outlined)),
-            const SizedBox(height: 8),
+                item: e, icon: Icons.location_on_outlined, isImage: false)),
+            
+            Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 20, bottom: 8, top: 4),
+                child: Text('Xem tất cả', 
+                    style: TextStyle(color: AppColors.primary.withValues(alpha: 0.9), fontSize: 12, fontWeight: FontWeight.bold)),
+              ),
+            ),
 
-            _MenuTile(
-                icon: Icons.map_outlined,
-                label: 'Địa điểm chờ đánh giá',
-                badge: profile.reviewPendingCount),
+            _SubHeader(
+                label: 'Chờ đánh giá',
+                trailing: profile.reviewPendingCount > 0 ? Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF44336), // Red
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    profile.reviewPendingCount.toString(),
+                    style: const TextStyle(
+                        color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                  ),
+                ) : null,
+            ),
             ...pendingItems
-                .map((e) => _ActivityTile(item: e, icon: Icons.image_outlined)),
-            const SizedBox(height: 24),
+                .map((e) => _ActivityTile(item: e, icon: Icons.image_outlined, isImage: true)),
+            const SizedBox(height: 16),
 
             // Ẩm thực
-            _SectionTitle(title: 'ẨM THỰC ĐÃ ĐẶT', color: Colors.grey.shade500),
-            const SizedBox(height: 12),
-            const _MenuTile(icon: Icons.restaurant_outlined, label: 'Đơn hàng của tôi'),
+            const _PillHeader(
+                icon: Icons.restaurant_outlined, label: 'ẨM THỰC ĐÃ ĐẶT'),
+            const _SubHeader(label: 'Đơn hàng của tôi'),
             ...foodItems.map((e) => _FoodOrderCard(item: e)),
 
             const Divider(height: 32, color: Color(0xFFF3F4F6)),
@@ -142,36 +159,42 @@ class _DrawerContent extends StatelessWidget {
   }
 }
 
-class _SectionTitle extends StatelessWidget {
-  final String title;
-  final Color color;
-  const _SectionTitle({required this.title, required this.color});
+class _SubHeader extends StatelessWidget {
+  final String label;
+  final Widget? trailing;
+
+  const _SubHeader({required this.label, this.trailing});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Text(
-        title,
-        style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.5,
-            color: color),
+      padding: const EdgeInsets.only(left: 36, right: 20, top: 4, bottom: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary),
+          ),
+          trailing ?? const SizedBox(),
+        ],
       ),
     );
   }
 }
 
-class _HighlightTile extends StatelessWidget {
+class _PillHeader extends StatelessWidget {
   final IconData icon;
   final String label;
-  const _HighlightTile({required this.icon, required this.label});
+  const _PillHeader({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: AppColors.blobLight.withValues(alpha: 0.3),
@@ -183,7 +206,7 @@ class _HighlightTile extends StatelessWidget {
           const SizedBox(width: 12),
           Text(label,
               style: const TextStyle(
-                  fontSize: 14,
+                  fontSize: 12,
                   fontWeight: FontWeight.bold,
                   color: AppColors.primary)),
         ],
@@ -195,8 +218,7 @@ class _HighlightTile extends StatelessWidget {
 class _MenuTile extends StatelessWidget {
   final IconData icon;
   final String label;
-  final int? badge;
-  const _MenuTile({required this.icon, required this.label, this.badge});
+  const _MenuTile({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -204,7 +226,7 @@ class _MenuTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Row(
         children: [
-          Icon(icon, color: Colors.grey.shade600, size: 22),
+          Icon(icon, color: Colors.grey.shade700, size: 22),
           const SizedBox(width: 16),
           Expanded(
             child: Text(label,
@@ -213,19 +235,6 @@ class _MenuTile extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF4B5563))),
           ),
-          if (badge != null && badge! > 0)
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: const BoxDecoration(
-                color: Colors.red,
-                shape: BoxShape.circle,
-              ),
-              child: Text(
-                badge.toString(),
-                style: const TextStyle(
-                    color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-              ),
-            ),
         ],
       ),
     );
@@ -235,23 +244,36 @@ class _MenuTile extends StatelessWidget {
 class _ActivityTile extends StatelessWidget {
   final ActivityItemEntity item;
   final IconData icon;
-  const _ActivityTile({required this.item, required this.icon});
+  final bool isImage;
+  const _ActivityTile({required this.item, required this.icon, this.isImage = false});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      child: Row(
+    return InkWell(
+      onTap: () {
+        if (item.status == ActivityStatus.pendingReview) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => RateItineraryScreen(itineraryId: item.id),
+            ),
+          );
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.only(left: 36, right: 20, top: 4, bottom: 8),
+        child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             width: 40,
             height: 40,
-            decoration: const BoxDecoration(
-              color: Color(0xFFF3F4F6),
-              shape: BoxShape.circle,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF3F4F6),
+              shape: isImage ? BoxShape.rectangle : BoxShape.circle,
+              borderRadius: isImage ? BorderRadius.circular(12) : null,
             ),
-            child: Icon(icon, color: Colors.grey.shade600, size: 20),
+            child: Icon(isImage ? Icons.landscape_outlined : icon, color: Colors.grey.shade600, size: 18),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -260,7 +282,7 @@ class _ActivityTile extends StatelessWidget {
               children: [
                 Text(item.title,
                     style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 13,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF1C1C1E))),
                 const SizedBox(height: 4),
@@ -275,7 +297,7 @@ class _ActivityTile extends StatelessWidget {
                       const SizedBox(width: 6),
                       const Text('Chờ bạn chia sẻ',
                           style: TextStyle(
-                              fontSize: 12, color: AppColors.primary)),
+                              fontSize: 11, color: AppColors.primary)),
                     ],
                   )
                 else
@@ -287,16 +309,16 @@ class _ActivityTile extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(item.rating.toString(),
                             style: const TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.bold)),
+                                fontSize: 11, fontWeight: FontWeight.bold)),
                         const SizedBox(width: 8),
                         const Text('•',
-                            style: TextStyle(fontSize: 12, color: Colors.grey)),
+                            style: TextStyle(fontSize: 11, color: Colors.grey)),
                         const SizedBox(width: 8),
                       ],
                       if (item.date != null)
                         Text(DateFormat('dd/MM/yyyy').format(item.date!),
                             style: const TextStyle(
-                                fontSize: 12, color: Colors.grey)),
+                                fontSize: 11, color: Colors.grey)),
                     ],
                   ),
               ],
@@ -304,7 +326,7 @@ class _ActivityTile extends StatelessWidget {
           )
         ],
       ),
-    );
+    ));
   }
 }
 
@@ -364,12 +386,12 @@ class _FoodOrderCard extends StatelessWidget {
               children: [
                 Text(item.title,
                     style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 13,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF1C1C1E))),
                 const SizedBox(height: 2),
                 Text(item.code ?? '',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                    style: const TextStyle(fontSize: 11, color: Colors.grey)),
               ],
             ),
           ),
