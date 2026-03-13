@@ -11,5 +11,7 @@ class LocationReviewEntity with _$LocationReviewEntity {
     required int day,
     double? rating,
     String? reviewText,
+    List<String>? reviewTags,
+    List<String>? mediaPaths,
   }) = _LocationReviewEntity;
 }

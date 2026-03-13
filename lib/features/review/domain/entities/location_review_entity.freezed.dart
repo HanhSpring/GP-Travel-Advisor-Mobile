@@ -23,6 +23,8 @@ mixin _$LocationReviewEntity {
   int get day => throw _privateConstructorUsedError;
   double? get rating => throw _privateConstructorUsedError;
   String? get reviewText => throw _privateConstructorUsedError;
+  List<String>? get reviewTags => throw _privateConstructorUsedError;
+  List<String>? get mediaPaths => throw _privateConstructorUsedError;
 
   /// Create a copy of LocationReviewEntity
   /// with the given fields replaced by the non-null parameter values.
@@ -45,6 +47,8 @@ abstract class $LocationReviewEntityCopyWith<$Res> {
     int day,
     double? rating,
     String? reviewText,
+    List<String>? reviewTags,
+    List<String>? mediaPaths,
   });
 }
 
@@ -72,6 +76,8 @@ class _$LocationReviewEntityCopyWithImpl<
     Object? day = null,
     Object? rating = freezed,
     Object? reviewText = freezed,
+    Object? reviewTags = freezed,
+    Object? mediaPaths = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -99,6 +105,14 @@ class _$LocationReviewEntityCopyWithImpl<
                 ? _value.reviewText
                 : reviewText // ignore: cast_nullable_to_non_nullable
                       as String?,
+            reviewTags: freezed == reviewTags
+                ? _value.reviewTags
+                : reviewTags // ignore: cast_nullable_to_non_nullable
+                      as List<String>?,
+            mediaPaths: freezed == mediaPaths
+                ? _value.mediaPaths
+                : mediaPaths // ignore: cast_nullable_to_non_nullable
+                      as List<String>?,
           )
           as $Val,
     );
@@ -121,6 +135,8 @@ abstract class _$$LocationReviewEntityImplCopyWith<$Res>
     int day,
     double? rating,
     String? reviewText,
+    List<String>? reviewTags,
+    List<String>? mediaPaths,
   });
 }
 
@@ -144,6 +160,8 @@ class __$$LocationReviewEntityImplCopyWithImpl<$Res>
     Object? day = null,
     Object? rating = freezed,
     Object? reviewText = freezed,
+    Object? reviewTags = freezed,
+    Object? mediaPaths = freezed,
   }) {
     return _then(
       _$LocationReviewEntityImpl(
@@ -171,6 +189,14 @@ class __$$LocationReviewEntityImplCopyWithImpl<$Res>
             ? _value.reviewText
             : reviewText // ignore: cast_nullable_to_non_nullable
                   as String?,
+        reviewTags: freezed == reviewTags
+            ? _value._reviewTags
+            : reviewTags // ignore: cast_nullable_to_non_nullable
+                  as List<String>?,
+        mediaPaths: freezed == mediaPaths
+            ? _value._mediaPaths
+            : mediaPaths // ignore: cast_nullable_to_non_nullable
+                  as List<String>?,
       ),
     );
   }
@@ -186,7 +212,10 @@ class _$LocationReviewEntityImpl implements _LocationReviewEntity {
     required this.day,
     this.rating,
     this.reviewText,
-  });
+    final List<String>? reviewTags,
+    final List<String>? mediaPaths,
+  }) : _reviewTags = reviewTags,
+       _mediaPaths = mediaPaths;
 
   @override
   final String id;
@@ -200,10 +229,29 @@ class _$LocationReviewEntityImpl implements _LocationReviewEntity {
   final double? rating;
   @override
   final String? reviewText;
+  final List<String>? _reviewTags;
+  @override
+  List<String>? get reviewTags {
+    final value = _reviewTags;
+    if (value == null) return null;
+    if (_reviewTags is EqualUnmodifiableListView) return _reviewTags;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _mediaPaths;
+  @override
+  List<String>? get mediaPaths {
+    final value = _mediaPaths;
+    if (value == null) return null;
+    if (_mediaPaths is EqualUnmodifiableListView) return _mediaPaths;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
 
   @override
   String toString() {
-    return 'LocationReviewEntity(id: $id, name: $name, imageUrl: $imageUrl, day: $day, rating: $rating, reviewText: $reviewText)';
+    return 'LocationReviewEntity(id: $id, name: $name, imageUrl: $imageUrl, day: $day, rating: $rating, reviewText: $reviewText, reviewTags: $reviewTags, mediaPaths: $mediaPaths)';
   }
 
   @override
@@ -218,12 +266,29 @@ class _$LocationReviewEntityImpl implements _LocationReviewEntity {
             (identical(other.day, day) || other.day == day) &&
             (identical(other.rating, rating) || other.rating == rating) &&
             (identical(other.reviewText, reviewText) ||
-                other.reviewText == reviewText));
+                other.reviewText == reviewText) &&
+            const DeepCollectionEquality().equals(
+              other._reviewTags,
+              _reviewTags,
+            ) &&
+            const DeepCollectionEquality().equals(
+              other._mediaPaths,
+              _mediaPaths,
+            ));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, name, imageUrl, day, rating, reviewText);
+  int get hashCode => Object.hash(
+    runtimeType,
+    id,
+    name,
+    imageUrl,
+    day,
+    rating,
+    reviewText,
+    const DeepCollectionEquality().hash(_reviewTags),
+    const DeepCollectionEquality().hash(_mediaPaths),
+  );
 
   /// Create a copy of LocationReviewEntity
   /// with the given fields replaced by the non-null parameter values.
@@ -246,6 +311,8 @@ abstract class _LocationReviewEntity implements LocationReviewEntity {
     required final int day,
     final double? rating,
     final String? reviewText,
+    final List<String>? reviewTags,
+    final List<String>? mediaPaths,
   }) = _$LocationReviewEntityImpl;
 
   @override
@@ -260,6 +327,10 @@ abstract class _LocationReviewEntity implements LocationReviewEntity {
   double? get rating;
   @override
   String? get reviewText;
+  @override
+  List<String>? get reviewTags;
+  @override
+  List<String>? get mediaPaths;
 
   /// Create a copy of LocationReviewEntity
   /// with the given fields replaced by the non-null parameter values.

@@ -81,6 +81,36 @@ class ReviewCubit extends Cubit<ReviewState> {
     }
   }
 
+  void updateLocationReviewDetails({
+    required String locationId,
+    double? rating,
+    String? reviewText,
+    List<String>? reviewTags,
+    List<String>? mediaPaths,
+  }) {
+    if (state is ReviewLoaded) {
+      final currentState = state as ReviewLoaded;
+      final newLocations = currentState.itinerary.locations.map((loc) {
+        if (loc.id == locationId) {
+          return loc.copyWith(
+            rating: rating ?? loc.rating,
+            reviewText: reviewText ?? loc.reviewText,
+            reviewTags: reviewTags ?? loc.reviewTags,
+            mediaPaths: mediaPaths ?? loc.mediaPaths,
+          );
+        }
+        return loc;
+      }).toList();
+
+      final newItinerary = currentState.itinerary.copyWith(locations: newLocations);
+
+      emit(currentState.copyWith(
+        itinerary: newItinerary,
+        applyToAllLocations: false,
+      ));
+    }
+  }
+
   Future<void> addMedia() async {
     if (state is ReviewLoaded) {
       final picker = ImagePicker();

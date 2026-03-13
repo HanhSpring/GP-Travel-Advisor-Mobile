@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../domain/entities/itinerary_review_entity.dart';
 import '../../../../core/widgets/net_image.dart';
 import 'star_rating_input.dart';
+import 'review_media_list.dart';
 
 class ReviewItineraryCard extends StatelessWidget {
   final ItineraryReviewEntity itinerary;
@@ -177,98 +178,12 @@ class ReviewItineraryCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
-            'Thêm hình ảnh & video',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1C1C1E),
-            ),
+          ReviewMediaList(
+            mediaPaths: mediaPaths,
+            onAddMedia: onAddMedia,
+            onRemoveMedia: onRemoveMedia,
+            onClearAllMedia: onClearAllMedia,
           ),
-          const SizedBox(height: 12),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            clipBehavior: Clip.none,
-            padding: const EdgeInsets.only(top: 12, right: 12, bottom: 4),
-            child: Row(
-              children: [
-                GestureDetector(
-                  onTap: onAddMedia,
-                  child: Container(
-                    width: 140,
-                    height: 140,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: Icon(Icons.add_a_photo_outlined, color: Colors.grey.shade500),
-                  ),
-                ),
-                ...mediaPaths.map((path) => Padding(
-                  padding: const EdgeInsets.only(left: 12),
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Container(
-                        width: 140,
-                        height: 140,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF3F4F6),
-                          borderRadius: BorderRadius.circular(16),
-                          image: DecorationImage(
-                            image: FileImage(File(path)),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        top: -12,
-                        right: -12,
-                        child: GestureDetector(
-                          onTap: () => onRemoveMedia(path),
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.15),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                )
-                              ],
-                            ),
-                            child: const Icon(Icons.close,
-                                size: 18, color: Colors.black87),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                )),
-              ],
-            ),
-          ),
-          if (mediaPaths.isNotEmpty)
-            Align(
-              alignment: Alignment.centerRight,
-              child: GestureDetector(
-                onTap: onClearAllMedia,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Text(
-                    'Xóa toàn bộ ảnh',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.red.shade400,
-                    ),
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );

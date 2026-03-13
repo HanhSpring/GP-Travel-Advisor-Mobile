@@ -7,6 +7,7 @@ import '../cubit/review_cubit.dart';
 import '../cubit/review_state.dart';
 import '../widgets/location_review_list_tile.dart';
 import '../widgets/review_itinerary_card.dart';
+import 'place_review_screen.dart';
 
 class RateItineraryScreen extends StatelessWidget {
   final String itineraryId;
@@ -136,6 +137,17 @@ class _RateItineraryView extends StatelessWidget {
                           location: loc,
                           onRatingChanged: (rating) {
                             context.read<ReviewCubit>().setLocationRating(loc.id, rating);
+                          },
+                          onWriteReview: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => PlaceReviewScreen(
+                                  locationId: loc.id,
+                                  reviewCubit: context.read<ReviewCubit>(),
+                                ),
+                              ),
+                            );
                           },
                         ),
                       ),

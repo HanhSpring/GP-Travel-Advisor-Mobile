@@ -7,8 +7,13 @@ import '../../domain/entities/location_review_entity.dart';
 class LocationReviewListTile extends StatelessWidget {
   final LocationReviewEntity location;
   final ValueChanged<double>? onRatingChanged;
+  final VoidCallback? onWriteReview;
 
-  const LocationReviewListTile({super.key, required this.location, this.onRatingChanged});
+  const LocationReviewListTile(
+      {super.key,
+      required this.location,
+      this.onRatingChanged,
+      this.onWriteReview});
 
   @override
   Widget build(BuildContext context) {
@@ -96,14 +101,32 @@ class LocationReviewListTile extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
+                if (location.reviewText != null && location.reviewText!.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(
+                      location.reviewText!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey.shade600,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 6),
                 Align(
                   alignment: Alignment.centerRight,
-                  child: Text(
-                    'Viết đánh giá',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary.withValues(alpha: 0.8),
+                  child: GestureDetector(
+                    onTap: onWriteReview,
+                    child: Text(
+                      'Viết đánh giá',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary.withValues(alpha: 0.8),
+                      ),
                     ),
                   ),
                 )
