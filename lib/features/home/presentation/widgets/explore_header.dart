@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../search/presentation/screens/search_screen.dart';
 
 class ExploreHeader extends StatelessWidget {
   const ExploreHeader({super.key});
@@ -61,24 +62,32 @@ class ExploreHeader extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           // Thanh tìm kiếm
-          Container(
-            height: 44,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(22),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Icon(Icons.search, color: Colors.grey.shade400, size: 20),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Tìm kiếm điểm đến, món ăn...',
-                    style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SearchScreen()),
+              );
+            },
+            child: Container(
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(22),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Icon(Icons.search, color: Colors.grey.shade400, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Tìm kiếm điểm đến, món ăn...',
+                      style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],

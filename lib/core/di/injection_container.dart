@@ -26,6 +26,11 @@ import '../../features/review/data/repositories/review_repository_impl.dart';
 import '../../features/review/domain/repositories/review_repository.dart';
 import '../../features/review/domain/usecases/get_itinerary_for_review_usecase.dart';
 import '../../features/review/presentation/cubit/review_cubit.dart';
+import '../../features/search/data/datasources/search_mock_data_source.dart';
+import '../../features/search/data/repositories/search_repository_impl.dart';
+import '../../features/search/domain/repositories/search_repository.dart';
+import '../../features/search/domain/usecases/get_recent_searches.dart';
+import '../../features/search/presentation/cubit/search_cubit.dart';
 import '../network/dio_client.dart';
 
 final sl = GetIt.instance;
@@ -168,5 +173,23 @@ Future<void> initDependencies() async {
     () => ReviewCubit(
       getItineraryForReview: sl<GetItineraryForReviewUseCase>(),
     ),
+  );
+  // ══════════════════════════════════════════════════════════════════════════
+  // ── Search Feature ────────────────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════════════════
+
+  sl.registerLazySingleton<SearchMockDataSource>(
+    () => SearchMockDataSourceImpl(),
+  );
+
+  sl.registerLazySingleton<SearchRepository>(
+    () => SearchRepositoryImpl(remoteDataSource: sl<SearchMockDataSource>()),
+  );
+
+  sl.registerLazySingleton(
+      () => GetRecentSearches(sl<SearchRepository>()));
+
+  sl.registerFactory(
+    () => SearchCubit(sl<GetRecentSearches>()),
   );
 }
