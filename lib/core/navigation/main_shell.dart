@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/di/injection_container.dart';
 import '../../features/home/presentation/screens/explore_screen.dart';
 import '../../features/itinerary/presentation/screens/itinerary_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/profile/presentation/cubit/profile_cubit.dart';
 import '../../features/itinerary/presentation/cubit/itinerary_cubit.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../core/di/injection_container.dart';
+import '../../features/trip_planner/presentation/screens/trip_planner_screen.dart'; // Import từ nhánh Phụng
 
 /// Shell chính chứa Bottom Navigation Bar + IndexedStack các tab.
-///
-/// 5 tab: Khám phá (0) · Lịch trình (1) · [+] FAB (2) · Đã lưu (3) · Cá nhân (4)
-/// Tab 2 không có trang — chỉ có FAB ở giữa.
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
@@ -23,7 +21,6 @@ class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
 
   /// Danh sách các trang tương ứng với tab navigation.
-  /// Index 2 bỏ trống (FAB slot).
   final List<Widget> _pages = [
     const ExploreScreen(),        // 0 — Khám phá
     const ItineraryScreen(),      // 1 — Lịch trình
@@ -47,14 +44,18 @@ class _MainShellState extends State<MainShell> {
         bottomNavigationBar: _BottomNav(
           currentIndex: _currentIndex,
           onTap: (i) {
-            // Bỏ qua tap vào slot FAB (index 2).
             if (i == 2) return;
             setState(() => _currentIndex = i);
           },
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: () {
-            // TODO: Mở màn tạo lịch trình mới.
+            // Sử dụng logic chuyển trang của Phụng để mở TripPlanner
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const TripPlannerScreen(),
+              ),
+            );
           },
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
@@ -68,6 +69,7 @@ class _MainShellState extends State<MainShell> {
   }
 }
 
+// ... (Phần code _BottomNav, _NavItem và _PlaceholderTab giữ nguyên như cũ)
 // ═══════════════════════════════════════════════════════════════════════════════
 // ── Bottom Navigation Bar ────────────────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════════════════════

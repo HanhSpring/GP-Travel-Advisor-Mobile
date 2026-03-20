@@ -1,5 +1,7 @@
 import 'package:get_it/get_it.dart';
 
+import '../../features/trip_planner/presentation/cubit/trip_planner_cubit.dart';
+
 import '../../features/auth/data/datasources/auth_datasource.dart';
 import '../../features/auth/data/repositories/mock_auth_repository.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
@@ -200,4 +202,6 @@ Future<void> initDependencies() async {
       getPlaceDetailUseCase: sl<GetPlaceDetailUseCase>(),
     ),
   );
+  // ── Trip Planner Cubit ─────────────────────────────────────────────────────
+  sl.registerFactory(() => TripPlannerCubit());
 }
