@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/itinerary_entity.dart';
 
 /// Hàng nút Filter (Chip) — Tất cả · Sắp đi · Đã đi · Nháp

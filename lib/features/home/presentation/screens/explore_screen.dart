@@ -13,6 +13,10 @@ import '../widgets/hotel_card.dart';
 import '../widgets/trip_card_widget.dart';
 
 import '../../../profile/presentation/widgets/profile_drawer.dart';
+import '../../../food/presentation/screens/food_menu_screen.dart';
+import '../../../food/presentation/widgets/pre_order_popup.dart';
+import '../../../review/presentation/widgets/itinerary_rating_popup.dart';
+import '../../../review/presentation/screens/rate_itinerary_screen.dart';
 
 class ExploreScreen extends StatelessWidget {
   const ExploreScreen({super.key});
@@ -36,6 +40,61 @@ class _ExploreView extends StatefulWidget {
 class _ExploreViewState extends State<_ExploreView> {
   int _suggestionPage = 0;
   int _destPage = 0;
+  bool _isItineraryStarted = false;
+
+  void _onToggleItinerary(bool value) {
+    setState(() => _isItineraryStarted = value);
+    if (value) {
+      // Simulate proximity trigger after 2 seconds
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Chế độ hành trình đã bật. Hệ thống sẽ tự động gợi ý món ăn khi bạn đến gần điểm dừng.'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+
+      Future.delayed(const Duration(seconds: 4), () {
+        if (!mounted || !_isItineraryStarted) return;
+        _showPreOrderNotification();
+      });
+    }
+  }
+
+  void _showPreOrderNotification() {
+    const restaurantName = 'Cơm tấm Ba Ghiền';
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => PreOrderPopup(
+        restaurantName: restaurantName,
+        onOrderTap: () {
+          Navigator.pop(context);
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const FoodMenuScreen(restaurantName: restaurantName)),
+          );
+        },
+      ),
+    );
+
+    // Simulate Trip Completion after 10 more seconds for demo
+    Future.delayed(const Duration(seconds: 10), () {
+      if (!mounted || !_isItineraryStarted) return;
+      _showTripCompletionPopup();
+    });
+  }
+
+  void _showTripCompletionPopup() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => const ItineraryRatingPopup(
+        itineraryId: 'itin-001',
+        itineraryTitle: 'Sài Gòn 3N2Đ',
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,21 +129,62 @@ class _ExploreViewState extends State<_ExploreView> {
   Widget _buildContent(BuildContext context, ExploreLoaded state) {
     return CustomScrollView(
       slivers: [
-        SliverToBoxAdapter(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              SectionHeader(title: 'Lịch trình của bạn', onSeeAll: () {}),
-              const SizedBox(height: 12),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: CurrentItineraryCard(),
-              ),
-              const SizedBox(height: 12),
-            ],
+        if (state.currentItinerary != null)
+          SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 20),
+                // Section Header with View All
+                SectionHeader(
+                  title: 'Lịch trình của bạn', 
+                  onSeeAll: () {},
+                  actionLabel: 'Xem tất cả >',
+                ),
+                
+                // Start Itinerary Switch Row
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF6FF),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
+                          'BẮT ĐẦU LỊCH TRÌNH',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2563EB),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Transform.scale(
+                        scale: 0.8,
+                        child: Switch(
+                          value: _isItineraryStarted,
+                          onChanged: _onToggleItinerary,
+                          activeColor: const Color(0xFF2563EB),
+                          activeTrackColor: const Color(0xFFBFDBFE),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: CurrentItineraryCard(item: state.currentItinerary),
+                ),
+                const SizedBox(height: 12),
+              ],
+            ),
           ),
-        ),
         // ── Gợi ý cho bạn ────────────────────────────────────────────────
         if (state.suggestions.isNotEmpty)
           SliverToBoxAdapter(

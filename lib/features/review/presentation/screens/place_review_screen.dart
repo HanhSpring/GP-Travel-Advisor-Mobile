@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/net_image.dart';
 import '../cubit/review_cubit.dart';
 import '../cubit/review_state.dart';
@@ -234,10 +234,17 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
                   child: TextField(
                     controller: _reviewController,
                     maxLines: 5,
+                    style: const TextStyle(fontSize: 13),
                     decoration: const InputDecoration(
                       hintText: 'Chia sẻ trải nghiệm của bạn...',
                       hintStyle: TextStyle(color: Colors.grey, fontSize: 13),
+                      filled: false,
                       border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      errorBorder: InputBorder.none,
+                      disabledBorder: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(vertical: 12),
                     ),
                   ),
                 ),

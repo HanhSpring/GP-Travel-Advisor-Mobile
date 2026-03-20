@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_colors.dart';
 import '../../features/home/presentation/screens/explore_screen.dart';
 import '../../features/itinerary/presentation/screens/itinerary_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/profile/presentation/cubit/profile_cubit.dart';
+import '../../features/itinerary/presentation/cubit/itinerary_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/di/injection_container.dart';
 
@@ -28,38 +29,41 @@ class _MainShellState extends State<MainShell> {
     const ItineraryScreen(),      // 1 — Lịch trình
     const SizedBox.shrink(),      // 2 — placeholder cho FAB
     const _PlaceholderTab(title: 'Đã lưu', icon: Icons.favorite), // 3
-    BlocProvider(                 // 4 - Cá nhân
-      create: (_) => sl<ProfileCubit>()..loadProfile(),
-      child: const ProfileScreen(),
-    ),
+    const ProfileScreen(),        // 4 - Cá nhân
   ];
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _pages,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => sl<ItineraryCubit>()..loadData()),
+        BlocProvider(create: (_) => sl<ProfileCubit>()..loadProfile()),
+      ],
+      child: Scaffold(
+        body: IndexedStack(
+          index: _currentIndex,
+          children: _pages,
+        ),
+        bottomNavigationBar: _BottomNav(
+          currentIndex: _currentIndex,
+          onTap: (i) {
+            // Bỏ qua tap vào slot FAB (index 2).
+            if (i == 2) return;
+            setState(() => _currentIndex = i);
+          },
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            // TODO: Mở màn tạo lịch trình mới.
+          },
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          elevation: 4,
+          shape: const CircleBorder(),
+          child: const Icon(Icons.add, size: 28),
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       ),
-      bottomNavigationBar: _BottomNav(
-        currentIndex: _currentIndex,
-        onTap: (i) {
-          // Bỏ qua tap vào slot FAB (index 2).
-          if (i == 2) return;
-          setState(() => _currentIndex = i);
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO: Mở màn tạo lịch trình mới.
-        },
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        elevation: 4,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add, size: 28),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 }

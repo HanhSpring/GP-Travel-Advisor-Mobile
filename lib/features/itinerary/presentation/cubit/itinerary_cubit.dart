@@ -13,6 +13,7 @@ class ItineraryCubit extends Cubit<ItineraryState> {
   final GetItinerariesUseCase _getItineraries;
   final GetItinerarySummaryUseCase _getSummary;
   final DeleteItineraryUseCase _deleteItinerary;
+  final GetItineraryDetailUseCase _getItineraryDetail;
 
   /// Filter đang active, null = "Tất cả".
   ItineraryStatus? _currentFilter;
@@ -21,9 +22,11 @@ class ItineraryCubit extends Cubit<ItineraryState> {
     required GetItinerariesUseCase getItineraries,
     required GetItinerarySummaryUseCase getSummary,
     required DeleteItineraryUseCase deleteItinerary,
+    required GetItineraryDetailUseCase getItineraryDetail,
   })  : _getItineraries = getItineraries,
         _getSummary = getSummary,
         _deleteItinerary = deleteItinerary,
+        _getItineraryDetail = getItineraryDetail,
         super(const ItineraryInitial());
 
   /// Tải toàn bộ dữ liệu (danh sách + thống kê).
@@ -41,6 +44,7 @@ class ItineraryCubit extends Cubit<ItineraryState> {
         itineraries: results[0] as List<ItineraryEntity>,
         summary: results[1] as dynamic,
         activeFilter: _currentFilter,
+        selectedItinerary: (state is ItineraryLoaded) ? (state as ItineraryLoaded).selectedItinerary : null,
       ));
     } catch (e) {
       emit(ItineraryError(e.toString()));
@@ -66,5 +70,33 @@ class ItineraryCubit extends Cubit<ItineraryState> {
     } catch (e) {
       emit(ItineraryError('Không thể xóa lịch trình: ${e.toString()}'));
     }
+  }
+
+  /// Chọn một lịch trình để xem chi tiết.
+  /// Cubit sẽ fetch data detail và lưu vào [selectedItinerary].
+  Future<void> selectItinerary(String id) async {
+    final currentState = state;
+    if (currentState is ItineraryLoaded) {
+      // Clear previous selection to show loading
+      emit(currentState.copyWithSelected(null));
+      
+      try {
+        final detail = await _getItineraryDetail(id);
+        emit((state as ItineraryLoaded).copyWithSelected(detail));
+      } catch (e) {
+        emit(ItineraryError('Không thể tải chi tiết: ${e.toString()}'));
+      }
+    }
+  }
+}
+
+extension on ItineraryLoaded {
+  ItineraryLoaded copyWithSelected(dynamic selected) {
+    return ItineraryLoaded(
+      itineraries: itineraries,
+      summary: summary,
+      activeFilter: activeFilter,
+      selectedItinerary: selected,
+    );
   }
 }
