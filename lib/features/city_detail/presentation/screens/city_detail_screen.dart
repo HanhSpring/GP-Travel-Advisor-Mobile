@@ -119,6 +119,7 @@ class _CityDetailContentState extends State<_CityDetailContent> {
                   onActivityPageChanged: (i) => setState(() => _activityIndex = i),
                   onRestaurantPageChanged: (i) => setState(() => _restaurantIndex = i),
                   onHotelPageChanged: (i) => setState(() => _hotelIndex = i),
+                  onTabSelected: (index) => context.read<CityDetailCubit>().changeTab(index),
                 )
               : widget.activeTab == 1
                   ? _ItineraryTabContent(itineraries: widget.overview.itineraries)
@@ -154,6 +155,7 @@ class _OverviewTabContent extends StatelessWidget {
   final ValueChanged<int> onActivityPageChanged;
   final ValueChanged<int> onRestaurantPageChanged;
   final ValueChanged<int> onHotelPageChanged;
+  final ValueChanged<int> onTabSelected;
 
   const _OverviewTabContent({
     required this.overview,
@@ -169,6 +171,7 @@ class _OverviewTabContent extends StatelessWidget {
     required this.onActivityPageChanged,
     required this.onRestaurantPageChanged,
     required this.onHotelPageChanged,
+    required this.onTabSelected,
   });
 
   @override
@@ -177,7 +180,7 @@ class _OverviewTabContent extends StatelessWidget {
       padding: EdgeInsets.zero,
       children: [
         const SizedBox(height: 20),
-        SectionHeader(title: 'Lịch trình cộng đồng', onSeeAll: () {}),
+        SectionHeader(title: 'Lịch trình cộng đồng', onSeeAll: () => onTabSelected(1)),
         const SizedBox(height: 12),
         SizedBox(
           height: 280, // Tăng lên 280 để chứa được tiêu đề 2 dòng + metadata (180+10+40+~30)
@@ -204,7 +207,7 @@ class _OverviewTabContent extends StatelessWidget {
           current: itineraryIndex,
         ),
         const SizedBox(height: 16),
-        SectionHeader(title: 'Hoạt động tham quan', onSeeAll: () {}),
+        SectionHeader(title: 'Hoạt động tham quan', onSeeAll: () => onTabSelected(2)),
         const SizedBox(height: 12),
         SizedBox(
           height: 160,
@@ -231,7 +234,7 @@ class _OverviewTabContent extends StatelessWidget {
           current: activityIndex,
         ),
         const SizedBox(height: 16),
-        SectionHeader(title: 'Nhà hàng tiêu biểu', onSeeAll: () {}),
+        SectionHeader(title: 'Nhà hàng tiêu biểu', onSeeAll: () => onTabSelected(3)),
         const SizedBox(height: 12),
         SizedBox(
           height: 185,
@@ -258,7 +261,7 @@ class _OverviewTabContent extends StatelessWidget {
           current: restaurantIndex,
         ),
         const SizedBox(height: 16),
-        SectionHeader(title: 'Khách sạn & Chỗ ở', onSeeAll: () {}),
+        SectionHeader(title: 'Khách sạn & Chỗ ở', onSeeAll: () => onTabSelected(4)),
         const SizedBox(height: 12),
         SizedBox(
           height: 300,

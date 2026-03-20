@@ -3,9 +3,6 @@ import '../../core/constants/app_colors.dart';
 import '../../features/home/presentation/screens/explore_screen.dart';
 import '../../features/itinerary/presentation/screens/itinerary_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
-import '../../features/profile/presentation/cubit/profile_cubit.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../core/di/injection_container.dart';
 
 /// Shell chính chứa Bottom Navigation Bar + IndexedStack các tab.
 ///
@@ -28,10 +25,7 @@ class _MainShellState extends State<MainShell> {
     const ItineraryScreen(),      // 1 — Lịch trình
     const SizedBox.shrink(),      // 2 — placeholder cho FAB
     const _PlaceholderTab(title: 'Đã lưu', icon: Icons.favorite), // 3
-    BlocProvider(                 // 4 - Cá nhân
-      create: (_) => sl<ProfileCubit>()..loadProfile(),
-      child: const ProfileScreen(),
-    ),
+    const ProfileScreen(), // 4 - Cá nhân
   ];
 
   @override
