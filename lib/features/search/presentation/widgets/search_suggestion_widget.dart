@@ -31,7 +31,6 @@ class SearchSuggestionWidget extends StatelessWidget {
               child: Text.rich(
                 const TextSpan(
                   style: TextStyle(
-                    fontFamily: 'Roboto',
                     fontSize: 14,
                     color: AppColors.textPrimary,
                     height: 1.5,

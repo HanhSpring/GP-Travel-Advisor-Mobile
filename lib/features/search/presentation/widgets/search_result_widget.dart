@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../domain/entities/search_location.dart';
+import '../../../../features/city_detail/presentation/screens/city_detail_screen.dart';
 
 class SearchResultWidget extends StatelessWidget {
   final List<SearchLocation> results;
@@ -42,7 +43,20 @@ class SearchResultWidget extends StatelessWidget {
             itemCount: results.length,
             itemBuilder: (context, index) {
               final location = results[index];
-              return _buildResultItem(location.name, location.imageUrl);
+              return InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CityDetailScreen(
+                        cityName: location.name,
+                        cityId: location.id,
+                      ),
+                    ),
+                  );
+                },
+                child: _buildResultItem(location.name, location.imageUrl),
+              );
             },
           ),
         ),

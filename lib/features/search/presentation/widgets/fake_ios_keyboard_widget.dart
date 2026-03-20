@@ -119,7 +119,7 @@ class FakeIOSKeyboardWidget extends StatelessWidget {
             borderRadius: BorderRadius.circular(6),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.3),
+                color: const Color.fromRGBO(0, 0, 0, 0.3),
                 offset: const Offset(0, 1),
               ),
             ],
@@ -143,7 +143,7 @@ class FakeIOSKeyboardWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(6),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: const Color.fromRGBO(0, 0, 0, 0.3),
             offset: const Offset(0, 1),
           ),
         ],
@@ -168,7 +168,7 @@ class FakeIOSKeyboardWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(6),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: const Color.fromRGBO(0, 0, 0, 0.3),
             offset: const Offset(0, 1),
           ),
         ],
