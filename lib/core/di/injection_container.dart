@@ -30,6 +30,7 @@ import '../../features/search/data/datasources/search_mock_data_source.dart';
 import '../../features/search/data/repositories/search_repository_impl.dart';
 import '../../features/search/domain/repositories/search_repository.dart';
 import '../../features/search/domain/usecases/get_recent_searches.dart';
+import '../../features/search/domain/usecases/search_locations.dart';
 import '../../features/search/presentation/cubit/search_cubit.dart';
 import '../network/dio_client.dart';
 
@@ -189,7 +190,10 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton(
       () => GetRecentSearches(sl<SearchRepository>()));
 
+  sl.registerLazySingleton(
+      () => SearchLocations(sl<SearchRepository>()));
+
   sl.registerFactory(
-    () => SearchCubit(sl<GetRecentSearches>()),
+    () => SearchCubit(sl<GetRecentSearches>(), sl<SearchLocations>()),
   );
 }

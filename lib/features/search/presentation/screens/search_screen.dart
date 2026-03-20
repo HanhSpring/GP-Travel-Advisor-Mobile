@@ -5,6 +5,7 @@ import '../cubit/search_cubit.dart';
 import '../cubit/search_state.dart';
 import '../widgets/search_header_widget.dart';
 import '../widgets/search_suggestion_widget.dart';
+import '../widgets/search_result_widget.dart';
 
 class SearchScreen extends StatelessWidget {
   const SearchScreen({super.key});
@@ -37,7 +38,9 @@ class _SearchView extends StatelessWidget {
                 controller: searchController,
                 onClear: () {
                   searchController.clear();
+                  context.read<SearchCubit>().onSearchQueryChanged('');
                 },
+                onChanged: (value) => context.read<SearchCubit>().onSearchQueryChanged(value),
               ),
             ),
 
@@ -52,6 +55,10 @@ class _SearchView extends StatelessWidget {
                       loading: () => const Center(child: CircularProgressIndicator()),
                       loaded: (recentSearches) => SearchSuggestionWidget(
                         recentSearches: recentSearches,
+                      ),
+                      searching: () => const Center(child: CircularProgressIndicator()),
+                      searchResults: (results) => SearchResultWidget(
+                        results: results,
                       ),
                       error: (message) => Center(child: Text(message)),
                     );

@@ -18,4 +18,14 @@ class SearchRepositoryImpl implements SearchRepository {
       return [];
     }
   }
+
+  @override
+  Future<List<SearchLocation>> searchLocations(String query) async {
+    try {
+      final models = await remoteDataSource.searchLocations(query);
+      return models.map((model) => model.toEntity()).toList();
+    } catch (e) {
+      return [];
+    }
+  }
 }

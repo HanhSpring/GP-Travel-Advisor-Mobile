@@ -4,11 +4,13 @@ import '../../../../core/constants/app_colors.dart';
 class SearchHeaderWidget extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback onClear;
+  final ValueChanged<String>? onChanged;
 
   const SearchHeaderWidget({
     super.key,
     required this.controller,
     required this.onClear,
+    this.onChanged,
   });
 
   @override
@@ -54,6 +56,7 @@ class SearchHeaderWidget extends StatelessWidget {
                       readOnly: false, // Sử dụng bàn phím thật
                       autofocus: true,
                       textAlignVertical: TextAlignVertical.center, // Đảm bảo text align center
+                      onChanged: onChanged,
                       decoration: InputDecoration(
                         hintText: 'Địa điểm tham quan, nhà hàng, khách sạn,...',
                         hintStyle: TextStyle(

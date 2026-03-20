@@ -23,7 +23,6 @@ SearchLocationModel _$SearchLocationModelFromJson(Map<String, dynamic> json) {
 mixin _$SearchLocationModel {
   String get id => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
-  @JsonKey(name: 'image_url')
   String get imageUrl => throw _privateConstructorUsedError;
 
   /// Serializes this SearchLocationModel to a JSON map.
@@ -43,11 +42,7 @@ abstract class $SearchLocationModelCopyWith<$Res> {
     $Res Function(SearchLocationModel) then,
   ) = _$SearchLocationModelCopyWithImpl<$Res, SearchLocationModel>;
   @useResult
-  $Res call({
-    String id,
-    String name,
-    @JsonKey(name: 'image_url') String imageUrl,
-  });
+  $Res call({String id, String name, String imageUrl});
 }
 
 /// @nodoc
@@ -94,11 +89,7 @@ abstract class _$$SearchLocationModelImplCopyWith<$Res>
   ) = __$$SearchLocationModelImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({
-    String id,
-    String name,
-    @JsonKey(name: 'image_url') String imageUrl,
-  });
+  $Res call({String id, String name, String imageUrl});
 }
 
 /// @nodoc
@@ -140,7 +131,7 @@ class _$SearchLocationModelImpl implements _SearchLocationModel {
   const _$SearchLocationModelImpl({
     required this.id,
     required this.name,
-    @JsonKey(name: 'image_url') required this.imageUrl,
+    required this.imageUrl,
   });
 
   factory _$SearchLocationModelImpl.fromJson(Map<String, dynamic> json) =>
@@ -151,7 +142,6 @@ class _$SearchLocationModelImpl implements _SearchLocationModel {
   @override
   final String name;
   @override
-  @JsonKey(name: 'image_url')
   final String imageUrl;
 
   @override
@@ -195,7 +185,7 @@ abstract class _SearchLocationModel implements SearchLocationModel {
   const factory _SearchLocationModel({
     required final String id,
     required final String name,
-    @JsonKey(name: 'image_url') required final String imageUrl,
+    required final String imageUrl,
   }) = _$SearchLocationModelImpl;
 
   factory _SearchLocationModel.fromJson(Map<String, dynamic> json) =
@@ -206,7 +196,6 @@ abstract class _SearchLocationModel implements SearchLocationModel {
   @override
   String get name;
   @override
-  @JsonKey(name: 'image_url')
   String get imageUrl;
 
   /// Create a copy of SearchLocationModel
