@@ -48,6 +48,20 @@ class MockItineraryDataSource implements ItineraryDataSource {
     ),
     // ── Đã đi (completed) ─────────────────────────────────────────────────
     ItineraryModel(
+      id: 'itin-000',
+      title: 'Hội An Memories',
+      imageUrl:
+          'https://images.unsplash.com/photo-1589308078059-be1415eab4c3?w=600&q=80',
+      startDate: DateTime(2024, 9, 10),
+      endDate: DateTime(2024, 9, 12),
+      estimatedCost: 3500000,
+      currency: 'VNĐ',
+      durationDays: 3,
+      progress: 1.0,
+      status: 'completed',
+      placeholderColor: 0xFFFFB300,
+    ),
+    ItineraryModel(
       id: 'itin-003',
       title: 'Vịnh Di Sản',
       imageUrl:
@@ -243,6 +257,23 @@ class MockItineraryDataSource implements ItineraryDataSource {
         'Nên thử cà phê bệt ở Nhà thờ Đức Bà.',
       ],
       centerCoordinate: [10.7769, 106.7009],
+      visitedRestaurants: const [
+        VisitedRestaurantModel(
+          name: 'Cơm tấm Ba Ghiền',
+          dishes: [
+            VisitedDishModel(name: 'Cơm tấm sườn bì chả', price: 85000, quantity: 1),
+            VisitedDishModel(name: 'Trà đá', price: 5000, quantity: 2),
+          ],
+          imageUrl: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=200&q=80',
+        ),
+        VisitedRestaurantModel(
+          name: 'Phở Hòa Pasteur',
+          dishes: [
+            VisitedDishModel(name: 'Phở bò tái nạm', price: 95000, quantity: 1),
+          ],
+          imageUrl: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?w=200&q=80',
+        ),
+      ],
       days: [
         ItineraryDayModel(
           dayNumber: 1,
@@ -275,6 +306,23 @@ class MockItineraryDataSource implements ItineraryDataSource {
       transportTurns: 6,
       estimatedBudget: 9500000,
       spentBudget: 8200000,
+      visitedRestaurants: const [
+        VisitedRestaurantModel(
+          name: 'Bún quậy Kiến Xây',
+          dishes: [
+            VisitedDishModel(name: 'Bún quậy đặc biệt', price: 75000, quantity: 2),
+          ],
+          imageUrl: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=200&q=80',
+        ),
+        VisitedRestaurantModel(
+          name: 'Nhà hàng Xin Chào',
+          dishes: [
+            VisitedDishModel(name: 'Gỏi cá trích', price: 180000, quantity: 1),
+            VisitedDishModel(name: 'Nước dừa', price: 35000, quantity: 2),
+          ],
+          imageUrl: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=200&q=80',
+        ),
+      ],
       notes: ['Nên đặt trước vé VinWonders', 'Mang theo kem chống nắng'],
       days: [
         ItineraryDayModel(
@@ -307,6 +355,23 @@ class MockItineraryDataSource implements ItineraryDataSource {
       transportTurns: 3,
       estimatedBudget: 4200000,
       spentBudget: 3800000,
+      visitedRestaurants: const [
+        VisitedRestaurantModel(
+          name: 'Lẩu gà lá é Tao Ngộ',
+          dishes: [
+            VisitedDishModel(name: 'Lẩu gà lá é (Lớn)', price: 350000, quantity: 1),
+            VisitedDishModel(name: 'Bún thêm', price: 10000, quantity: 2),
+          ],
+          imageUrl: 'https://images.unsplash.com/photo-1547928576-a4a332306003?w=200&q=80',
+        ),
+        VisitedRestaurantModel(
+          name: 'Bánh mì Liên Hoa',
+          dishes: [
+            VisitedDishModel(name: 'Bánh mì xíu mại', price: 25000, quantity: 3),
+          ],
+          imageUrl: 'https://images.unsplash.com/photo-1619096249114-162137930819?w=200&q=80',
+        ),
+      ],
       notes: ['Đà Lạt khá lạnh về đêm'],
       days: [
         ItineraryDayModel(

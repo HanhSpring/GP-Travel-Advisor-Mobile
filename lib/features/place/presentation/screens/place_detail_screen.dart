@@ -12,8 +12,13 @@ import '../widgets/related_places_section.dart';
 
 class PlaceDetailScreen extends StatefulWidget {
   final String placeId;
+  final bool showRelatedPlaces;
 
-  const PlaceDetailScreen({super.key, required this.placeId});
+  const PlaceDetailScreen({
+    super.key, 
+    required this.placeId,
+    this.showRelatedPlaces = true,
+  });
 
   @override
   State<PlaceDetailScreen> createState() => _PlaceDetailScreenState();
@@ -70,7 +75,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                     isFavorite: place.isFavorite,
                     onBack: () => Navigator.pop(context),
                     onFavorite: () {
-                      // Handle favorite toggle
+                      context.read<PlaceDetailCubit>().toggleFavorite();
                     },
                   ),
                   
@@ -103,8 +108,9 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                     reviews: place.reviews,
                   ),
                   
-                  // 7. Related Places
-                  RelatedPlacesSection(relatedPlaces: place.relatedPlaces),
+                  // 7. Related Places - ONLY SHOW if showRelatedPlaces is true
+                  if (widget.showRelatedPlaces)
+                    RelatedPlacesSection(relatedPlaces: place.relatedPlaces),
                   
                   const SizedBox(height: 60),
                 ],

@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import 'package:travel_advisor_mobile/features/home/presentation/screens/see_all_screen.dart';
+import 'package:travel_advisor_mobile/features/home/presentation/widgets/detailed_place_card.dart';
 import '../cubit/itinerary_cubit.dart';
 import '../cubit/itinerary_state.dart';
 import '../../domain/entities/itinerary_detail_entity.dart';
@@ -32,9 +34,64 @@ class ItineraryDetailScreen extends StatefulWidget {
 
 class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
   int _selectedDay = 1;
+  bool _isPublic = true;
   GoogleMapController? _mapController;
   final ScrollController _scrollController = ScrollController();
   final Map<String, GlobalKey> _activityKeys = {};
+
+  void _showAddPlaceScreen() {
+    void onAdd(String name) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Đã thêm $name vào lịch trình thành công!'),
+          backgroundColor: const Color(0xFF10B981),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      Navigator.pop(context); // Go back to itinerary detail
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SeeAllScreen(
+          title: 'Điểm đến nổi bật',
+          items: [
+            DetailedPlaceCard(
+              title: 'Sapa',
+              rating: 4.5,
+              reviews: '1.2k',
+              imageUrl: 'https://images.unsplash.com/photo-1503506046705-f6a745409929?w=800&q=80',
+              placeholderColor: 0xFFE2E8F0,
+              info: 'Việt Nam • Địa điểm du lịch',
+              onTap: () {},
+              onAddTap: () => onAdd('Sapa'),
+            ),
+            DetailedPlaceCard(
+              title: 'Hội An',
+              rating: 4.8,
+              reviews: '2.5k',
+              imageUrl: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&q=80',
+              placeholderColor: 0xFFF1F5F9,
+              info: 'Việt Nam • Phố cổ du lịch',
+              onTap: () {},
+              onAddTap: () => onAdd('Hội An'),
+            ),
+            DetailedPlaceCard(
+              title: 'Đà Nẵng',
+              rating: 4.7,
+              reviews: '1.8k',
+              imageUrl: 'https://images.unsplash.com/photo-1559592471-744e99c1586e?w=800&q=80',
+              placeholderColor: 0xFFCBD5E1,
+              info: 'Việt Nam • Thành phố biển',
+              onTap: () {},
+              onAddTap: () => onAdd('Đà Nẵng'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   void _onDayChanged(int day) {
     setState(() => _selectedDay = day);
@@ -69,8 +126,101 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
       MaterialPageRoute(
         builder: (_) => BlocProvider(
           create: (_) => sl<PlaceDetailCubit>(),
-          child: PlaceDetailScreen(placeId: activity.id),
+          child: PlaceDetailScreen(
+            placeId: activity.id,
+            showRelatedPlaces: false,
+          ),
         ),
+      ),
+    );
+  }
+
+  void _showShareSheet() {
+    final invitedUsers = <String>{};
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return Container(
+            height: MediaQuery.of(context).size.height * 0.6,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: Column(
+              children: [
+                Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
+                const SizedBox(height: 24),
+                const Text('Chia sẻ lịch trình', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                const Text('Mời bạn bè cùng tham gia và chỉnh sửa lịch trình chung cho chuyến đi này.', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey, fontSize: 13)),
+                const SizedBox(height: 24),
+                TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Tìm kiếm qua tên hoặc email...',
+                    prefixIcon: const Icon(Icons.search, size: 20),
+                    filled: true,
+                    fillColor: const Color(0xFFF1F5F9),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Expanded(
+                  child: ListView(
+                    children: [
+                       _shareUserItem('Nguyễn Văn A', 'anv@example.com', 'https://i.pravatar.cc/150?u=a', invitedUsers.contains('a'), () {
+                         setModalState(() => invitedUsers.add('a'));
+                       }),
+                       _shareUserItem('Trần Thị B', 'btt@example.com', 'https://i.pravatar.cc/150?u=b', invitedUsers.contains('b'), () {
+                         setModalState(() => invitedUsers.add('b'));
+                       }),
+                       _shareUserItem('Lê Văn C', 'clv@example.com', 'https://i.pravatar.cc/150?u=c', invitedUsers.contains('c'), () {
+                         setModalState(() => invitedUsers.add('c'));
+                       }),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+      ),
+    );
+  }
+
+  Widget _shareUserItem(String name, String email, String avatar, bool isInvited, VoidCallback onInvite) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        children: [
+          CircleAvatar(backgroundImage: NetworkImage(avatar)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                Text(email, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+              ],
+            ),
+          ),
+          ElevatedButton(
+            onPressed: isInvited ? null : onInvite,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isInvited ? Colors.grey.shade300 : AppColors.primary,
+              foregroundColor: isInvited ? Colors.grey : Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+            ),
+            child: Text(isInvited ? 'Đã gửi' : 'Gửi lời mời', style: const TextStyle(fontSize: 12)),
+          ),
+        ],
       ),
     );
   }
@@ -105,12 +255,16 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
     return Scaffold(
       body: _ItineraryDetailView(
         selectedDay: _selectedDay,
+        isPublic: _isPublic,
         onDayChanged: _onDayChanged,
+        onPublicChanged: (v) => setState(() => _isPublic = v),
+        onAddPlaceTap: _showAddPlaceScreen,
         mapController: _mapController,
         onMapCreated: (controller) => _mapController = controller,
         scrollController: _scrollController,
         activityKeys: _activityKeys,
         onActivityTap: _zoomToActivity,
+        onShareTap: _showShareSheet,
         onMarkerTap: (id) {
           // Find activity by id and scroll to it
           _scrollToActivity(id);
@@ -128,22 +282,30 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
 
 class _ItineraryDetailView extends StatelessWidget {
   final int selectedDay;
+  final bool isPublic;
   final Function(int) onDayChanged;
+  final Function(bool) onPublicChanged;
+  final VoidCallback onAddPlaceTap;
   final GoogleMapController? mapController;
   final Function(GoogleMapController) onMapCreated;
   final ScrollController scrollController;
   final Map<String, GlobalKey> activityKeys;
   final Function(ItineraryActivityEntity) onActivityTap;
+  final VoidCallback onShareTap;
   final Function(String) onMarkerTap;
 
   const _ItineraryDetailView({
     required this.selectedDay,
+    required this.isPublic,
     required this.onDayChanged,
+    required this.onPublicChanged,
+    required this.onAddPlaceTap,
     this.mapController,
     required this.onMapCreated,
     required this.scrollController,
     required this.activityKeys,
     required this.onActivityTap,
+    required this.onShareTap,
     required this.onMarkerTap,
   });
 
@@ -254,13 +416,7 @@ class _ItineraryDetailView extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       _floatingCircleButton(Icons.arrow_back, () => Navigator.pop(context)),
-                      Row(
-                        children: [
-                          _floatingCircleButton(Icons.share_outlined, () {}),
-                          const SizedBox(width: 12),
-                          _floatingCircleButton(Icons.more_horiz, () {}),
-                        ],
-                      ),
+                      _floatingCircleButton(Icons.share_outlined, onShareTap),
                     ],
                   ),
                 ),
@@ -350,8 +506,8 @@ class _ItineraryDetailView extends StatelessWidget {
                   Transform.scale(
                     scale: 0.7,
                     child: Switch(
-                      value: itin.isPublic, 
-                      onChanged: (v) {}, 
+                      value: isPublic, 
+                      onChanged: onPublicChanged, 
                       activeThumbColor: AppColors.primary,
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
@@ -462,6 +618,7 @@ class _ItineraryDetailView extends StatelessWidget {
                 activity: activity,
                 isFirst: entry.key == 0,
                 isLast: entry.key == currentDayData.activities.length - 1,
+                onAddTap: onAddPlaceTap,
               ),
             );
           }),
@@ -469,7 +626,7 @@ class _ItineraryDetailView extends StatelessWidget {
           const SizedBox(height: 24),
           Center(
             child: OutlinedButton.icon(
-              onPressed: () {},
+              onPressed: onAddPlaceTap,
               icon: const Icon(Icons.add_location_alt_outlined, size: 18),
               label: const Text('THÊM ĐỊA ĐIỂM'),
               style: OutlinedButton.styleFrom(

@@ -27,7 +27,7 @@ class ExploreHeader extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(
-                  icon: const Icon(Icons.tune, color: AppColors.primary, size: 20),
+                  icon: const Icon(Icons.menu, color: AppColors.primary, size: 20),
                   onPressed: () {
                     Scaffold.of(context).openDrawer();
                   },

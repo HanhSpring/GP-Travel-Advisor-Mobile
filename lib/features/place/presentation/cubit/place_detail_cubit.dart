@@ -16,4 +16,14 @@ class PlaceDetailCubit extends Cubit<PlaceDetailState> {
       emit(PlaceDetailError(e.toString()));
     }
   }
+
+  void toggleFavorite() {
+    if (state is PlaceDetailLoaded) {
+      final currentState = state as PlaceDetailLoaded;
+      final updatedPlace = currentState.placeDetail.copyWith(
+        isFavorite: !currentState.placeDetail.isFavorite,
+      );
+      emit(PlaceDetailLoaded(updatedPlace));
+    }
+  }
 }

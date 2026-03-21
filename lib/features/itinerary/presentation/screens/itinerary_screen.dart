@@ -28,31 +28,26 @@ class _ItineraryView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: BlocBuilder<ItineraryCubit, ItineraryState>(
-          builder: (context, state) {
-            if (state is ItineraryInitial) {
-              return const SizedBox.shrink();
-            }
+    return BlocBuilder<ItineraryCubit, ItineraryState>(
+      builder: (context, state) {
+        if (state is ItineraryInitial) {
+          return const SizedBox.shrink();
+        }
 
-            if (state is ItineraryLoading) {
-              return _buildLoadingShimmer();
-            }
+        if (state is ItineraryLoading) {
+          return _buildLoadingShimmer();
+        }
 
-            if (state is ItineraryError) {
-              return ErrorView(
-                error: state.message,
-                onRetry: () => context.read<ItineraryCubit>().loadData(),
-              );
-            }
+        if (state is ItineraryError) {
+          return ErrorView(
+            error: state.message,
+            onRetry: () => context.read<ItineraryCubit>().loadData(),
+          );
+        }
 
-            final loaded = state as ItineraryLoaded;
-            return _buildLoadedView(context, loaded);
-          },
-        ),
-      ),
+        final loaded = state as ItineraryLoaded;
+        return _buildLoadedView(context, loaded);
+      },
     );
   }
 
@@ -63,9 +58,17 @@ class _ItineraryView extends StatelessWidget {
       slivers: [
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + 24,
+              left: 24,
+              right: 24,
+            ),
             child: Row(
               children: [
+                _iconButton(Icons.menu, () {
+                  Scaffold.of(context).openDrawer();
+                }),
+                const SizedBox(width: 12),
                 const Expanded(
                   child: Text(
                     'Lịch trình của tôi',
@@ -78,8 +81,6 @@ class _ItineraryView extends StatelessWidget {
                 ),
                 if (state.itineraries.isNotEmpty) ...[
                   _iconButton(Icons.search, () {}),
-                  const SizedBox(width: 8),
-                  _iconButton(Icons.tune, () {}),
                 ],
               ],
             ),
@@ -92,16 +93,19 @@ class _ItineraryView extends StatelessWidget {
               padding: const EdgeInsets.only(top: 16),
               child: ItineraryFilterChips(
                 activeFilter: state.activeFilter,
+                activeSubFilter: state.activeCompletedFilter,
                 onChanged: (status) => cubit.filterBy(status),
+                onSubFilterChanged: (filter) => cubit.filterByCompleted(filter),
               ),
             ),
           ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: ItinerarySummaryGrid(summary: state.summary),
+          if (state.itineraries.isNotEmpty && state.activeFilter == null)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: ItinerarySummaryGrid(summary: state.summary),
+              ),
             ),
-          ),
         ],
 
         if (state.itineraries.isEmpty)
@@ -136,14 +140,6 @@ class _ItineraryView extends StatelessWidget {
                   );
                 }
 
-                if (item.status == ItineraryStatus.completed) {
-                  return ItineraryCompletedCard(
-                    item: item,
-                    onTap: onCardTap,
-                    onEdit: () {},
-                    onDelete: () => cubit.deleteItem(item.id),
-                  );
-                }
                 return ItineraryCard(
                   item: item,
                   onTap: onCardTap,

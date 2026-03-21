@@ -18,6 +18,9 @@ class ItineraryCubit extends Cubit<ItineraryState> {
   /// Filter đang active, null = "Tất cả".
   ItineraryStatus? _currentFilter;
 
+  /// Filter con cho "Đã đi".
+  CompletedFilter _currentCompletedFilter = CompletedFilter.all;
+
   ItineraryCubit({
     required GetItinerariesUseCase getItineraries,
     required GetItinerarySummaryUseCase getSummary,
@@ -40,10 +43,23 @@ class ItineraryCubit extends Cubit<ItineraryState> {
         _getItineraries(status: _currentFilter),
         _getSummary(),
       ]);
+
+      var itineraries = results[0] as List<ItineraryEntity>;
+      
+      // Lọc thêm theo Rating nếu đang ở tab "Đã đi"
+      if (_currentFilter == ItineraryStatus.completed) {
+        if (_currentCompletedFilter == CompletedFilter.rated) {
+          itineraries = itineraries.where((i) => i.rating != null).toList();
+        } else if (_currentCompletedFilter == CompletedFilter.unrated) {
+          itineraries = itineraries.where((i) => i.rating == null).toList();
+        }
+      }
+
       emit(ItineraryLoaded(
-        itineraries: results[0] as List<ItineraryEntity>,
+        itineraries: itineraries,
         summary: results[1] as dynamic,
         activeFilter: _currentFilter,
+        activeCompletedFilter: _currentCompletedFilter,
         selectedItinerary: (state is ItineraryLoaded) ? (state as ItineraryLoaded).selectedItinerary : null,
       ));
     } catch (e) {
@@ -56,6 +72,14 @@ class ItineraryCubit extends Cubit<ItineraryState> {
   /// Gọi khi người dùng bấm chip filter (Tất cả / Sắp đi / Đã đi / Nháp).
   Future<void> filterBy(ItineraryStatus? status) async {
     _currentFilter = status;
+    // Reset filter con khi đổi tab chính
+    _currentCompletedFilter = CompletedFilter.all;
+    await loadData();
+  }
+
+  /// Lọc con cho "Đã đi" (Tất cả / Đã đánh giá / Chưa đánh giá).
+  Future<void> filterByCompleted(CompletedFilter filter) async {
+    _currentCompletedFilter = filter;
     await loadData();
   }
 
@@ -96,6 +120,7 @@ extension on ItineraryLoaded {
       itineraries: itineraries,
       summary: summary,
       activeFilter: activeFilter,
+      activeCompletedFilter: activeCompletedFilter,
       selectedItinerary: selected,
     );
   }

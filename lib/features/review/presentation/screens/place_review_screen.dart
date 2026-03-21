@@ -14,10 +14,13 @@ class PlaceReviewScreen extends StatefulWidget {
   final String locationId;
   final ReviewCubit reviewCubit;
 
+  final bool isReadOnly;
+
   const PlaceReviewScreen({
     super.key,
     required this.locationId,
     required this.reviewCubit,
+    this.isReadOnly = false,
   });
 
   @override
@@ -120,16 +123,17 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
             ),
             centerTitle: true,
             actions: [
-              TextButton(
-                onPressed: _submit,
-                child: const Text(
-                  'Gửi',
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold,
+              if (!widget.isReadOnly)
+                TextButton(
+                  onPressed: _submit,
+                  child: const Text(
+                    'Gửi',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
           body: SingleChildScrollView(
@@ -205,7 +209,7 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
                 Center(
                   child: StarRatingInput(
                     rating: _rating,
-                    onRatingChanged: (val) {
+                    onRatingChanged: widget.isReadOnly ? (_) {} : (val) {
                       setState(() => _rating = val);
                     },
                     size: 32,
@@ -234,6 +238,7 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
                   child: TextField(
                     controller: _reviewController,
                     maxLines: 5,
+                    readOnly: widget.isReadOnly,
                     style: const TextStyle(fontSize: 13),
                     decoration: const InputDecoration(
                       hintText: 'Chia sẻ trải nghiệm của bạn...',
@@ -251,11 +256,11 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
                 const SizedBox(height: 24),
                 ReviewMediaList(
                   mediaPaths: _mediaPaths,
-                  onAddMedia: _pickMedia,
-                  onRemoveMedia: (path) {
+                  onAddMedia: widget.isReadOnly ? () {} : _pickMedia,
+                  onRemoveMedia: widget.isReadOnly ? (_) {} : (path) {
                     setState(() => _mediaPaths.remove(path));
                   },
-                  onClearAllMedia: () {
+                  onClearAllMedia: widget.isReadOnly ? () {} : () {
                     setState(() => _mediaPaths.clear());
                   },
                   imageSize: 80,
@@ -276,7 +281,7 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
                   children: _quickTags.map((tag) {
                     final isSelected = _selectedTags.contains(tag);
                     return GestureDetector(
-                      onTap: () {
+                      onTap: widget.isReadOnly ? () {} : () {
                         setState(() {
                           if (isSelected) {
                             _selectedTags.remove(tag);
@@ -315,25 +320,26 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
                   ],
                 ),
                 const SizedBox(height: 32),
-                ElevatedButton(
-                  onPressed: _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    minimumSize: const Size(double.infinity, 50),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
+                if (!widget.isReadOnly)
+                  ElevatedButton(
+                    onPressed: _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      minimumSize: const Size(double.infinity, 50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      elevation: 0,
                     ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    'Gửi đánh giá',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
+                    child: const Text(
+                      'Gửi đánh giá',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                ),
                 const SizedBox(height: 20),
               ],
             ),

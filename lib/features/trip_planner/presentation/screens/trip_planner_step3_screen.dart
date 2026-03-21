@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../cubit/trip_planner_cubit.dart';
 import '../cubit/trip_planner_state.dart';
 import '../widgets/budget_slider_section.dart';
 import '../widgets/food_preference_section.dart';
-import '../widgets/step_progress_bar.dart'; // We could reuse a widget or draw a custom one like in step 1/2
-import 'trip_summary_screen.dart';
+import '../widgets/step_progress_bar.dart'; 
+import '../../../../core/di/injection_container.dart';
+import '../../../itinerary/presentation/cubit/itinerary_cubit.dart';
+import '../../../itinerary/presentation/screens/itinerary_summary_screen.dart';
 
 class TripPlannerStep3Screen extends StatelessWidget {
   const TripPlannerStep3Screen({Key? key}) : super(key: key);
@@ -142,7 +144,14 @@ class TripPlannerStep3Screen extends StatelessWidget {
                         Navigator.pushAndRemoveUntil(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const TripSummaryScreen(),
+                            builder: (_) => BlocProvider(
+                              create: (_) {
+                                final cubit = sl<ItineraryCubit>();
+                                cubit.loadData().then((_) => cubit.selectItinerary('itin-001'));
+                                return cubit;
+                              },
+                              child: const ItinerarySummaryScreen(itineraryId: 'itin-001'),
+                            ),
                           ),
                           (route) => route.isFirst,
                         );

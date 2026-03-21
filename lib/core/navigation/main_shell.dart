@@ -7,7 +7,10 @@ import '../../features/itinerary/presentation/screens/itinerary_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/profile/presentation/cubit/profile_cubit.dart';
 import '../../features/itinerary/presentation/cubit/itinerary_cubit.dart';
-import '../../features/trip_planner/presentation/screens/trip_planner_screen.dart'; // Import từ nhánh Phụng
+import '../../features/trip_planner/presentation/screens/trip_planner_screen.dart';
+import '../../features/profile/presentation/widgets/profile_drawer.dart';
+import '../../features/itinerary/presentation/screens/saved_screen.dart';
+import 'tab_cubit.dart';
 
 /// Shell chính chứa Bottom Navigation Bar + IndexedStack các tab.
 class MainShell extends StatefulWidget {
@@ -18,14 +21,14 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> {
-  int _currentIndex = 0;
+
 
   /// Danh sách các trang tương ứng với tab navigation.
   final List<Widget> _pages = [
     const ExploreScreen(),        // 0 — Khám phá
     const ItineraryScreen(),      // 1 — Lịch trình
     const SizedBox.shrink(),      // 2 — placeholder cho FAB
-    const _PlaceholderTab(title: 'Đã lưu', icon: Icons.favorite), // 3
+    const SavedScreen(),          // 3
     const ProfileScreen(),        // 4 - Cá nhân
   ];
 
@@ -35,35 +38,32 @@ class _MainShellState extends State<MainShell> {
       providers: [
         BlocProvider(create: (_) => sl<ItineraryCubit>()..loadData()),
         BlocProvider(create: (_) => sl<ProfileCubit>()..loadProfile()),
+        BlocProvider(create: (_) => TabCubit()),
       ],
-      child: Scaffold(
-        body: IndexedStack(
-          index: _currentIndex,
-          children: _pages,
-        ),
-        bottomNavigationBar: _BottomNav(
-          currentIndex: _currentIndex,
-          onTap: (i) {
-            if (i == 2) return;
-            setState(() => _currentIndex = i);
-          },
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            // Sử dụng logic chuyển trang của Phụng để mở TripPlanner
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => const TripPlannerScreen(),
-              ),
-            );
-          },
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          elevation: 4,
-          shape: const CircleBorder(),
-          child: const Icon(Icons.add, size: 28),
-        ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      child: BlocBuilder<TabCubit, int>(
+        builder: (context, currentIndex) {
+          return Scaffold(
+            drawer: const ProfileDrawer(),
+            body: IndexedStack(
+              index: currentIndex,
+              children: _pages,
+            ),
+            bottomNavigationBar: _BottomNav(
+              currentIndex: currentIndex,
+              onTap: (i) {
+                if (i == 2) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const TripPlannerScreen(),
+                    ),
+                  );
+                  return;
+                }
+                context.read<TabCubit>().changeTab(i);
+              },
+            ),
+          );
+        },
       ),
     );
   }
@@ -84,14 +84,13 @@ class _BottomNav extends StatelessWidget {
     return BottomAppBar(
       color: Colors.white,
       elevation: 8,
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 8,
-      child: SizedBox(
-        height: 60,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _NavItem(
+      padding: EdgeInsets.zero,
+      height: 90, // Set height directly on BottomAppBar
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          Expanded(
+            child: _NavItem(
               icon: Icons.explore_outlined,
               activeIcon: Icons.explore,
               label: 'Khám phá',
@@ -99,7 +98,9 @@ class _BottomNav extends StatelessWidget {
               current: currentIndex,
               onTap: onTap,
             ),
-            _NavItem(
+          ),
+          Expanded(
+            child: _NavItem(
               icon: Icons.map_outlined,
               activeIcon: Icons.map,
               label: 'Lịch trình',
@@ -107,9 +108,39 @@ class _BottomNav extends StatelessWidget {
               current: currentIndex,
               onTap: onTap,
             ),
-            // Khoảng trống cho FAB notch.
-            const SizedBox(width: 56),
-            _NavItem(
+          ),
+          // Nút trung tâm có text ở dưới
+          Expanded(
+            child: GestureDetector(
+              onTap: () => onTap(2),
+              behavior: HitTestBehavior.opaque,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: const BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.add, color: Colors.white, size: 24),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Tạo lịch trình',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Color(0xFF9E9E9E),
+                      fontWeight: FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            child: _NavItem(
               icon: Icons.favorite_outline,
               activeIcon: Icons.favorite,
               label: 'Đã lưu',
@@ -117,7 +148,9 @@ class _BottomNav extends StatelessWidget {
               current: currentIndex,
               onTap: onTap,
             ),
-            _NavItem(
+          ),
+          Expanded(
+            child: _NavItem(
               icon: Icons.person_outline,
               activeIcon: Icons.person,
               label: 'Cá nhân',
@@ -125,8 +158,8 @@ class _BottomNav extends StatelessWidget {
               current: currentIndex,
               onTap: onTap,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

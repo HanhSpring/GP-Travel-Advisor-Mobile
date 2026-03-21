@@ -7,12 +7,14 @@ class TimelineActivityCard extends StatelessWidget {
   final ItineraryActivityEntity activity;
   final bool isFirst;
   final bool isLast;
+  final VoidCallback? onAddTap;
 
   const TimelineActivityCard({
     super.key,
     required this.activity,
     this.isFirst = false,
     this.isLast = false,
+    this.onAddTap,
   });
 
   @override
@@ -22,19 +24,22 @@ class TimelineActivityCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Timeline indicator
-          Column(
-            children: [
-              _buildStatusIndicator(),
-              if (!isLast)
-                Expanded(
-                  child: Container(
-                    width: 2,
-                    color: const Color(0xFFE5E7EB),
+          SizedBox(
+            width: 24,
+            child: Column(
+              children: [
+                _buildStatusIndicator(),
+                if (!isLast)
+                  Expanded(
+                    child: Container(
+                      width: 2,
+                      color: const Color(0xFFE5E7EB),
+                    ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
           // Content
           Expanded(
             child: Padding(
@@ -59,7 +64,7 @@ class TimelineActivityCard extends StatelessWidget {
                       border: Border.all(color: const Color(0xFFF3F4F6)),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.02),
+                          color: Colors.black.withValues(alpha: 0.02),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -191,22 +196,67 @@ class TimelineActivityCard extends StatelessWidget {
                   ),
                   if (activity.transportInfo != null)
                     Padding(
-                      padding: const EdgeInsets.only(top: 16, left: 4),
-                      child: Row(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.arrow_downward, size: 10, color: Color(0xFF9CA3AF)),
-                          const SizedBox(width: 8),
-                          const Icon(Icons.directions_car, size: 12, color: Color(0xFF9CA3AF)),
-                          const SizedBox(width: 8),
-                          Text(activity.transportInfo!, style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF), fontStyle: FontStyle.italic)),
+                          Row(
+                            children: [
+                              const Icon(Icons.arrow_downward, size: 10, color: Color(0xFF9CA3AF)),
+                              const SizedBox(width: 8),
+                              const Icon(Icons.directions_car, size: 12, color: Color(0xFF9CA3AF)),
+                              const SizedBox(width: 8),
+                              Text(activity.transportInfo!, style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF), fontStyle: FontStyle.italic)),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          _buildAddButton(),
                         ],
                       ),
+                    )
+                  else if (!isLast)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: _buildAddButton(),
                     ),
                 ],
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAddButton() {
+    return InkWell(
+      onTap: onAddTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 20,
+              height: 20,
+              decoration: const BoxDecoration(
+                color: AppColors.primary,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.add, size: 14, color: Colors.white),
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'Thêm địa điểm',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -119,106 +119,113 @@ class ConflictResolutionSheet extends StatelessWidget {
     String imageUrl, {
     bool isRecommended = false,
   }) {
-    return GestureDetector(
-      onTap: onSelect,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: isRecommended ? AppColors.primary : const Color(0xFFF1F5F9),
-            width: isRecommended ? 2 : 1,
-          ),
-          boxShadow: [
-            if (isRecommended)
-              BoxShadow(
-                color: AppColors.primary.withOpacity(0.1),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-          ],
+    Widget card = Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isRecommended ? AppColors.primary : const Color(0xFFF1F5F9),
+          width: isRecommended ? 2 : 1,
         ),
-        child: Stack(
-          children: [
-            Row(
+        boxShadow: [
+          if (isRecommended)
+            BoxShadow(
+              color: AppColors.primary.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: isRecommended ? AppColors.primary : const Color(0xFFF1F5F9),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                id,
+                style: TextStyle(
+                  color: isRecommended ? Colors.white : const Color(0xFF64748B),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: isRecommended ? AppColors.primary : const Color(0xFFF1F5F9),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      id,
-                      style: TextStyle(
-                        color: isRecommended ? Colors.white : const Color(0xFF64748B),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: Color(0xFF1E293B),
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                          color: Color(0xFF1E293B),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      _tag(tag, tagBg, tagText),
-                    ],
-                  ),
-                ),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    imageUrl,
-                    width: 60,
-                    height: 60,
-                    fit: BoxFit.cover,
-                  ),
-                ),
+                const SizedBox(height: 6),
+                _tag(tag, tagBg, tagText),
               ],
             ),
-            if (isRecommended)
-              Positioned(
-                top: -8,
-                right: 70,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+          ),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.network(
+              imageUrl,
+              width: 60,
+              height: 60,
+              fit: BoxFit.cover,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (isRecommended) {
+      card = Stack(
+        clipBehavior: Clip.none,
+        children: [
+          card,
+          Positioned(
+            top: -12,
+            right: 24,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
                   ),
-                  child: const Text(
-                    'GỢI Ý TỐT NHẤT',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 8,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                ],
+              ),
+              child: const Text(
+                'GỢI Ý TỐT NHẤT',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 9,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
                 ),
               ),
-          ],
-        ),
-      ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return GestureDetector(
+      onTap: onSelect,
+      child: card,
     );
   }
 
