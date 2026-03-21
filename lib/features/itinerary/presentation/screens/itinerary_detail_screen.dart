@@ -346,7 +346,7 @@ class _ItineraryDetailView extends StatelessWidget {
             );
 
             // Create markers
-            final markers = _buildMarkers(currentDayData.activities);
+            // final markers = _buildMarkers(currentDayData.activities);
 
             return Stack(
               children: [
@@ -429,58 +429,57 @@ class _ItineraryDetailView extends StatelessWidget {
     );
   }
 
-  Set<Marker> _buildMarkers(List<ItineraryActivityEntity> activities) {
-    return activities
-        .where((a) => a.latitude != null && a.longitude != null)
-        .map((a) {
-      return Marker(
-        markerId: MarkerId(a.id),
-        position: LatLng(a.latitude!, a.longitude!),
-        infoWindow: InfoWindow(title: a.title, snippet: a.locationName),
-        icon: _getMarkerIcon(a.status),
-        onTap: () => onMarkerTap(a.id),
-      );
-    }).toSet();
-  }
+  // Set<Marker> _buildMarkers(List<ItineraryActivityEntity> activities) {
+  //   return activities
+  //       .where((a) => a.latitude != null && a.longitude != null)
+  //       .map((a) {
+  //     return Marker(
+  //       markerId: MarkerId(a.id),
+  //       position: LatLng(a.latitude!, a.longitude!),
+  //       infoWindow: InfoWindow(title: a.title, snippet: a.locationName),
+  //       icon: _getMarkerIcon(a.status),
+  //       onTap: () => onMarkerTap(a.id),
+  //     );
+  //   }).toSet();
+  // }
 
-  BitmapDescriptor _getMarkerIcon(ActivityStatus status) {
-    // Ideally use custom marker images, but for now we'll use default colors
-    switch (status) {
-      case ActivityStatus.daDi:
-        return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen);
-      case ActivityStatus.dangDi:
-        return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure);
-      case ActivityStatus.diQua:
-        return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueYellow);
-      case ActivityStatus.chuaDi:
-      default:
-        return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed);
-    }
-  }
+  // BitmapDescriptor _getMarkerIcon(ActivityStatus status) {
+  //   // Ideally use custom marker images, but for now we'll use default colors
+  //   switch (status) {
+  //     case ActivityStatus.daDi:
+  //       return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen);
+  //     case ActivityStatus.dangDi:
+  //       return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure);
+  //     case ActivityStatus.diQua:
+  //       return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueYellow);
+  //     case ActivityStatus.chuaDi:
+  //       return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed);
+  //   }
+  // }
 
-  void _fitBounds(GoogleMapController controller, Set<Marker> markers) {
-    if (markers.isEmpty) return;
-    
-    double? minLat, maxLat, minLng, maxLng;
-    for (final marker in markers) {
-      final lat = marker.position.latitude;
-      final lng = marker.position.longitude;
-      if (minLat == null || lat < minLat) minLat = lat;
-      if (maxLat == null || lat > maxLat) maxLat = lat;
-      if (minLng == null || lng < minLng) minLng = lng;
-      if (maxLng == null || lng > maxLng) maxLng = lng;
-    }
+  // void _fitBounds(GoogleMapController controller, Set<Marker> markers) {
+  //   if (markers.isEmpty) return;
+  //   
+  //   double? minLat, maxLat, minLng, maxLng;
+  //   for (final marker in markers) {
+  //     final lat = marker.position.latitude;
+  //     final lng = marker.position.longitude;
+  //     if (minLat == null || lat < minLat) minLat = lat;
+  //     if (maxLat == null || lat > maxLat) maxLat = lat;
+  //     if (minLng == null || lng < minLng) minLng = lng;
+  //     if (maxLng == null || lng > maxLng) maxLng = lng;
+  //   }
 
-    controller.animateCamera(
-      CameraUpdate.newLatLngBounds(
-        LatLngBounds(
-          southwest: LatLng(minLat!, minLng!),
-          northeast: LatLng(maxLat!, maxLng!),
-        ),
-        50.0,
-      ),
-    );
-  }
+  //   controller.animateCamera(
+  //     CameraUpdate.newLatLngBounds(
+  //       LatLngBounds(
+  //         southwest: LatLng(minLat!, minLng!),
+  //         northeast: LatLng(maxLat!, maxLng!),
+  //       ),
+  //       50.0,
+  //     ),
+  //   );
+  // }
 
   Widget _buildContentCard(BuildContext context, ItineraryDetailEntity itin, dynamic currentDayData) {
     final currencyFormatter = NumberFormat('#,###', 'vi_VN');
@@ -688,7 +687,7 @@ class _ItineraryDetailView extends StatelessWidget {
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 10,
               offset: const Offset(0, 4),
             )

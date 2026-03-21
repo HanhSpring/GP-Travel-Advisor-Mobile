@@ -430,7 +430,7 @@ class _ItinerarySummaryView extends StatelessWidget {
               Expanded(child: Text(note.toString(), style: const TextStyle(fontSize: 14, color: Color(0xFF475569), height: 1.4))),
             ],
           ),
-        )).toList(),
+        )),
       ],
     );
   }

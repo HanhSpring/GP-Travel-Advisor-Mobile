@@ -291,7 +291,6 @@ class TimelineActivityCard extends StatelessWidget {
           ),
         );
       case ActivityStatus.chuaDi:
-      default:
         return Container(
           width: 12,
           height: 12,
@@ -309,7 +308,6 @@ class TimelineActivityCard extends StatelessWidget {
       case ActivityStatus.diQua:
         return _label('ĐÃ ĐI QUA', const Color(0xFFF1F5F9), const Color(0xFF64748B));
       case ActivityStatus.chuaDi:
-      default:
         return _label('CHƯA ĐẾN', const Color(0xFFF8FAFC), const Color(0xFF94A3B8));
     }
   }
