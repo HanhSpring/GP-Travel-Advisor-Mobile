@@ -3,6 +3,11 @@ import '../../core/constants/app_colors.dart';
 import '../../features/home/presentation/screens/explore_screen.dart';
 import '../../features/itinerary/presentation/screens/itinerary_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
+import '../../features/saved/presentation/screens/saved_screen.dart';
+import '../../features/saved/presentation/cubit/saved_cubit.dart';
+import '../../features/saved/data/repositories/saved_repository_impl.dart';
+import '../../features/saved/data/datasources/saved_mock_data_source.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Shell chính chứa Bottom Navigation Bar + IndexedStack các tab.
 ///
@@ -21,10 +26,15 @@ class _MainShellState extends State<MainShell> {
   /// Danh sách các trang tương ứng với tab navigation.
   /// Index 2 bỏ trống (FAB slot).
   final List<Widget> _pages = [
-    const ExploreScreen(),        // 0 — Khám phá
-    const ItineraryScreen(),      // 1 — Lịch trình
-    const SizedBox.shrink(),      // 2 — placeholder cho FAB
-    const _PlaceholderTab(title: 'Đã lưu', icon: Icons.favorite), // 3
+    const ExploreScreen(), // 0 — Khám phá
+    const ItineraryScreen(), // 1 — Lịch trình
+    const SizedBox.shrink(), // 2 — placeholder cho FAB
+    BlocProvider(
+      create: (context) => SavedCubit(
+        repository: SavedRepositoryImpl(dataSource: SavedMockDataSource()),
+      ),
+      child: const SavedScreen(),
+    ), // 3 — Đã lưu
     const ProfileScreen(), // 4 - Cá nhân
   ];
 
