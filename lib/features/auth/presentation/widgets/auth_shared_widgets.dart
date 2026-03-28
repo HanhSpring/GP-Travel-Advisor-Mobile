@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/constants/app_sizes.dart';
 
 /// Shared decorative background blobs used across auth screens.
 class AuthBackground extends StatelessWidget {
@@ -55,7 +56,7 @@ class OrDivider extends StatelessWidget {
       children: [
         Expanded(child: Divider(color: Colors.grey.shade300, thickness: 1)),
         const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12),
+          padding: EdgeInsets.symmetric(horizontal: AppSizes.s12),
           child: Text('Hoặc',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
         ),
@@ -75,7 +76,7 @@ class GoogleSignInButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 48,
+      height: AppSizes.s48,
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
@@ -93,7 +94,6 @@ class GoogleSignInButton extends StatelessWidget {
             const Text(
               'Google',
               style: TextStyle(
-                fontFamily: 'Roboto',
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF374151),
@@ -130,7 +130,7 @@ class FacebookSignInButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 48,
+      height: AppSizes.s48,
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
@@ -148,7 +148,6 @@ class FacebookSignInButton extends StatelessWidget {
             const Text(
               'Facebook',
               style: TextStyle(
-                fontFamily: 'Roboto',
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF374151),
@@ -191,7 +190,7 @@ class SocialButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 48,
+      height: AppSizes.s48,
       child: OutlinedButton.icon(
         onPressed: onPressed,
         icon: icon,
