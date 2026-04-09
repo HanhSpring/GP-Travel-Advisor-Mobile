@@ -27,3 +27,4 @@ class CurrencyInputFormatter extends TextInputFormatter {
     );
   }
 }
+
