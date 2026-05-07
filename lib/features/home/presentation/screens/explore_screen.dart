@@ -29,6 +29,8 @@ import 'package:travel_advisor_mobile/features/city_detail/presentation/screens/
 
 import 'package:travel_advisor_mobile/features/itinerary/presentation/cubit/itinerary_cubit.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/screens/itinerary_summary_screen.dart';
+import 'package:travel_advisor_mobile/core/services/activity_service.dart';
+import 'package:travel_advisor_mobile/core/widgets/visible_place_tracker.dart';
 import 'package:travel_advisor_mobile/features/place/presentation/cubit/place_detail_cubit.dart';
 import 'package:travel_advisor_mobile/features/place/presentation/screens/place_detail_screen.dart';
 
@@ -426,16 +428,20 @@ class _ExploreViewState extends State<_ExploreView> {
                   Navigator.push(context, MaterialPageRoute(
                     builder: (_) => SeeAllScreen(
                       title: 'Nhà hàng tiêu biểu',
-                      items: state.allRestaurants.map((item) => GestureDetector(
-                        onTap: () {
-                          Navigator.push(context, MaterialPageRoute(
-                            builder: (_) => BlocProvider(
-                              create: (_) => sl<PlaceDetailCubit>(),
-                              child: PlaceDetailScreen(placeId: item.id),
-                            ),
-                          ));
-                        },
-                        child: RestaurantVerticalCard(item: item),
+                      items: state.allRestaurants.map((item) => VisiblePlaceTracker(
+                        placeId: item.id,
+                        child: GestureDetector(
+                          onTap: () {
+                            sl<ActivityService>().trackClick(item.id);
+                            Navigator.push(context, MaterialPageRoute(
+                              builder: (_) => BlocProvider(
+                                create: (_) => sl<PlaceDetailCubit>(),
+                                child: PlaceDetailScreen(placeId: item.id),
+                              ),
+                            ));
+                          },
+                          child: RestaurantVerticalCard(item: item),
+                        ),
                       )).toList(),
                     ),
                   ));
@@ -453,16 +459,20 @@ class _ExploreViewState extends State<_ExploreView> {
                       final item = state.restaurants[i];
                       return Padding(
                         padding: EdgeInsets.only(left: i == 0 ? 16 : 0, right: 12),
-                        child: GestureDetector(
-                          onTap: () {
-                            Navigator.push(context, MaterialPageRoute(
-                              builder: (_) => BlocProvider(
-                                create: (_) => sl<PlaceDetailCubit>(),
-                                child: PlaceDetailScreen(placeId: item.id),
-                              ),
-                            ));
-                          },
-                          child: city_cards.RestaurantCard(item: item),
+                        child: VisiblePlaceTracker(
+                          placeId: item.id,
+                          child: GestureDetector(
+                            onTap: () {
+                              sl<ActivityService>().trackClick(item.id);
+                              Navigator.push(context, MaterialPageRoute(
+                                builder: (_) => BlocProvider(
+                                  create: (_) => sl<PlaceDetailCubit>(),
+                                  child: PlaceDetailScreen(placeId: item.id),
+                                ),
+                              ));
+                            },
+                            child: city_cards.RestaurantCard(item: item),
+                          ),
                         ),
                       );
                     },
@@ -484,16 +494,20 @@ class _ExploreViewState extends State<_ExploreView> {
                   Navigator.push(context, MaterialPageRoute(
                     builder: (_) => SeeAllScreen(
                       title: 'Khách sạn nổi bật',
-                      items: state.allHotels.map((item) => GestureDetector(
-                        onTap: () {
-                          Navigator.push(context, MaterialPageRoute(
-                            builder: (_) => BlocProvider(
-                              create: (_) => sl<PlaceDetailCubit>(),
-                              child: PlaceDetailScreen(placeId: item.id),
-                            ),
-                          ));
-                        },
-                        child: HotelVerticalCard(item: item),
+                      items: state.allHotels.map((item) => VisiblePlaceTracker(
+                        placeId: item.id,
+                        child: GestureDetector(
+                          onTap: () {
+                            sl<ActivityService>().trackClick(item.id);
+                            Navigator.push(context, MaterialPageRoute(
+                              builder: (_) => BlocProvider(
+                                create: (_) => sl<PlaceDetailCubit>(),
+                                child: PlaceDetailScreen(placeId: item.id),
+                              ),
+                            ));
+                          },
+                          child: HotelVerticalCard(item: item),
+                        ),
                       )).toList(),
                     ),
                   ));
@@ -511,17 +525,19 @@ class _ExploreViewState extends State<_ExploreView> {
                       final item = state.hotels[i];
                       return Padding(
                         padding: EdgeInsets.only(left: i == 0 ? 16 : 0, right: 12),
-                        child: GestureDetector(
-                          onTap: () {
-                            Navigator.push(context, MaterialPageRoute(
-                              builder: (_) => BlocProvider(
-                                create: (_) => sl<PlaceDetailCubit>(),
-                                child: PlaceDetailScreen(placeId: item.id),
-                              ),
-                            ));
-                          },
-                          child: city_cards.HotelCard(
-                            item: item,
+                        child: VisiblePlaceTracker(
+                          placeId: item.id,
+                          child: GestureDetector(
+                            onTap: () {
+                              sl<ActivityService>().trackClick(item.id);
+                              Navigator.push(context, MaterialPageRoute(
+                                builder: (_) => BlocProvider(
+                                  create: (_) => sl<PlaceDetailCubit>(),
+                                  child: PlaceDetailScreen(placeId: item.id),
+                                ),
+                              ));
+                            },
+                            child: city_cards.HotelCard(item: item),
                           ),
                         ),
                       );

@@ -1,5 +1,6 @@
 import 'package:get_it/get_it.dart';
 
+import 'package:travel_advisor_mobile/core/services/activity_service.dart';
 import 'package:travel_advisor_mobile/features/survey/presentation/cubit/survey_cubit.dart';
 import 'package:travel_advisor_mobile/features/trip_planner/presentation/cubit/trip_planner_cubit.dart';
 
@@ -71,6 +72,9 @@ final sl = GetIt.instance;
 Future<void> initDependencies() async {
   // ── Network ────────────────────────────────────────────────────────────────
   sl.registerLazySingleton<DioClient>(() => DioClient());
+
+  // ── Activity Tracking ──────────────────────────────────────────────────────
+  sl.registerLazySingleton<ActivityService>(() => ActivityService(sl()));
 
   // ── Auth ───────────────────────────────────────────────────────────────────
   sl.registerLazySingleton<AuthDataSource>(() => RemoteAuthDataSource(sl()));
@@ -188,7 +192,7 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton(() => GetRecentSearches(sl()));
   sl.registerLazySingleton(() => SearchLocations(sl()));
   sl.registerLazySingleton(() => SaveRecentSearch(sl()));
-  sl.registerFactory(() => SearchCubit(sl(), sl(), sl()));
+  sl.registerFactory(() => SearchCubit(sl(), sl(), sl(), sl()));
 
   // ── City Detail ────────────────────────────────────────────────────────────
   sl.registerLazySingleton<CityDetailDataSource>(() => RemoteCityDetailDataSource(sl()));
