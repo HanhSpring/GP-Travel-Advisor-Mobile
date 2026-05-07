@@ -73,12 +73,9 @@ dependencies:
   # register with google
   google_sign_in: ^6.2.1
   supabase_flutter: ^2.4.0
-<<<<<<< HEAD
   flutter_local_notifications: ^21.0.0
   permission_handler: ^12.0.1
-=======
   visibility_detector: ^0.4.0+2
->>>>>>> 08d4dfc (feat: log_active)
 
 dev_dependencies:
   flutter_test:
