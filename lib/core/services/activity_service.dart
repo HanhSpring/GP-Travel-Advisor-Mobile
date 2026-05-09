@@ -56,9 +56,9 @@ class ActivityService {
   Future<void> trackUnsave(String placeId) =>
       _track(actionType: 'unsave', placeId: placeId);
 
-  /// User nhập từ khóa tìm kiếm và có kết quả trả về
-  Future<void> trackSearch() =>
-      _track(actionType: 'search');
+  /// User nhập từ khóa tìm kiếm và click vào kết quả đầu tiên
+  Future<void> trackSearch({String? placeId}) =>
+      _track(actionType: 'search', placeId: placeId);
 
   /// User check-in tại địa điểm thực tế
   Future<void> trackVisited(String placeId) =>

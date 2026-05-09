@@ -16,6 +16,9 @@ class SearchCubit extends Cubit<SearchState> {
   final ActivityService _activityService;
   Timer? _debounce;
 
+  /// Flag: đã log search cho phiên tìm kiếm hiện tại chưa (chỉ log 1 lần mỗi query)
+  bool _searchTracked = false;
+
   SearchCubit(
     this._getRecentSearches,
     this._searchLocations,
@@ -33,8 +36,15 @@ class SearchCubit extends Cubit<SearchState> {
     }
   }
 
-  /// Gọi khi user tap vào 1 kết quả search
+  /// Gọi khi user tap vào 1 kết quả search.
+  /// Nếu là click đầu tiên trong phiên search hiện tại và location.type == 'place',
+  /// log action 'search' kèm place_id.
   Future<void> onLocationSelected(SearchLocation location) async {
+    // Log search với place_id — chỉ lần click đầu tiên mỗi phiên search
+    if (!_searchTracked && location.type == 'place') {
+      _searchTracked = true;
+      _activityService.trackSearch(placeId: location.id);
+    }
     await _saveRecentSearch(location);
   }
 
@@ -42,17 +52,20 @@ class SearchCubit extends Cubit<SearchState> {
     _debounce?.cancel();
 
     if (query.trim().isEmpty) {
+      _searchTracked = false; // reset khi xóa query
       loadRecentSearches();
       return;
     }
+
+    // Reset flag mỗi khi user nhập query mới
+    _searchTracked = false;
 
     _debounce = Timer(const Duration(milliseconds: 300), () async {
       emit(const SearchState.searching());
       try {
         final results = await _searchLocations(query);
         emit(SearchState.searchResults(results));
-        // Log search action khi có kết quả trả về
-        _activityService.trackSearch();
+        // Không log ở đây — log khi user click vào kết quả đầu tiên
       } catch (e) {
         emit(const SearchState.error('Failed to search locations'));
       }

@@ -5,11 +5,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:travel_advisor_mobile/core/constants/app_sizes.dart';
 import 'package:travel_advisor_mobile/core/di/injection_container.dart';
+import 'package:travel_advisor_mobile/core/services/activity_service.dart';
 import 'package:travel_advisor_mobile/core/theme/app_colors.dart';
 import 'package:travel_advisor_mobile/features/city_detail/presentation/screens/city_detail_screen.dart';
 import 'package:travel_advisor_mobile/features/place/presentation/cubit/place_detail_cubit.dart';
 import 'package:travel_advisor_mobile/features/place/presentation/screens/place_detail_screen.dart';
 import 'package:travel_advisor_mobile/features/search/domain/entities/search_location.dart';
+import 'package:travel_advisor_mobile/features/search/presentation/cubit/search_cubit.dart';
 
 class SearchSuggestionWidget extends StatelessWidget {
   final List<SearchLocation> recentSearches;
@@ -78,7 +80,11 @@ class SearchSuggestionWidget extends StatelessWidget {
               final location = recentSearches[index];
               return InkWell(
                 onTap: () {
+                  // Lưu lại recent search
+                  context.read<SearchCubit>().onLocationSelected(location);
+
                   if (location.type == 'place') {
+                    sl<ActivityService>().trackClick(location.id);
                     Navigator.push(
                       context,
                       MaterialPageRoute(

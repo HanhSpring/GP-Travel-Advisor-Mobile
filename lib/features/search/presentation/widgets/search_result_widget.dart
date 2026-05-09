@@ -10,6 +10,7 @@ import 'package:travel_advisor_mobile/features/city_detail/presentation/screens/
 import 'package:travel_advisor_mobile/features/place/presentation/cubit/place_detail_cubit.dart';
 import 'package:travel_advisor_mobile/features/place/presentation/screens/place_detail_screen.dart';
 import 'package:travel_advisor_mobile/features/search/domain/entities/search_location.dart';
+import 'package:travel_advisor_mobile/features/search/presentation/cubit/search_cubit.dart';
 
 class SearchResultWidget extends StatelessWidget {
   final List<SearchLocation> results;
@@ -53,6 +54,9 @@ class SearchResultWidget extends StatelessWidget {
               final location = results[index];
               return InkWell(
                 onTap: () {
+                  // Ghi log search (place_id) — chỉ lần click đầu tiên mỗi phiên search
+                  context.read<SearchCubit>().onLocationSelected(location);
+
                   if (location.type == 'place') {
                     sl<ActivityService>().trackClick(location.id);
                     Navigator.push(
@@ -84,6 +88,7 @@ class SearchResultWidget extends StatelessWidget {
       ],
     );
   }
+
 
   Widget _buildResultItem(String title, String imageUrl) {
     return Padding(
