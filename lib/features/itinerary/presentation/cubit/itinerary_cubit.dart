@@ -711,6 +711,11 @@ class ItineraryCubit extends Cubit<ItineraryState> {
     String newPlaceName, {
     double? newLat,
     double? newLng,
+    String? newImageUrl,
+    double? newRating,
+    int? newReviewCount,
+    String? newAddress,
+    String? newCategory,
   }) async {
     if (state is! ItineraryLoaded) return;
     final currentState = state as ItineraryLoaded;
@@ -730,6 +735,11 @@ class ItineraryCubit extends Cubit<ItineraryState> {
           locationName: newPlaceName,
           latitude: newLat ?? a.latitude,
           longitude: newLng ?? a.longitude,
+          imageUrl: newImageUrl ?? a.imageUrl,
+          rating: newRating ?? a.rating,
+          reviewCount: newReviewCount ?? a.reviewCount,
+          address: newAddress ?? a.address,
+          category: newCategory ?? a.category,
         );
       }).toList();
       return day.copyWith(activities: updatedActivities);

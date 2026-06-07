@@ -547,6 +547,11 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
           place.name,
           newLat: place.latitude,
           newLng: place.longitude,
+          newImageUrl: place.imageUrl,
+          newRating: place.rating,
+          newReviewCount: place.reviewCount,
+          newAddress: place.address,
+          newCategory: place.category,
         );
       },
     );
