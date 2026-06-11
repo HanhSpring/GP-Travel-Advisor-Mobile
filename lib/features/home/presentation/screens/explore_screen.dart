@@ -242,13 +242,20 @@ class _ExploreViewState extends State<_ExploreView> {
         .catchError((_) {});
   }
 
+  ExploreLoaded? get _loadedState {
+    final s = context.read<ExploreCubit>().state;
+    return s is ExploreLoaded ? s : null;
+  }
+
   Future<void> _openSuggestionSeeAll() async {
+    final initial = _loadedState?.suggestions ?? const <TripSuggestion>[];
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => PaginatedSeeAllScreen<TripSuggestion>(
           title: 'Lịch trình gợi ý',
           pageSize: _pageSize,
+          initialItems: initial,
           pageLoader: (page, limit) =>
               context.read<ExploreCubit>().loadSuggestionsPage(page: page, limit: limit),
           itemBuilder: (context, item) => GestureDetector(
@@ -271,12 +278,14 @@ class _ExploreViewState extends State<_ExploreView> {
   }
 
   Future<void> _openDestinationSeeAll() async {
+    final initial = _loadedState?.destinations ?? const <Destination>[];
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => PaginatedSeeAllScreen<Destination>(
           title: 'Điểm đến nổi bật',
           pageSize: _pageSize,
+          initialItems: initial,
           pageLoader: (page, limit) =>
               context.read<ExploreCubit>().loadDestinationsPage(page: page, limit: limit),
           itemBuilder: (context, item) => GestureDetector(
@@ -307,12 +316,14 @@ class _ExploreViewState extends State<_ExploreView> {
   }
 
   Future<void> _openRestaurantSeeAll() async {
+    final initial = _loadedState?.restaurants ?? const <CityRestaurant>[];
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => PaginatedSeeAllScreen<CityRestaurant>(
           title: 'Nhà hàng tiêu biểu',
           pageSize: _pageSize,
+          initialItems: initial,
           pageLoader: (page, limit) =>
               context.read<ExploreCubit>().loadRestaurantsPage(page: page, limit: limit),
           itemBuilder: (context, item) => GestureDetector(
@@ -335,12 +346,14 @@ class _ExploreViewState extends State<_ExploreView> {
   }
 
   Future<void> _openHotelSeeAll() async {
+    final initial = _loadedState?.hotels ?? const <CityHotel>[];
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => PaginatedSeeAllScreen<CityHotel>(
           title: 'Khách sạn nổi bật',
           pageSize: _pageSize,
+          initialItems: initial,
           pageLoader: (page, limit) =>
               context.read<ExploreCubit>().loadHotelsPage(page: page, limit: limit),
           itemBuilder: (context, item) => GestureDetector(

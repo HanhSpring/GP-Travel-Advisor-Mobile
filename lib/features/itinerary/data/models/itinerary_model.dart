@@ -74,6 +74,7 @@ ItineraryStatus _mapStatus(String? status) {
       return ItineraryStatus.completed;
     case 'ongoing':
     case 'upcoming':
+    case 'pending':
       return ItineraryStatus.upcoming;
     case null:
       return ItineraryStatus.draft;
