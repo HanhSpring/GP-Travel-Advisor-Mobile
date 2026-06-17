@@ -1,3 +1,4 @@
+import 'package:travel_advisor_mobile/features/food/data/datasources/food_remote_data_source.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -27,8 +28,6 @@ import 'package:travel_advisor_mobile/features/home/presentation/widgets/home_it
 
 import 'package:travel_advisor_mobile/features/food/presentation/screens/food_menu_screen.dart';
 import 'package:travel_advisor_mobile/features/food/presentation/widgets/pre_order_popup.dart';
-import 'package:travel_advisor_mobile/features/food/data/datasources/food_remote_data_source.dart';
-import 'package:travel_advisor_mobile/features/review/domain/repositories/review_repository.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/widgets/itinerary_rating_popup.dart';
 import 'package:travel_advisor_mobile/features/city_detail/presentation/screens/city_detail_screen.dart';
 
@@ -111,9 +110,7 @@ class _ExploreViewState extends State<_ExploreView> {
 
     _isLoadingOrderPlaces = true;
     try {
-      final places = await sl<FoodRemoteDataSource>().getItineraryOrderPlaces(
-        itineraryId: exploreState.currentItinerary!.id,
-      );
+      final places = await context.read<ExploreCubit>().getItineraryOrderPlaces(exploreState.currentItinerary!.id);
 
       _orderPlaces = places;
       _currentOrderPlaceIndex = 0;
@@ -143,7 +140,7 @@ class _ExploreViewState extends State<_ExploreView> {
 
     OrderPopupData popupData;
     try {
-      popupData = await sl<FoodRemoteDataSource>().getOrderPopup(
+      popupData = await context.read<ExploreCubit>().getOrderPopup(
         currentPlace.placeId,
       );
     } catch (_) {
@@ -223,8 +220,7 @@ class _ExploreViewState extends State<_ExploreView> {
 
     final itinerary = exploreState.currentItinerary!;
 
-    sl<ReviewRepository>()
-        .getPopupData(itinerary.id)
+    context.read<ExploreCubit>().getPopupData(itinerary.id)
         .then((popupData) {
           if (!mounted || !popupData.showPopup) {
             return;

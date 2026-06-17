@@ -229,7 +229,7 @@ class _ReplacePlaceSheetState extends State<ReplacePlaceSheet> {
       physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.s20),
       itemCount: places.length,
-      separatorBuilder: (_, __) => const SizedBox(height: AppSizes.s12),
+      separatorBuilder: (_, _) => const SizedBox(height: AppSizes.s12),
       itemBuilder: (_, i) => _ListCard(
         place: places[i],
         onSelect: () => _onSelect(places[i]),

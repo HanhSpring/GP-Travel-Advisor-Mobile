@@ -74,10 +74,10 @@ class _SurveyScreenState extends State<SurveyScreen> {
       child: BlocConsumer<SurveyCubit, SurveyState>(
         listener: (context, state) {
           state.maybeWhen(
-            success: (_, __) {
+            success: (_, _) {
               Navigator.of(context).pushReplacementNamed('/home');
             },
-            error: (_, __, message) {
+            error: (_, _, message) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text(message)),
               );
@@ -180,7 +180,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
                           height: 54,
                           child: ElevatedButton(
                             onPressed: state.maybeWhen(
-                              loading: (_, __) => null,
+                              loading: (_, _) => null,
                               orElse: () => () => _onNext(context, currentStep),
                             ),
                             style: ElevatedButton.styleFrom(

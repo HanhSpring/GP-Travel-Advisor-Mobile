@@ -51,9 +51,7 @@ class RemoteReviewDataSource implements ReviewDataSource {
 
   RemoteReviewDataSource(this._client);
 
-  String _requireTouristId() {
-    throw UnimplementedError('Use AuthUtils.requireCurrentUserId() instead');
-  }
+  
 
   int _parseDayLabel(String label) {
     final normalized = label.toUpperCase().trim();

@@ -1,3 +1,7 @@
+import 'package:travel_advisor_mobile/features/food/domain/usecases/food_usecases.dart';
+import 'package:travel_advisor_mobile/features/food/data/repositories/food_repository_impl.dart';
+import 'package:travel_advisor_mobile/features/food/domain/repositories/food_repository.dart';
+import 'package:travel_advisor_mobile/features/review/domain/usecases/get_popup_data_usecase.dart';
 import 'package:get_it/get_it.dart';
 
 import 'package:travel_advisor_mobile/features/city/data/datasources/city_datasource.dart';
@@ -130,6 +134,9 @@ Future<void> initDependencies() async {
       getFeaturedDestinations: sl(),
       getRestaurantsByCategories: sl(),
       getHotelsByCategories: sl(),
+      getItineraryOrderPlaces: sl(),
+      getOrderPopup: sl(),
+      getPopupData: sl(),
     ),
   );
   
@@ -218,6 +225,7 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<ReviewDataSource>(() => RemoteReviewDataSource(sl()));
   sl.registerLazySingleton<ReviewRepository>(() => ReviewRepositoryImpl(sl()));
   sl.registerLazySingleton(() => GetItineraryForReviewUseCase(sl()));
+  sl.registerLazySingleton(() => GetPopupDataUseCase(sl()));
   sl.registerFactory(
     () => ReviewCubit(getItineraryForReview: sl(), reviewRepository: sl()),
   );
@@ -252,6 +260,9 @@ Future<void> initDependencies() async {
 
   // ── Food / Orders ─────────────────────────────────────────────────────────
   sl.registerLazySingleton<FoodRemoteDataSource>(() => FoodRemoteDataSource(sl()));
+  sl.registerLazySingleton<FoodRepository>(() => FoodRepositoryImpl(remoteDataSource: sl()));
+  sl.registerLazySingleton(() => GetItineraryOrderPlacesUseCase(sl()));
+  sl.registerLazySingleton(() => GetOrderPopupUseCase(sl()));
   sl.registerFactory(() => FoodCubit(remote: sl()));
 
   // ── Place ──────────────────────────────────────────────────────────────────

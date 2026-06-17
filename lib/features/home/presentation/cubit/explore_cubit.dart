@@ -1,3 +1,7 @@
+import 'package:travel_advisor_mobile/features/food/domain/usecases/food_usecases.dart';
+import 'package:travel_advisor_mobile/features/review/domain/usecases/get_popup_data_usecase.dart';
+import 'package:travel_advisor_mobile/features/food/data/datasources/food_remote_data_source.dart';
+import 'package:travel_advisor_mobile/features/review/domain/entities/rating_popup_data.dart';
 import 'dart:async';
 
 import 'explore_state.dart';
@@ -16,6 +20,9 @@ class ExploreCubit extends Cubit<ExploreState> {
   final GetFeaturedDestinationsUseCase _getFeaturedDestinations;
   final GetRestaurantsByCategoriesUseCase _getRestaurantsByCategories;
   final GetHotelsByCategoriesUseCase _getHotelsByCategories;
+  final GetItineraryOrderPlacesUseCase _getItineraryOrderPlaces;
+  final GetOrderPopupUseCase _getOrderPopup;
+  final GetPopupDataUseCase _getPopupData;
 
   List<TripSuggestion>? _cachedSuggestions;
   List<Destination>? _cachedDestinations;
@@ -28,11 +35,17 @@ class ExploreCubit extends Cubit<ExploreState> {
     required GetFeaturedDestinationsUseCase getFeaturedDestinations,
     required GetRestaurantsByCategoriesUseCase getRestaurantsByCategories,
     required GetHotelsByCategoriesUseCase getHotelsByCategories,
+    required GetItineraryOrderPlacesUseCase getItineraryOrderPlaces,
+    required GetOrderPopupUseCase getOrderPopup,
+    required GetPopupDataUseCase getPopupData,
   }) : _getExploreHome = getExploreHome,
        _getPublicSuggestions = getPublicSuggestions,
        _getFeaturedDestinations = getFeaturedDestinations,
        _getRestaurantsByCategories = getRestaurantsByCategories,
        _getHotelsByCategories = getHotelsByCategories,
+       _getItineraryOrderPlaces = getItineraryOrderPlaces,
+       _getOrderPopup = getOrderPopup,
+       _getPopupData = getPopupData,
        super(const ExploreInitial());
 
   /// 🔧 CHẾ ĐỘ DEMO: Set true để bỏ qua lỗi Backend và dùng dữ liệu mẫu
@@ -324,5 +337,17 @@ class ExploreCubit extends Cubit<ExploreState> {
         emit(ExploreError(e.toString()));
       }
     }
+  }
+
+  Future<List<OrderEligiblePlace>> getItineraryOrderPlaces(String itineraryId) {
+    return _getItineraryOrderPlaces(itineraryId);
+  }
+
+  Future<OrderPopupData> getOrderPopup(String placeId) {
+    return _getOrderPopup(placeId);
+  }
+
+  Future<RatingPopupData> getPopupData(String itineraryId) {
+    return _getPopupData(itineraryId);
   }
 }

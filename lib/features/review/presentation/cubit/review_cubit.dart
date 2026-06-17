@@ -58,7 +58,7 @@ class ReviewCubit extends Cubit<ReviewState> {
       final locId = entry.value;
       final index = entry.key;
       final storedRating = DemoReviewStore.getLocationRating(locId);
-      final storedComment = DemoReviewStore.userComments[locId];
+      
       
       return LocationReviewEntity(
         id: locId,
