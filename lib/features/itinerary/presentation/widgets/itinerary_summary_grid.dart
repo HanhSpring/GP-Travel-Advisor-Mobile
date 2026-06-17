@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:travel_advisor_mobile/features/itinerary/domain/entities/itinerary_summary.dart';
 
-/// Lưới thống kê 2×2 — Tổng số · Đã đi · Sắp đi · Đang tạo
 ///
-/// Mỗi ô hiển thị label + số lượng với màu nhấn riêng.
 class ItinerarySummaryGrid extends StatelessWidget {
   final ItinerarySummary summary;
   const ItinerarySummaryGrid({super.key, required this.summary});

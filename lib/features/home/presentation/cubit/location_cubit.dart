@@ -6,8 +6,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:travel_advisor_mobile/core/services/location_service.dart';
 import 'package:travel_advisor_mobile/features/home/presentation/cubit/location_state.dart';
 
-/// Quản lý việc lấy vị trí hiện tại của người dùng cho header trang chủ.
-/// Sau lần lấy đầu tiên sẽ lắng nghe stream để **tự cập nhật** khi di chuyển.
 class LocationCubit extends Cubit<LocationState> {
   final LocationService _locationService;
 
@@ -15,12 +13,9 @@ class LocationCubit extends Cubit<LocationState> {
 
   StreamSubscription<Position>? _positionSub;
 
-  /// Toạ độ đã reverse-geocode gần nhất — để chỉ geocode lại khi đi đủ xa,
-  /// tránh spam Nominatim (rate limit ~1 req/s).
   double? _lastLat;
   double? _lastLng;
 
-  /// Khoảng cách tối thiểu (m) để geocode lại tên Phường/Xã.
   static const double _refreshDistanceM = 150;
 
   Future<void> fetchLocation() async {
@@ -38,7 +33,6 @@ class LocationCubit extends Cubit<LocationState> {
     }
   }
 
-  /// Lắng nghe thay đổi vị trí và cập nhật tên khu vực khi di chuyển đủ xa.
   void _listenPositionChanges() {
     _positionSub?.cancel();
     _positionSub = _locationService.positionStream(distanceFilter: 100).listen(
@@ -49,7 +43,6 @@ class LocationCubit extends Cubit<LocationState> {
 
   Future<void> _onPositionChanged(Position pos) async {
     if (isClosed) return;
-    // Chỉ reverse-geocode lại khi đã rời xa điểm cũ -> đỡ gọi mạng liên tục.
     if (_lastLat != null && _lastLng != null) {
       final moved = Geolocator.distanceBetween(
         _lastLat!,

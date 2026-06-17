@@ -263,7 +263,6 @@ class _OverviewTabContent extends StatelessWidget {
       children: [
         const SizedBox(height: 20),
 
-        // ── LỊCH TRÌNH CỘNG ĐỒNG ──────────────────────────────────
         SectionHeader(
           title: 'Lịch trình cộng đồng',
           onSeeAll: () => onTabSelected(1),
@@ -315,7 +314,6 @@ class _OverviewTabContent extends StatelessWidget {
         PageDots(count: overviewItineraries.length, current: itineraryIndex),
         const SizedBox(height: 16),
 
-        // ── HOẠT ĐỘNG THAM QUAN & GIẢI TRÍ ────────────────────────
         SectionHeader(
           title: 'Hoạt động tham quan & giải trí',
           onSeeAll: () => onTabSelected(2),
@@ -361,7 +359,6 @@ class _OverviewTabContent extends StatelessWidget {
         PageDots(count: overviewActivities.length, current: activityIndex),
         const SizedBox(height: 16),
 
-        // ── NHÀ HÀNG TIÊU BIỂU ───────────────────────────────────
         SectionHeader(
           title: 'Nhà hàng tiêu biểu',
           onSeeAll: () => onTabSelected(3),
@@ -407,7 +404,6 @@ class _OverviewTabContent extends StatelessWidget {
         PageDots(count: overviewRestaurants.length, current: restaurantIndex),
         const SizedBox(height: 16),
 
-        // ── KHÁCH SẠN & CHỖ Ở ────────────────────────────────────
         SectionHeader(
           title: 'Khách sạn & Chỗ ở',
           onSeeAll: () => onTabSelected(4),

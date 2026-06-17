@@ -87,7 +87,6 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
       } catch (_) {}
     }
 
-    // Lấy ngày tham quan để validate opening hours đúng thứ trong tuần
     DateTime? visitDate;
     if ((context.read<ItineraryCubit>().state as ItineraryLoaded?)
             ?.selectedItinerary !=
@@ -131,7 +130,6 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
   void _scrollToActivity(String activityId) {
     setState(() => _highlightedActivityId = activityId);
 
-    // Tìm activity để lấy tọa độ và zoom nhẹ
     final itin = (context.read<ItineraryCubit>().state as ItineraryLoaded)
         .selectedItinerary;
     final activity = itin?.days
@@ -295,7 +293,6 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
         );
       }
     } else {
-      // Lưu snapshot trước khi vào edit mode để có thể hoàn tác
       final currentItinerary =
           (context.read<ItineraryCubit>().state as ItineraryLoaded?)
               ?.selectedItinerary;
@@ -355,7 +352,6 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
     }
   }
 
-  /// Lấy DateTime của ngày [dayNumber] từ itinerary hiện tại.
   DateTime? _visitDateForDay(int dayNumber) {
     try {
       final state = context.read<ItineraryCubit>().state;
@@ -368,7 +364,6 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
     }
   }
 
-  /// Parse open_hour_compressed JSON, trả về (openTime, closeTime) dạng "HH:mm" cho [date].
   (String, String)? _parseOpenSlot(String jsonStr, DateTime date) {
     try {
       const dayNames = [
@@ -434,7 +429,6 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
           '${pickedTime.hour.toString().padLeft(2, '0')}:${pickedTime.minute.toString().padLeft(2, '0')}';
       final currentTime = isStart ? activity.startTime : activity.endTime;
 
-      // ── Validation: kiểm tra tính hợp lệ trước khi cho phép thay đổi ──────
       final newMin = pickedTime.hour * 60 + pickedTime.minute;
 
       int _toMinutes(String t) {
@@ -477,14 +471,13 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
       }
 
       if (isStart) {
-        // Đang chỉnh giờ ĐẾN → phải trước giờ RỜI hiện tại
         final endMin = _toMinutes(activity.endTime);
         if (newMin >= endMin) {
           await _showTimeError(
             'Giờ đến ($newTime) phải trước giờ rời (${activity.endTime}) của cùng địa điểm.\n\n'
             'Vui lòng chọn lại thời gian.',
           );
-          return; // Không áp dụng thay đổi
+          return;
         }
         if (endMin - newMin > 4 * 60) {
           await _showTimeError(
@@ -494,14 +487,13 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
           return;
         }
       } else {
-        // Đang chỉnh giờ RỜI → phải sau giờ ĐẾN hiện tại
         final startMin = _toMinutes(activity.startTime);
         if (newMin <= startMin) {
           await _showTimeError(
             'Giờ rời ($newTime) phải sau giờ đến (${activity.startTime}) của cùng địa điểm.\n\n'
             'Vui lòng chọn lại thời gian.',
           );
-          return; // Không áp dụng thay đổi
+          return;
         }
         if (newMin - startMin > 4 * 60) {
           await _showTimeError(
@@ -511,7 +503,6 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
           return;
         }
       }
-      // ── Validate giờ mở/đóng cửa của địa điểm ─────────────────────────────────
       if (activity.openHourCompressed != null) {
         final visitDate = _visitDateForDay(_selectedDay);
         if (visitDate != null) {
@@ -542,7 +533,6 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
           }
         }
       }
-      // ── Kết thúc validation ──────────────────────────────────────────────────
 
       if (newTime != currentTime) {
         final oldMin = int.parse(parts[0]) * 60 + int.parse(parts[1]);
@@ -1089,7 +1079,6 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
         },
       ),
     ).then((_) {
-      // Đóng popup → dismiss để không hiện lại ngay
       if (ctx.mounted) {
         ctx.read<TrackingCubit>().dismissNearbyRestaurant();
       }

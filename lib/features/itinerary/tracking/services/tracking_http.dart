@@ -1,9 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-/// Dựng một Dio "đứng một mình" cho các isolate nền (geofence callback /
-/// AlarmManager) — nơi không có DI của app và `flutter_dotenv` chưa load.
-/// Token đọc trực tiếp từ secure storage (platform keystore, dùng được xuyên isolate).
 Future<Dio> buildTrackingDio(String baseUrl) async {
   final dio = Dio(BaseOptions(
     baseUrl: baseUrl,

@@ -576,7 +576,6 @@ class _$LoadedImpl implements _Loaded {
   final CityOverview overview;
   @override
   final int activeTab;
-  // === Filter state cho từng tab ===
   @override
   @JsonKey()
   final ActivityFilter activityFilter;
@@ -586,9 +585,7 @@ class _$LoadedImpl implements _Loaded {
   @override
   @JsonKey()
   final HotelFilter hotelFilter;
-  // === Danh sách đã được lọc/sắp xếp (UI đọc từ đây) ===
   final List<CityActivity> _filteredActivities;
-  // === Danh sách đã được lọc/sắp xếp (UI đọc từ đây) ===
   @override
   @JsonKey()
   List<CityActivity> get filteredActivities {
@@ -838,11 +835,11 @@ abstract class _Loaded implements CityDetailState {
   }) = _$LoadedImpl;
 
   CityOverview get overview;
-  int get activeTab; // === Filter state cho từng tab ===
+  int get activeTab;
   ActivityFilter get activityFilter;
   RestaurantFilter get restaurantFilter;
   HotelFilter
-  get hotelFilter; // === Danh sách đã được lọc/sắp xếp (UI đọc từ đây) ===
+  get hotelFilter;
   List<CityActivity> get filteredActivities;
   List<CityRestaurant> get filteredRestaurants;
   List<CityHotel> get filteredHotels;

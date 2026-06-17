@@ -15,7 +15,6 @@ class SearchLocationModel {
     this.type = 'city',
   });
 
-  /// Lấy id, name, type và ảnh từ API. Backend trả `image` (fallback `image_url`).
   factory SearchLocationModel.fromJson(Map<String, dynamic> json) {
     final image = (json['image'] ?? json['image_url'] ?? '').toString();
     return SearchLocationModel(
@@ -26,9 +25,7 @@ class SearchLocationModel {
     );
   }
 
-  // Thêm vào class SearchLocationModel, bên dưới fromJson hiện tại
 
-  /// Parse từ local storage (có imageUrl)
   factory SearchLocationModel.fromLocalJson(Map<String, dynamic> json) {
     return SearchLocationModel(
       id: json['id']?.toString() ?? '',

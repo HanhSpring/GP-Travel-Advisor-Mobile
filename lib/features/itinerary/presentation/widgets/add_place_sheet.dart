@@ -14,9 +14,7 @@ class AddPlaceSheet extends StatefulWidget {
   final double? referenceLat;
   final double? referenceLng;
   final List<String>? existingIds;
-  /// Ngày tham quan — dùng để validate opening hours đúng ngày trong tuần.
   final DateTime? visitDate;
-  /// Giờ dự kiến tham quan (HH:mm) — dùng để validate opening hours.
   final String? proposedVisitTime;
 
   const AddPlaceSheet({
@@ -140,7 +138,6 @@ class _AddPlaceSheetState extends State<AddPlaceSheet> {
   }
 
   void _onSelect(NearbyPlaceModel place) async {
-    // Validate opening hours dựa theo ngày tham quan và giờ dự kiến
     if (place.openHourCompressed != null && widget.proposedVisitTime != null) {
       final slot = _openSlotForDay(
           place.openHourCompressed!, widget.visitDate ?? DateTime.now());
@@ -204,7 +201,6 @@ class _AddPlaceSheetState extends State<AddPlaceSheet> {
     );
   }
 
-  /// Trả về (openTime, closeTime) dạng "HH:mm" cho ngày [date], hoặc null nếu không tìm thấy.
   (String, String)? _openSlotForDay(String jsonStr, DateTime date) {
     try {
       const dayNames = [

@@ -15,7 +15,6 @@ class UserModel {
   @JsonKey(name: 'email')
   final String email;
 
-  /// Backend trả về `fullName`, không phải `display_name`
   @JsonKey(name: 'fullName')
   final String? fullName;
 

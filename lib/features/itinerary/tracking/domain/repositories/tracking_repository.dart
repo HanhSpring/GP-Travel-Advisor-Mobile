@@ -1,6 +1,5 @@
 import '../../data/models/tracking_models.dart';
 
-/// Hợp đồng cho tính năng theo dõi lịch trình (geofence + dwell).
 abstract class TrackingRepository {
   Future<TrackingStartResult> start({
     required String itineraryId,

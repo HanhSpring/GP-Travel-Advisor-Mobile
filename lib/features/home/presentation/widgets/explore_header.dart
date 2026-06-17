@@ -27,7 +27,6 @@ class ExploreHeader extends StatelessWidget {
         children: [
           Row(
             children: [
-              // Nút filter dạng tròn màu trắng
               Container(
                 width: AppSizes.iconButtonSize,
                 height: AppSizes.iconButtonSize,
@@ -43,7 +42,6 @@ class ExploreHeader extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSizes.s12),
-              // Vị trí
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,7 +138,6 @@ class ExploreHeader extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSizes.s16),
-          // Thanh tìm kiếm
           GestureDetector(
             onTap: () {
               Navigator.push(

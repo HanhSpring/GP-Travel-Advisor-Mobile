@@ -64,7 +64,6 @@ class RemoteAuthDataSource implements AuthDataSource {
       final accessToken = data['accessToken'] as String;
       final refreshToken = data['refreshToken'] as String;
 
-      // Lưu tokens vào SecureStorage
       await _storage.write(key: 'access_token', value: accessToken);
       await _storage.write(key: 'refresh_token', value: refreshToken);
 
@@ -84,8 +83,6 @@ class RemoteAuthDataSource implements AuthDataSource {
   @override
   Future<LoginResult> loginWithGoogle() async {
     try {
-      // 1. Mở popup Đăng nhập Google (Native)
-      // Lưu ý: Cần truyền serverClientId (Web Client ID) lấy từ Google Cloud Console
       final GoogleSignIn googleSignIn = GoogleSignIn(
         serverClientId:
             '210635344590-5pfnhbdh1s392h1jduvq6lkkv20j0rdn.apps.googleusercontent.com',
@@ -105,7 +102,6 @@ class RemoteAuthDataSource implements AuthDataSource {
         throw 'Không lấy được Token từ Google';
       }
 
-      // 2. Gửi Token cho Supabase để xác thực
       final AuthResponse supabaseResponse = await Supabase.instance.client.auth
           .signInWithIdToken(
             provider: OAuthProvider.google,
@@ -118,16 +114,12 @@ class RemoteAuthDataSource implements AuthDataSource {
         throw Exception('Lỗi xác thực với Supabase');
       }
 
-      // 3. Gọi Backend NestJS để đồng bộ DB
-      // Truyền trực tiếp token ban đầu vào headers
       final syncRes = await _client.dio.post(
         '/auth/sync-oauth',
         data: {'requestedRole': 'TOURIST'},
         options: Options(headers: {'Authorization': 'Bearer $supabaseToken'}),
       );
 
-      // 4. Refresh Session để lấy token mới nhất với đầy đủ Metadata
-      // (Backend có thể đã cập nhật user_metadata sau sync-oauth)
       final refreshed = await Supabase.instance.client.auth.refreshSession();
       final freshToken =
           refreshed.session?.accessToken ?? supabaseToken;
@@ -137,11 +129,9 @@ class RemoteAuthDataSource implements AuthDataSource {
           '';
       final freshUser = refreshed.user ?? supabaseResponse.user;
 
-      // Lưu token mới nhất vào SecureStorage
       await _storage.write(key: 'access_token', value: freshToken);
       await _storage.write(key: 'refresh_token', value: freshRefreshToken);
 
-      // 5. Trả về LoginResult với token và metadata mới nhất
       final user = UserModel.fromJson({
         'id': freshUser?.id,
         'email': freshUser?.email,

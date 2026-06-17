@@ -90,7 +90,6 @@ Future<void> initDependencies() async {
   // ── Network ────────────────────────────────────────────────────────────────
   sl.registerLazySingleton<DioClient>(() => DioClient());
 
-  // ── Location (vị trí hiện tại + reverse geocoding) ───────────────────────────
   sl.registerLazySingleton<LocationService>(() => LocationService());
   sl.registerFactory(() => LocationCubit(sl()));
 
@@ -98,7 +97,6 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<AuthDataSource>(() => RemoteAuthDataSource(sl()));
   sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(sl()));
 
-  // Đăng ký các UseCase
   sl.registerLazySingleton(() => LoginUseCase(sl()));
   sl.registerLazySingleton(() => RegisterTouristUseCase(sl()));
   sl.registerLazySingleton(() => ForgotPasswordUseCase(sl()));
@@ -106,7 +104,6 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton(() => ChangePasswordUseCase(sl()));
   sl.registerLazySingleton(() => LoginWithGoogleUseCase(sl()));
 
-  // Đăng ký Cubit
   sl.registerFactory(
     () => AuthCubit(
       loginUseCase: sl(),
@@ -229,7 +226,6 @@ Future<void> initDependencies() async {
   sl.registerFactory(
     () => ReviewCubit(getItineraryForReview: sl(), reviewRepository: sl()),
   );
-// Trong hàm initDependencies(), thêm SharedPreferences ở phần đầu (trước tất cả features):
   final sharedPreferences = await SharedPreferences.getInstance();
   sl.registerLazySingleton<SharedPreferences>(() => sharedPreferences);
 

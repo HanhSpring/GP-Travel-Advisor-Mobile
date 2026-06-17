@@ -131,7 +131,6 @@ class _ItineraryRatingPopupState extends State<ItineraryRatingPopup> {
               ),
               const SizedBox(height: 24),
               
-              // "Đánh giá chi tiết" Button
               SizedBox(
                 width: double.infinity,
                 height: 52,
@@ -158,7 +157,6 @@ class _ItineraryRatingPopupState extends State<ItineraryRatingPopup> {
               ),
               const SizedBox(height: 12),
               
-              // "Gửi đánh giá" Button
               SizedBox(
                 width: double.infinity,
                 height: 52,
@@ -226,7 +224,6 @@ class _ItineraryRatingPopupState extends State<ItineraryRatingPopup> {
               ),
               const SizedBox(height: 12),
               
-              // "Để sau" link
               TextButton(
                 onPressed: () async {
                   try {

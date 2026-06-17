@@ -16,7 +16,6 @@ class AuthLoading extends AuthState {
   const AuthLoading();
 }
 
-/// Login thành công — chứa user info và tokens
 class AuthSuccess extends AuthState {
   final LoginResult result;
   const AuthSuccess(this.result);
@@ -24,12 +23,10 @@ class AuthSuccess extends AuthState {
   List<Object?> get props => [result];
 }
 
-/// Đăng ký thành công (cần xác thực email)
 class RegisterSuccess extends AuthState {
   const RegisterSuccess();
 }
 
-/// Gửi email quên mật khẩu thành công
 class ForgotPasswordSuccess extends AuthState {
   final String message;
   const ForgotPasswordSuccess(this.message);
@@ -37,12 +34,10 @@ class ForgotPasswordSuccess extends AuthState {
   List<Object?> get props => [message];
 }
 
-/// Đặt lại mật khẩu thành công
 class UpdatePasswordSuccess extends AuthState {
   const UpdatePasswordSuccess();
 }
 
-/// Đổi mật khẩu thành công
 class ChangePasswordSuccess extends AuthState {
   final String message;
   const ChangePasswordSuccess(this.message);

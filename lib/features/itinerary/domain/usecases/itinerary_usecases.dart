@@ -4,7 +4,6 @@ import 'package:travel_advisor_mobile/features/itinerary/domain/entities/itinera
 import 'package:travel_advisor_mobile/features/itinerary/domain/entities/itinerary_summary.dart';
 import 'package:travel_advisor_mobile/features/itinerary/domain/repositories/itinerary_repository.dart';
 
-/// UseCase: Lấy danh sách lịch trình (có thể lọc theo status).
 class GetItinerariesUseCase {
   final ItineraryRepository _repository;
   GetItinerariesUseCase(this._repository);
@@ -14,7 +13,6 @@ class GetItinerariesUseCase {
   }
 }
 
-/// UseCase: Lấy thống kê tổng quan.
 class GetItinerarySummaryUseCase {
   final ItineraryRepository _repository;
   GetItinerarySummaryUseCase(this._repository);
@@ -24,7 +22,6 @@ class GetItinerarySummaryUseCase {
   }
 }
 
-/// UseCase: Xóa một lịch trình.
 class DeleteItineraryUseCase {
   final ItineraryRepository _repository;
   DeleteItineraryUseCase(this._repository);
@@ -34,7 +31,6 @@ class DeleteItineraryUseCase {
   }
 }
 
-/// UseCase: Lấy chi tiết lịch trình.
 class GetItineraryDetailUseCase {
   final ItineraryRepository _repository;
   GetItineraryDetailUseCase(this._repository);
@@ -44,7 +40,6 @@ class GetItineraryDetailUseCase {
   }
 }
 
-/// UseCase: Cập nhật hoạt động/mốc thời gian của lịch trình.
 class UpdateItineraryActivitiesUseCase {
   final ItineraryRepository _repository;
   UpdateItineraryActivitiesUseCase(this._repository);
@@ -54,7 +49,6 @@ class UpdateItineraryActivitiesUseCase {
   }
 }
 
-/// UseCase: Bật/tắt chế độ công khai.
 class ToggleVisibilityUseCase {
   final ItineraryRepository _repository;
   ToggleVisibilityUseCase(this._repository);
@@ -64,7 +58,6 @@ class ToggleVisibilityUseCase {
   }
 }
 
-/// UseCase: Cập nhật tiêu đề/tên lịch trình.
 class UpdateItineraryTitleUseCase {
   final ItineraryRepository _repository;
   UpdateItineraryTitleUseCase(this._repository);
@@ -74,7 +67,6 @@ class UpdateItineraryTitleUseCase {
   }
 }
 
-/// UseCase: Cập nhật thông tin một hoạt động.
 class UpdateActivityUseCase {
   final ItineraryRepository _repository;
   UpdateActivityUseCase(this._repository);
@@ -100,7 +92,6 @@ class UpdateActivityUseCase {
   }
 }
 
-/// UseCase: Xóa một hoạt động khỏi lịch trình.
 class DeleteActivityUseCase {
   final ItineraryRepository _repository;
   DeleteActivityUseCase(this._repository);

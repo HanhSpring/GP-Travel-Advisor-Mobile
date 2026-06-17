@@ -25,12 +25,10 @@ abstract class ItineraryRepository {
   });
   Future<void> deleteActivity(String itineraryId, String activityId);
 
-  /// Cập nhật danh sách hoạt động/thời gian của lịch trình theo [id].
   Future<void> updateItineraryActivities(
     String id,
     List<ItineraryDayEntity> days,
   );
 
-  /// Tạo lịch trình mới qua AI pipeline, trả về itineraryId.
   Future<String> createItinerary(CreateItineraryParams params);
 }

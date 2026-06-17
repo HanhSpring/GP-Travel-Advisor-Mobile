@@ -3,11 +3,7 @@ import 'package:native_geofence/native_geofence.dart';
 import '../data/models/tracking_models.dart';
 import 'geofence_callback.dart';
 
-/// Đăng ký / gỡ geofence với Google Play Services qua native_geofence.
 ///
-/// Mỗi điểm dừng = 1 geofence hình tròn (tâm + bán kính). Region `id` đặt bằng
-/// `itineraryDetailId` để callback nền biết điểm nào kích hoạt.
-/// `loiteringDelay` = ngưỡng dwell → sự kiện DWELL bắn sau khi ở lại đủ lâu.
 class GeofenceTrackingService {
   bool _initialized = false;
 
@@ -17,7 +13,6 @@ class GeofenceTrackingService {
     _initialized = true;
   }
 
-  /// Đăng ký toàn bộ geofence của một ngày. Trả về số geofence đăng ký thành công.
   Future<int> registerAll(
     List<TrackingGeofence> geofences, {
     Duration? expiration,
@@ -31,7 +26,6 @@ class GeofenceTrackingService {
           id: g.itineraryDetailId,
           location: Location(latitude: g.latitude, longitude: g.longitude),
           radiusMeters: g.radiusM.toDouble(),
-          // ENTER để ghi mốc, DWELL để tính "Đã ghé", EXIT để đóng mốc.
           triggers: const {
             GeofenceEvent.enter,
             GeofenceEvent.dwell,
@@ -40,8 +34,6 @@ class GeofenceTrackingService {
           iosSettings: const IosGeofenceSettings(initialTrigger: true),
           androidSettings: AndroidGeofenceSettings(
             initialTriggers: const {GeofenceEvent.enter},
-            // Cap 120s để Android DWELL fire trong vòng 2 phút ngay cả khi
-            // backend trả về threshold cao (legacy data). Min 30s cho test nhanh.
             loiteringDelay: Duration(seconds: g.dwellThresholdSeconds.clamp(30, 120)),
             notificationResponsiveness: const Duration(seconds: 10),
             expiration: expiration,
@@ -51,13 +43,11 @@ class GeofenceTrackingService {
             .createGeofence(geofence, geofenceTriggered);
         ok++;
       } catch (_) {
-        // bỏ qua geofence lỗi, tiếp tục các điểm còn lại
       }
     }
     return ok;
   }
 
-  /// Gỡ một số geofence theo itineraryDetailId (dùng khi kết thúc ngày).
   Future<void> removeByIds(List<String> ids) async {
     await _ensureInit();
     for (final id in ids) {
@@ -68,7 +58,6 @@ class GeofenceTrackingService {
     }
   }
 
-  /// Gỡ tất cả geofence đang theo dõi.
   Future<void> removeAll() async {
     await _ensureInit();
     try {

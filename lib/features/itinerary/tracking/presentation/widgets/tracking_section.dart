@@ -9,10 +9,7 @@ import '../cubit/tracking_cubit.dart';
 import '../cubit/tracking_state.dart';
 import 'tracking_permissions.dart';
 
-/// Khối UI "Theo dõi lịch trình" nhúng vào màn chi tiết.
 ///
-/// Khi tracking KHÔNG active: hiện nút "Bắt đầu theo dõi" (nếu showStartButton=true).
-/// Khi tracking ACTIVE: hiện compact bar "Đã đi X/Y địa điểm + Dừng".
 class TrackingSection extends StatefulWidget {
   final String itineraryId;
   final DateTime date;
@@ -20,9 +17,7 @@ class TrackingSection extends StatefulWidget {
   final List<ItineraryActivityEntity> activities;
   final bool showStartButton;
   final bool dbTrackingActive;
-  /// Callback sau khi bắt đầu tracking thành công (dùng để cập nhật ItineraryCubit).
   final VoidCallback? onStarted;
-  /// Callback sau khi dừng tracking (dùng để cập nhật ItineraryCubit).
   final VoidCallback? onStopped;
 
   const TrackingSection({
@@ -94,7 +89,6 @@ class _TrackingBody extends StatelessWidget {
     this.onStopped,
   });
 
-  // TODO(date-restriction): Bật lại khi muốn giới hạn chỉ bắt đầu vào ngày lịch trình.
   // bool get _dayReached {
   //   final now = DateTime.now();
   //   final today = DateTime(now.year, now.month, now.day);
@@ -149,7 +143,6 @@ class _TrackingBody extends StatelessWidget {
     );
   }
 
-  // ── Compact bar khi đang theo dõi ──────────────────────────────────────────
   Widget _activeBar(BuildContext context, TrackingState state) {
     return Container(
       margin: const EdgeInsets.only(bottom: AppSizes.s12),
@@ -188,7 +181,6 @@ class _TrackingBody extends StatelessWidget {
     );
   }
 
-  // ── Nút bắt đầu ─────────────────────────────────────────────────────────────
   Widget _startButton(BuildContext context, TrackingState state) {
     final isCompleted = itineraryStatus.toUpperCase() == 'COMPLETED';
     // TODO(date-restriction): thay canStart = _dayReached && !isCompleted

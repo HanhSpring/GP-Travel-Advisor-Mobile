@@ -51,7 +51,6 @@ class _ForgotPasswordViewState extends State<_ForgotPasswordView> {
     return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
         if (state is ForgotPasswordSuccess) {
-          // Hiển thị dialog thông báo kiểm tra email
           showDialog(
             context: context,
             barrierDismissible: false,

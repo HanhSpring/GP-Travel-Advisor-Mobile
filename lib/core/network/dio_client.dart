@@ -10,8 +10,8 @@ class DioClient {
 
   static final _cacheOptions = CacheOptions(
     store: MemCacheStore(
-      maxSize: 10 * 1024 * 1024,     // 10 MB tổng
-      maxEntrySize: 2 * 1024 * 1024, // 2 MB mỗi entry
+      maxSize: 10 * 1024 * 1024,
+      maxEntrySize: 2 * 1024 * 1024,
     ),
     policy: CachePolicy.forceCache,
     maxStale: const Duration(minutes: 5),
@@ -47,7 +47,6 @@ class DioClient {
 
   Dio get dio => _dio;
 
-  /// Trả về Options có header bypass cache — dùng khi user pull-to-refresh.
   Options get forceRefreshOptions => Options(
         extra: _cacheOptions
             .copyWith(policy: CachePolicy.refresh)
@@ -55,8 +54,6 @@ class DioClient {
       );
 }
 
-/// Đính kèm Bearer token từ SecureStorage vào mỗi request.
-/// Khi nhận 401, tự động gọi /auth/refresh rồi retry request gốc 1 lần.
 class _AuthInterceptor extends Interceptor {
   final _storage = const FlutterSecureStorage();
 
@@ -72,7 +69,6 @@ class _AuthInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
-    // Chỉ xử lý 401 và không retry vô hạn
     if (err.response?.statusCode == 401 &&
         err.requestOptions.extra['_retried'] != true) {
       try {
@@ -124,7 +120,6 @@ class _AuthInterceptor extends Interceptor {
         handler.resolve(retryResponse);
         return;
       } catch (_) {
-        // Refresh thất bại → xoá token cũ, để app điều hướng về màn login
         await Future.wait([
           _storage.delete(key: 'access_token'),
           _storage.delete(key: 'refresh_token'),

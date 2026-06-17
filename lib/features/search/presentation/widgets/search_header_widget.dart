@@ -21,14 +21,13 @@ class SearchHeaderWidget extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: AppSizes.s12),
       child: Row(
         children: [
-          // Nút Back
           GestureDetector(
             onTap: () => Navigator.pop(context),
             child: const Padding(
               padding: EdgeInsets.only(right: AppSizes.s16),
               child: Icon(
                 Icons.arrow_back_ios_new,
-                color: Colors.black, // Theo thiết kế là đen
+                color: Colors.black,
                 size: AppSizes.iconMd,
               ),
             ),
@@ -44,30 +43,30 @@ class SearchHeaderWidget extends StatelessWidget {
               ),
               padding: const EdgeInsets.only(left: AppSizes.s12, right: AppSizes.s16),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center, // Căn giữa theo trục dọc
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const Icon(
                     Icons.search,
-                    color: Colors.black, // Kính lúp màu đen (#000000)
+                    color: Colors.black,
                     size: AppSizes.iconMd,
                   ),
                   const SizedBox(width: AppSizes.s8),
                   Expanded(
                     child: TextField(
                       controller: controller,
-                      readOnly: false, // Sử dụng bàn phím thật
+                      readOnly: false,
                       autofocus: true,
-                      textAlignVertical: TextAlignVertical.center, // Đảm bảo text align center
+                      textAlignVertical: TextAlignVertical.center,
                       onChanged: onChanged,
                       decoration: InputDecoration(
                         hintText: 'Tìm kiếm thành phố, địa điểm, nhà hàng...',
                         hintStyle: TextStyle(
                           fontSize: 16,
-                          color: Colors.grey.shade500, // Màu xám nhạt
+                          color: Colors.grey.shade500,
                           fontWeight: FontWeight.w400,
                         ),
-                        border: InputBorder.none, // Bỏ viền mặc định
-                        focusedBorder: InputBorder.none, // Bỏ viền khi focus
+                        border: InputBorder.none,
+                        focusedBorder: InputBorder.none,
                         enabledBorder: InputBorder.none,
                         errorBorder: InputBorder.none,
                         disabledBorder: InputBorder.none,
@@ -76,7 +75,7 @@ class SearchHeaderWidget extends StatelessWidget {
                       ),
                       style: const TextStyle(
                         fontSize: 16,
-                        color: Colors.black, // Text input màu đen (#000000)
+                        color: Colors.black,
                       ),
                     ),
                   ),

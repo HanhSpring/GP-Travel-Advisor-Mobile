@@ -9,9 +9,6 @@ import 'geofence_tracking_service.dart';
 import 'tracking_context.dart';
 import 'tracking_http.dart';
 
-/// Đặt lịch AlarmManager cho vòng lặp theo ngày của use case:
-///  - 23h: kết thúc ngày (remove geofence + mark skipped) → đặt alarm sáng hôm sau.
-///  - sáng hôm sau: đăng ký lại geofence cho ngày mới → đặt alarm 23h ngày đó.
 class TrackingAlarmService {
   static const int endOfDayAlarmId = 990001;
   static const int nextDayAlarmId = 990002;
@@ -41,7 +38,6 @@ class TrackingAlarmService {
   }
 }
 
-/// 23h — kết thúc ngày: gọi `/end-day`, remove geofence, đặt alarm ngày kế.
 @pragma('vm:entry-point')
 Future<void> onTrackingDayEnd() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -59,13 +55,11 @@ Future<void> onTrackingDayEnd() async {
     });
     final end = EndDayResult.fromAny(res.data);
 
-    // Remove geofence trên thiết bị.
     final ids = end.removedItineraryDetailIds.isNotEmpty
         ? end.removedItineraryDetailIds
         : ctx.places.keys.toList();
     await GeofenceTrackingService().removeByIds(ids);
 
-    // Còn ngày kế → đặt alarm sáng hôm sau để đăng ký lại.
     final hasNext =
         end.itineraryStatus != 'completed' && end.nextDayDate != null;
     if (hasNext) {
@@ -77,16 +71,13 @@ Future<void> onTrackingDayEnd() async {
           DateTime(next.year, next.month, next.day, 7);
       await TrackingAlarmService().scheduleNextDay(alarmAt);
     } else {
-      // Hết lịch trình → dọn ngữ cảnh.
       await TrackingContextStore.clear();
       await TrackingContextStore.clearNextDate();
     }
   } catch (_) {
-    // Lỗi mạng: giữ nguyên, người dùng có thể mở app để đồng bộ lại.
   }
 }
 
-/// Sáng hôm sau — đăng ký lại geofence cho ngày mới, đặt alarm 23h ngày đó.
 @pragma('vm:entry-point')
 Future<void> onTrackingNextDay() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -108,7 +99,6 @@ Future<void> onTrackingNextDay() async {
 
     await GeofenceTrackingService().registerAll(geofences);
 
-    // Cập nhật context sang ngày mới.
     final newCtx = TrackingContextStore.build(
       baseUrl: ctx.baseUrl,
       touristId: ctx.touristId,
@@ -120,7 +110,6 @@ Future<void> onTrackingNextDay() async {
     await TrackingContextStore.save(newCtx);
     await TrackingContextStore.clearNextDate();
 
-    // Đặt alarm kết thúc ngày mới lúc 23:00.
     final p = nextDate.split('-');
     if (p.length == 3) {
       final endAt = DateTime(

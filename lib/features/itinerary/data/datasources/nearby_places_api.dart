@@ -13,7 +13,6 @@ class NearbyPlaceModel {
   final double? latitude;
   final double? longitude;
   final bool isSameCategory;
-  /// JSON giờ mở cửa theo ngày: {"Monday":[["07:00:00","22:00:00"]],...}
   final String? openHourCompressed;
 
   const NearbyPlaceModel({

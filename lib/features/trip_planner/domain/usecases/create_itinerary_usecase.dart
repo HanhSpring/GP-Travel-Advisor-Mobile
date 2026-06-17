@@ -15,7 +15,6 @@ class CreateItineraryParams {
   final int childCount;
   final double budget;
   final List<String> foodPreferences;
-  // [TRIP_NAME_INPUT] Tên chuyến đi do user nhập ở Bước 3
   final String? tripName;
 
   const CreateItineraryParams({

@@ -11,8 +11,6 @@ import 'package:travel_advisor_mobile/features/trip_planner/presentation/widgets
 import '../widgets/step_progress_bar.dart';
 
 // ════════════════════════════════════════════════════════════════
-// [TRIP_NAME_INPUT] Đổi sang StatefulWidget để quản lý TextEditingController
-// cho phần nhập tên chuyến đi được thêm vào Bước 3.
 // ════════════════════════════════════════════════════════════════
 class TripPlannerStep3Screen extends StatefulWidget {
   const TripPlannerStep3Screen({super.key});
@@ -22,13 +20,11 @@ class TripPlannerStep3Screen extends StatefulWidget {
 }
 
 class _TripPlannerStep3ScreenState extends State<TripPlannerStep3Screen> {
-  // [TRIP_NAME_INPUT] Controller cho TextField tên chuyến đi
   late final TextEditingController _nameController;
 
   @override
   void initState() {
     super.initState();
-    // [TRIP_NAME_INPUT] Lấy tên hiện tại hoặc tự sinh từ điểm đến + ngày
     final generatedName =
         context.read<TripPlannerCubit>().resolveOrGenerateTripName();
     _nameController = TextEditingController(text: generatedName);
@@ -130,7 +126,6 @@ class _TripPlannerStep3ScreenState extends State<TripPlannerStep3Screen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // ════════════════════════════════════════
-                        // [TRIP_NAME_INPUT] Phần nhập tên chuyến đi
                         // ════════════════════════════════════════
                         const Text(
                           'Tên chuyến đi',
@@ -180,7 +175,6 @@ class _TripPlannerStep3ScreenState extends State<TripPlannerStep3Screen> {
                         ),
                         // ════════════════════════════════════════
                         const SizedBox(height: 36),
-                        // Phần ngân sách (giữ nguyên như cũ)
                         const Text(
                           'Ngân sách',
                           style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: AppColors.textPrimary),

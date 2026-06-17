@@ -69,7 +69,6 @@ class FoodPreferenceSection extends StatelessWidget {
                 ),
               );
             }),
-            // Thêm mới button
             GestureDetector(
               onTap: () {
                 // Handle add new preference

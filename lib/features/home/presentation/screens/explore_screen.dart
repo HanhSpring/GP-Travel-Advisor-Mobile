@@ -426,7 +426,6 @@ class _ExploreViewState extends State<_ExploreView> {
             ),
           ),
 
-        // ── Lịch trình gợi ý ────────────────────────────────────────────────
         if (state.suggestions.isNotEmpty)
           SliverToBoxAdapter(
             child: Column(
@@ -482,7 +481,6 @@ class _ExploreViewState extends State<_ExploreView> {
             ),
           ),
 
-        // ── Điểm đến nổi bật ─────────────────────────────────────────────
         if (state.destinations.isNotEmpty)
           SliverToBoxAdapter(
             child: Column(
@@ -543,7 +541,6 @@ class _ExploreViewState extends State<_ExploreView> {
             ),
           ),
 
-        // ── Nhà hàng tiêu biểu ─────────────────────────────────────────────
         if (state.restaurants.isNotEmpty)
           SliverToBoxAdapter(
             child: Column(
@@ -597,7 +594,6 @@ class _ExploreViewState extends State<_ExploreView> {
             ),
           ),
 
-        // ── Khách sạn nổi bật ─────────────────────────────────────────────
         if (state.hotels.isNotEmpty)
           SliverToBoxAdapter(
             child: Column(

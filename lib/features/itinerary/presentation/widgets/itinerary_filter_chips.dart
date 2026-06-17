@@ -4,10 +4,7 @@ import 'package:travel_advisor_mobile/core/theme/app_colors.dart';
 import 'package:travel_advisor_mobile/features/itinerary/domain/entities/itinerary_entity.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/cubit/itinerary_state.dart';
 
-/// Hàng nút Filter (Chip) — Tất cả · Sắp đi · Đã đi · Nháp
 ///
-/// Khi bấm vào chip, gọi [onChanged] với giá trị [ItineraryStatus?].
-/// Truyền `null` nghĩa là "Tất cả".
 class ItineraryFilterChips extends StatelessWidget {
   final ItineraryStatus? activeFilter;
   final CompletedFilter activeSubFilter;

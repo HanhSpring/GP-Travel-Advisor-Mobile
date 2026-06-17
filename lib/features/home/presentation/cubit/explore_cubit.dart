@@ -48,7 +48,6 @@ class ExploreCubit extends Cubit<ExploreState> {
        _getPopupData = getPopupData,
        super(const ExploreInitial());
 
-  /// 🔧 CHẾ ĐỘ DEMO: Set true để bỏ qua lỗi Backend và dùng dữ liệu mẫu
   static const bool kDemoMode = AppConfig.kUseMockData;
 
   Future<T> _safeLoad<T>(Future<T> Function() loader, T fallback) async {
@@ -277,7 +276,6 @@ class ExploreCubit extends Cubit<ExploreState> {
       );
     } catch (e) {
       if (kDemoMode) {
-        // ⚠️ BACKEND NOTE: Mock dữ liệu trang chủ cho Demo
         final mockExplore = ExploreHomeData(
           suggestions: [
             const TripSuggestion(

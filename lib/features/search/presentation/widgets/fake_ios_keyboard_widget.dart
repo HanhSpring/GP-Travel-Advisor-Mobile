@@ -8,7 +8,7 @@ class FakeIOSKeyboardWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFFD1D5DB), // Xám nhạt của bàn phím
+      color: const Color(0xFFD1D5DB),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

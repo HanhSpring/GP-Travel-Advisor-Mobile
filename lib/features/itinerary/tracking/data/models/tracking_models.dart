@@ -1,13 +1,8 @@
-/// Models cho tính năng "Theo dõi lịch trình" (geofence + dwell time).
 ///
-/// Khớp với BE `api-service` module `itinerary-tracking` (base `/itinerary/tracking`).
-/// Parse JSON theo kiểu "lenient": chấp nhận nhiều biến thể key (camelCase/snake_case)
-/// để bền với thay đổi nhỏ phía BE.
 library;
 
 import 'package:travel_advisor_mobile/features/itinerary/tracking/tracking_config.dart';
 
-// ───────────────────────── helpers parse linh hoạt ─────────────────────────
 double? _toDouble(dynamic v) {
   if (v == null) return null;
   if (v is num) return v.toDouble();
@@ -22,7 +17,6 @@ int _toInt(dynamic v, [int fallback = 0]) {
 
 String? _toStr(dynamic v) => v?.toString();
 
-/// Lấy giá trị đầu tiên không null trong nhiều key có thể có.
 dynamic _pick(Map<String, dynamic> j, List<String> keys) {
   for (final k in keys) {
     if (j.containsKey(k) && j[k] != null) return j[k];
@@ -30,7 +24,6 @@ dynamic _pick(Map<String, dynamic> j, List<String> keys) {
   return null;
 }
 
-/// Trạng thái ghé của một điểm dừng.
 enum VisitStatus { notVisited, visited, skipped }
 
 VisitStatus visitStatusFrom(String? raw) {
@@ -44,17 +37,15 @@ VisitStatus visitStatusFrom(String? raw) {
   }
 }
 
-// ───────────────────────── geofence để mobile đăng ký ─────────────────────────
-/// Một vùng geofence trả về từ `/start` hoặc `/geofences`.
 class TrackingGeofence {
-  final String itineraryDetailId; // khoá định danh điểm dừng ở API
+  final String itineraryDetailId;
   final String? geofenceId;
   final String? placeId;
-  final String? name; // tên địa điểm (để hiển thị thông báo)
+  final String? name;
   final double latitude;
   final double longitude;
   final int radiusM;
-  final int dwellThresholdSeconds; // ngưỡng dwell -> "Đã ghé"
+  final int dwellThresholdSeconds;
 
   const TrackingGeofence({
     required this.itineraryDetailId,
@@ -98,14 +89,12 @@ class TrackingGeofence {
       !(latitude == 0 && longitude == 0);
 }
 
-/// Kết quả `/start`.
 class TrackingStartResult {
   final String? itineraryStatus;
   final List<TrackingGeofence> geofences;
 
   const TrackingStartResult({this.itineraryStatus, this.geofences = const []});
 
-  /// BE có thể trả về thẳng một List, hoặc object bọc trong `geofences`/`data`.
   factory TrackingStartResult.fromAny(dynamic body) {
     if (body is List) {
       return TrackingStartResult(
@@ -130,7 +119,6 @@ class TrackingStartResult {
   }
 }
 
-// ───────────────────────── trạng thái bản đồ (/status) ─────────────────────────
 class TrackingPlaceStatus {
   final String itineraryDetailId;
   final String? geofenceId;
@@ -220,7 +208,6 @@ class TrackingStatusResult {
   }
 }
 
-// ───────────────────────── kết quả gửi event / check-in ─────────────────────────
 class GeofenceEventResult {
   final VisitStatus status;
   final bool notificationCreated;
@@ -248,7 +235,6 @@ class GeofenceEventResult {
   }
 }
 
-// ───────────────────────── kết quả kết thúc ngày (/end-day) ─────────────────────────
 class EndDayResult {
   final List<String> removedGeofenceIds;
   final List<String> removedItineraryDetailIds;

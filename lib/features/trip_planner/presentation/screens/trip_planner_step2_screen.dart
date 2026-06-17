@@ -12,7 +12,6 @@ import 'trip_planner_step3_screen.dart';
 class TripPlannerStep2Screen extends StatelessWidget {
   const TripPlannerStep2Screen({super.key});
 
-  // â”€â”€ Pickers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Future<void> _pickDate(
     BuildContext context, {
@@ -282,7 +281,6 @@ class TripPlannerStep2Screen extends StatelessWidget {
   }
 }
 
-// â”€â”€ Trip Intent selector button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _TripIntentButton extends StatelessWidget {
   final List<String> selected;
@@ -336,7 +334,6 @@ class _TripIntentButton extends StatelessWidget {
   }
 }
 
-// â”€â”€ Trip Intent bottom sheet â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _TripIntentSheet extends StatefulWidget {
   final List<String> current;
@@ -361,7 +358,6 @@ class _TripIntentSheetState extends State<_TripIntentSheet> {
         }
         return;
       }
-      // Specific intent: bỏ general nếu đang có
       _selected.remove(kGeneralTripIntent);
       if (_selected.contains(intent)) {
         _selected.remove(intent);
@@ -482,7 +478,6 @@ class _TripIntentSheetState extends State<_TripIntentSheet> {
     );
   }
 }
-// â”€â”€ Section title â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _SectionTitle extends StatelessWidget {
   final String title;

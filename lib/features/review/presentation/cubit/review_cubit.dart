@@ -19,7 +19,6 @@ class ReviewCubit extends Cubit<ReviewState> {
     required this.reviewRepository,
   }) : super(ReviewInitial());
 
-  /// 🔧 CHẾ ĐỘ DEMO: Set true để bỏ qua lỗi Backend và dùng dữ liệu mẫu
   static const bool kDemoMode = AppConfig.kUseMockData;
 
   Future<void> loadReviewData(String itineraryId) async {
@@ -239,7 +238,6 @@ class ReviewCubit extends Cubit<ReviewState> {
           }
         }
 
-        // TẠM THỜI COMMENT DÒNG RETURN ĐỂ ÉP GỌI XUỐNG BACKEND THẬT DÙ ĐANG Ở CHẾ ĐỘ DEMO
         // emit(currentState.copyWith(isSubmitting: false));
         // return;
       }

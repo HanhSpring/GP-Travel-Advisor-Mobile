@@ -38,7 +38,6 @@ class ItineraryCard extends StatelessWidget {
           motion: const BehindMotion(),
           extentRatio: 0.4,
           children: [
-            // ── Nút Xóa ──
             CustomSlidableAction(
               onPressed: (_) => onDelete?.call(),
               backgroundColor: const Color(0xFFEF5350),
@@ -73,7 +72,6 @@ class ItineraryCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Ảnh slideshow + badge ngày ───────────────────────────────
                 SizedBox(
                   height: 150,
                   width: double.infinity,
@@ -84,7 +82,6 @@ class ItineraryCard extends StatelessWidget {
                         images: item.placeImages,
                         placeholderColor: item.placeholderColor,
                       ),
-                      // Gradient overlay phía dưới để text dễ đọc.
                       Positioned(
                         bottom: 0,
                         left: 0,
@@ -103,7 +100,6 @@ class ItineraryCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      // Badge ngày ở góc dưới bên trái.
                       if (item.startDate != null && item.endDate != null)
                         Positioned(
                           bottom: 10,
@@ -125,7 +121,6 @@ class ItineraryCard extends StatelessWidget {
                             ),
                           ),
                         ),
-                      // Badge "Đã đi" ở góc trên bên trái
                       if (item.status == ItineraryStatus.completed)
                         Positioned(
                           top: 12,
@@ -150,13 +145,11 @@ class ItineraryCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                // ── Nội dung bên dưới ──────────────────────────────────────────
                 Padding(
                   padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Tiêu đề + menu 3 chấm
                       Row(
                         children: [
                           Expanded(
@@ -203,7 +196,6 @@ class ItineraryCard extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 8),
-                      // Chi phí + Số ngày
                       Row(
                         children: [
                           Icon(Icons.monetization_on_outlined,
@@ -267,7 +259,6 @@ class ItineraryCard extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        // Số lượng địa điểm
         Text(
           '${item.visitedLocations}/${item.totalLocations} địa điểm',
           style: const TextStyle(

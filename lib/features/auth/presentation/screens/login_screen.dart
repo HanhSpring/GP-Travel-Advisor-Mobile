@@ -58,12 +58,9 @@ class _LoginViewState extends State<_LoginView> {
       listener: (context, state) async {
         if (state is AuthSuccess) {
           FocusScope.of(context).unfocus();
-          // Lưu tokens sau khi login thành công
-          // Token được parse bởi datasource và lưu vào SecureStorage
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!context.mounted) return;
             Navigator.pushReplacementNamed(context, '/home');
-            // Web cần reload để flush auth state trong browser storage
             if (kIsWeb) {
               Future.delayed(const Duration(milliseconds: 100), reloadPage);
             }

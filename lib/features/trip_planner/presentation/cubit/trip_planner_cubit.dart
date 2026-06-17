@@ -17,7 +17,6 @@ class TripPlannerCubit extends Cubit<TripPlannerState> {
         ),
       );
 
-  // â”€â”€ BÆ°á»›c 1: Äá»‹a Ä‘iá»ƒm â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   void updateDeparture(String name, String id) {
     state.maybeWhen(
@@ -83,12 +82,10 @@ class TripPlannerCubit extends Cubit<TripPlannerState> {
     );
   }
 
-  // â”€â”€ BÆ°á»›c 2: Thá»i gian & Chá»§ Ä‘á» â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   void updateStartDate(DateTime date) {
     state.maybeWhen(
       loaded: (form) {
-        // Äáº£m báº£o endDate khÃ´ng trÆ°á»›c startDate
         final end = form.endDate != null && form.endDate!.isBefore(date)
             ? date
             : form.endDate;
@@ -152,7 +149,6 @@ class TripPlannerCubit extends Cubit<TripPlannerState> {
     );
   }
 
-  // â”€â”€ BÆ°á»›c 2: ThÃ nh viÃªn â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   void increaseAdults() {
     state.maybeWhen(
@@ -206,9 +202,7 @@ class TripPlannerCubit extends Cubit<TripPlannerState> {
     );
   }
 
-  // â”€â”€ BÆ°á»›c 3: NgÃ¢n sÃ¡ch & áº¨m thá»±c â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  // [TRIP_NAME_INPUT] Cập nhật tên chuyến đi khi user gõ vào TextField
   void updateTripName(String name) {
     state.maybeWhen(
       loaded: (form) => emit(
@@ -218,7 +212,6 @@ class TripPlannerCubit extends Cubit<TripPlannerState> {
     );
   }
 
-  // [TRIP_NAME_INPUT] Lấy tên hiện tại hoặc tự sinh nếu chưa có, rồi lưu vào form
   String resolveOrGenerateTripName() {
     final form = state.whenOrNull(loaded: (f) => f);
     if (form == null) return '';
@@ -256,7 +249,6 @@ class TripPlannerCubit extends Cubit<TripPlannerState> {
     );
   }
 
-  // â”€â”€ Navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   void goNextStep() {
     state.maybeWhen(
@@ -288,7 +280,6 @@ class TripPlannerCubit extends Cubit<TripPlannerState> {
     );
   }
 
-  // â”€â”€ Submit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Future<void> submitTripPlan() async {
     final form = state.whenOrNull(loaded: (f) => f);
@@ -385,7 +376,6 @@ class TripPlannerCubit extends Cubit<TripPlannerState> {
           childCount: form.childCount,
           budget: form.budget,
           foodPreferences: form.foodPreferences,
-          // [TRIP_NAME_INPUT] Dùng tên user đã nhập, fallback sang tên tự sinh
           tripName: (form.tripName != null && form.tripName!.isNotEmpty)
               ? form.tripName
               : _generateTripName(form),
@@ -399,9 +389,7 @@ class TripPlannerCubit extends Cubit<TripPlannerState> {
     }
   }
 
-  // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  // [TRIP_NAME_INPUT] Tự sinh tên từ điểm đến + khoảng ngày, VD: "Đà Nẵng • 10–13/06"
   String _generateTripName(TripForm form) {
     final dest = form.destinationLocation ?? '';
     if (form.startDate == null) return dest;
@@ -469,7 +457,6 @@ class TripPlannerCubit extends Cubit<TripPlannerState> {
         .where(kTripIntents.contains)
         .where(seen.add)
         .toList();
-    // Safety net: nếu general trộn với specific, bỏ general
     if (valid.length > 1 && valid.contains(kGeneralTripIntent)) {
       return valid.where((v) => v != kGeneralTripIntent).take(kMaxTripIntents).toList();
     }

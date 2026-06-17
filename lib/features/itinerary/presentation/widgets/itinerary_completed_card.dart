@@ -6,7 +6,6 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:travel_advisor_mobile/features/itinerary/domain/entities/itinerary_entity.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/screens/rate_itinerary_screen.dart';
 
-/// Card lịch trình "Đã đi" — có badge "ĐÃ ĐI" + rating ⭐ thay cho progress bar.
 class ItineraryCompletedCard extends StatelessWidget {
   final ItineraryEntity item;
   final VoidCallback? onTap;
@@ -68,14 +67,12 @@ class ItineraryCompletedCard extends StatelessWidget {
             clipBehavior: Clip.antiAlias,
             child: Row(
               children: [
-                // ── Ảnh bên trái ───────────────────────────────────────────
                 SizedBox(
                   width: 120,
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
                       _buildImage(),
-                      // Badge "ĐÃ ĐI" góc trên trái
                       Positioned(
                         top: 8,
                         left: 8,
@@ -100,7 +97,6 @@ class ItineraryCompletedCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                // ── Nội dung bên phải ──────────────────────────────────────
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
@@ -108,7 +104,6 @@ class ItineraryCompletedCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Tiêu đề + menu
                         Row(
                           children: [
                             Expanded(
@@ -154,7 +149,6 @@ class ItineraryCompletedCard extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 6),
-                        // Ngày
                         Text(
                           '${item.durationDays} Ngày · ${_formatDuration()}',
                           style: const TextStyle(

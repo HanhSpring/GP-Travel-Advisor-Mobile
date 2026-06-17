@@ -17,7 +17,6 @@ import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/it
 import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/itinerary_filter_chips.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/itinerary_summary_grid.dart';
 
-/// Màn hình chính "Lịch trình của tôi".
 class ItineraryScreen extends StatelessWidget {
   const ItineraryScreen({super.key});
 
@@ -297,7 +296,6 @@ class _ItineraryViewState extends State<_ItineraryView> {
 
 }
 
-/// Card lịch trình + nút "BẮT ĐẦU / ĐANG DIỄN RA" nhúng vào cuối card.
 class _ItineraryCardWithStart extends StatelessWidget {
   final ItineraryEntity item;
   final VoidCallback onCardTap;
@@ -309,7 +307,6 @@ class _ItineraryCardWithStart extends StatelessWidget {
     required this.onDelete,
   });
 
-  // TODO(date-restriction): Bật lại khi muốn giới hạn nút chỉ hiện vào ngày lịch trình.
   bool get _shouldShowStart => item.status != ItineraryStatus.completed;
 
   @override

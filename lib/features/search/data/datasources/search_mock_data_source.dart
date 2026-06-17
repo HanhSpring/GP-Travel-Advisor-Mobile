@@ -87,13 +87,10 @@ class SearchMockDataSourceImpl implements SearchMockDataSource {
     return _mockData.where((location) {
       final name = location.name.toLowerCase();
       
-      // Nếu người dùng chỉ gõ chung chung "thành phố" hoặc "tp" -> Show tất cả các thành phố
       if (q == 'thành phố' || q == 'thanh pho' || q == 'tp' || q == 'tp.') {
         return location.type == 'city';
       }
 
-      // Trường hợp gõ "thành phố đà nẵng" nhưng mock data là "đà nẵng" 
-      // -> Loại bỏ các từ khóa thừa để tăng tỉ lệ khớp
       String normalizedQ = q
           .replaceAll('thành phố', '')
           .replaceAll('thanh pho', '')
@@ -101,10 +98,8 @@ class SearchMockDataSourceImpl implements SearchMockDataSource {
           .replaceAll('tp ', '')
           .trim();
 
-      // Mở rộng cả Tên trong Mock Data (ví dụ: "tp. hồ chí minh" thành "thành phố hồ chí minh")
       String expandedName = name.replaceAll('tp.', 'thành phố').replaceAll('tp ', 'thành phố ');
 
-      // Nếu sau khi bỏ chữ "thành phố" mà từ khóa vẫn còn nội dung, ưu tiên match nội dung đó
       if (normalizedQ.isNotEmpty && name.contains(normalizedQ)) {
         return true;
       }

@@ -5,12 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../data/models/tracking_models.dart';
 import '../tracking_config.dart';
 
-/// Ngữ cảnh theo dõi được lưu xuống đĩa để **background isolate** (geofence
-/// callback / AlarmManager) có thể tự gọi BE mà không cần DI của app.
 ///
-/// Isolate nền không chia sẻ memory với app, cũng không load `flutter_dotenv`,
-/// nên ta phải persist `baseUrl`, `touristId`, `itineraryId`, ngày và thông tin
-/// từng điểm dừng (tên + ngưỡng dwell) ngay lúc bấm "Bắt đầu".
 class TrackingContext {
   final String baseUrl;
   final String touristId;
@@ -72,7 +67,6 @@ class TrackingPlaceMeta {
       );
 }
 
-/// Đọc/ghi [TrackingContext] qua SharedPreferences (dùng được ở cả hai isolate).
 class TrackingContextStore {
   static const _key = 'itinerary_tracking_context';
 
@@ -83,7 +77,6 @@ class TrackingContextStore {
 
   static Future<TrackingContext?> load() async {
     final prefs = await SharedPreferences.getInstance();
-    // Đảm bảo đọc giá trị mới nhất nếu isolate khác vừa ghi.
     await prefs.reload();
     final raw = prefs.getString(_key);
     if (raw == null) return null;
@@ -100,7 +93,6 @@ class TrackingContextStore {
     await prefs.remove(_key);
   }
 
-  // ── Ngày kế tiếp cần đăng ký lại (AlarmManager sáng hôm sau) ──────────────
   static const _nextDateKey = 'itinerary_tracking_next_date';
 
   static Future<void> saveNextDate(String date) async {
@@ -119,7 +111,6 @@ class TrackingContextStore {
     await prefs.remove(_nextDateKey);
   }
 
-  // ── Food spots persistence (lat/lng của quán ăn trong lịch trình) ──────────
   static const _foodSpotsKey = 'tracking_food_spots';
 
   static Future<void> saveFoodSpots(String json) async {
@@ -156,7 +147,6 @@ class TrackingContextStore {
     await prefs.remove(_lastErrorKey);
   }
 
-  /// Tạo context từ danh sách geofence của ngày.
   static TrackingContext build({
     required String baseUrl,
     required String touristId,

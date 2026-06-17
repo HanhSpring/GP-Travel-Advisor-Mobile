@@ -98,7 +98,6 @@ class _ItineraryReviewDialogState extends State<ItineraryReviewDialog> {
                 }),
               ),
               
-              // Nút Đánh giá chi tiết địa điểm
               TextButton.icon(
                 onPressed: () {
                   Navigator.push(

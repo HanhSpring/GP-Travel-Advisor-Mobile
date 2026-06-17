@@ -1,12 +1,10 @@
 import 'package:equatable/equatable.dart';
 
-/// Vị trí hiện tại của người dùng (đã reverse-geocode).
-/// [ward] = Phường/Xã, [province] = Tỉnh/Thành phố.
 class UserLocation extends Equatable {
   final double latitude;
   final double longitude;
-  final String? ward; // Phường/Xã
-  final String? province; // Tỉnh/Thành phố
+  final String? ward;
+  final String? province;
 
   const UserLocation({
     required this.latitude,
@@ -15,7 +13,6 @@ class UserLocation extends Equatable {
     this.province,
   });
 
-  /// Chuỗi hiển thị "Phường/Xã, Tỉnh/TP" (in hoa), bỏ phần rỗng.
   String get displayText {
     final parts = [ward, province]
         .where((e) => e != null && e.trim().isNotEmpty)

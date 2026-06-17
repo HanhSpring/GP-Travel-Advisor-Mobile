@@ -1,7 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
-/// Một format chung để tự động thêm dấu phân cách hàng nghìn khi nhập số tiền (chuẩn Việt Nam).
 class CurrencyInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
@@ -10,7 +9,6 @@ class CurrencyInputFormatter extends TextInputFormatter {
       return newValue;
     }
 
-    // Chỉ lấy các con số
     final text = newValue.text.replaceAll(RegExp(r'\D'), '');
     final double? value = double.tryParse(text);
 

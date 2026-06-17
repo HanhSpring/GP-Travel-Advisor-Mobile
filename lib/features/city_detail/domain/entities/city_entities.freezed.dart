@@ -22,7 +22,7 @@ mixin _$CityItinerary {
   String get authorName => throw _privateConstructorUsedError;
   String get authorAvatar => throw _privateConstructorUsedError;
   String get imageUrl => throw _privateConstructorUsedError;
-  String get duration => throw _privateConstructorUsedError; // e.g., "3 NGÀY"
+  String get duration => throw _privateConstructorUsedError;
   String get views => throw _privateConstructorUsedError;
   String get likes => throw _privateConstructorUsedError;
   String get location => throw _privateConstructorUsedError;
@@ -239,7 +239,6 @@ class _$CityItineraryImpl implements _CityItinerary {
   final String imageUrl;
   @override
   final String duration;
-  // e.g., "3 NGÀY"
   @override
   final String views;
   @override
@@ -321,7 +320,7 @@ abstract class _CityItinerary implements CityItinerary {
   @override
   String get imageUrl;
   @override
-  String get duration; // e.g., "3 NGÀY"
+  String get duration;
   @override
   String get views;
   @override
@@ -346,7 +345,7 @@ mixin _$CityActivity {
   int get reviewCount => throw _privateConstructorUsedError;
   String get address => throw _privateConstructorUsedError;
   String get status =>
-      throw _privateConstructorUsedError; // e.g., "Đang mở cửa"
+      throw _privateConstructorUsedError;
   bool get isFavorite =>
       throw _privateConstructorUsedError; // === Filter fields ===
   String get category =>
@@ -598,7 +597,6 @@ class _$CityActivityImpl implements _CityActivity {
   @override
   @JsonKey()
   final String status;
-  // e.g., "Đang mở cửa"
   @override
   @JsonKey()
   final bool isFavorite;
@@ -697,7 +695,7 @@ abstract class _CityActivity implements CityActivity {
   @override
   String get address;
   @override
-  String get status; // e.g., "Đang mở cửa"
+  String get status;
   @override
   bool get isFavorite; // === Filter fields ===
   @override
@@ -724,7 +722,7 @@ mixin _$CityRestaurant {
   int get reviewCount => throw _privateConstructorUsedError;
   String get address => throw _privateConstructorUsedError;
   String get status =>
-      throw _privateConstructorUsedError; // e.g., "Đang mở cửa"
+      throw _privateConstructorUsedError;
   bool get isFavorite =>
       throw _privateConstructorUsedError; // === Filter fields ===
   String get cuisine =>
@@ -975,7 +973,6 @@ class _$CityRestaurantImpl implements _CityRestaurant {
   @override
   @JsonKey()
   final String status;
-  // e.g., "Đang mở cửa"
   @override
   @JsonKey()
   final bool isFavorite;
@@ -1084,7 +1081,7 @@ abstract class _CityRestaurant implements CityRestaurant {
   @override
   String get address;
   @override
-  String get status; // e.g., "Đang mở cửa"
+  String get status;
   @override
   bool get isFavorite; // === Filter fields ===
   @override
@@ -1109,13 +1106,13 @@ mixin _$CityHotel {
   String get imageUrl => throw _privateConstructorUsedError;
   double get rating => throw _privateConstructorUsedError;
   int get reviewCount => throw _privateConstructorUsedError;
-  String get price => throw _privateConstructorUsedError; // e.g., "5.450.000đ"
+  String get price => throw _privateConstructorUsedError;
   String get address => throw _privateConstructorUsedError;
   bool get isFavorite =>
       throw _privateConstructorUsedError; // === Filter fields ===
   int get starRating => throw _privateConstructorUsedError; // 1-5
   double get priceValue =>
-      throw _privateConstructorUsedError; // Số tiền thực tế (dùng cho filter/sort)
+      throw _privateConstructorUsedError;
   String get accommodationType =>
       throw _privateConstructorUsedError; // 'hotel','homestay','resort','apartment','guesthouse'
   List<String> get amenities => throw _privateConstructorUsedError;
@@ -1369,7 +1366,6 @@ class _$CityHotelImpl implements _CityHotel {
   final int reviewCount;
   @override
   final String price;
-  // e.g., "5.450.000đ"
   @override
   @JsonKey()
   final String address;
@@ -1384,7 +1380,6 @@ class _$CityHotelImpl implements _CityHotel {
   @override
   @JsonKey()
   final double priceValue;
-  // Số tiền thực tế (dùng cho filter/sort)
   @override
   @JsonKey()
   final String accommodationType;
@@ -1485,7 +1480,7 @@ abstract class _CityHotel implements CityHotel {
   @override
   int get reviewCount;
   @override
-  String get price; // e.g., "5.450.000đ"
+  String get price;
   @override
   String get address;
   @override
@@ -1493,7 +1488,7 @@ abstract class _CityHotel implements CityHotel {
   @override
   int get starRating; // 1-5
   @override
-  double get priceValue; // Số tiền thực tế (dùng cho filter/sort)
+  double get priceValue;
   @override
   String get accommodationType; // 'hotel','homestay','resort','apartment','guesthouse'
   @override

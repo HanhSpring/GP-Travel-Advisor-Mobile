@@ -139,15 +139,12 @@ class ActivityEditScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-            // 2. Thời gian thực hiện - Editable
             _buildTimeSection(context, startTime, endTime, isEditing),
             const SizedBox(height: AppSizes.s24),
 
-            // 3. Chi phí dự kiến & Thực tế
             _buildCostSection(context, activityData, actualCost, isEditing),
             const SizedBox(height: AppSizes.s24),
 
-            // 4. Ghi chú cá nhân - Editable
             _ActivityNotesField(initialNotes: notes, isEditing: isEditing),
             const SizedBox(height: AppSizes.s32),
 
@@ -338,7 +335,6 @@ class ActivityEditScreen extends StatelessWidget {
           ),
           const SizedBox(height: AppSizes.s12),
 
-          // Chi phí dự kiến (Disabled/Dimmable)
           Opacity(
             opacity: isEditing ? 0.6 : 1.0,
             child: Column(
@@ -369,7 +365,6 @@ class ActivityEditScreen extends StatelessWidget {
             thickness: 1.5,
           ),
 
-          // CHI PHÍ THỰC TẾ
           Row(
             children: [
               Container(

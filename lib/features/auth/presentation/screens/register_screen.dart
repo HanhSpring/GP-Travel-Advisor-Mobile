@@ -40,7 +40,6 @@ class _RegisterViewState extends State<_RegisterView> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
-  // Lỗi email từ server (vd: "Email đã tồn tại")
   String? _emailError;
 
   @override
@@ -53,7 +52,6 @@ class _RegisterViewState extends State<_RegisterView> {
     super.dispose();
   }
 
-  /// Chuyển đổi giới tính từ tiếng Việt sang enum backend.
   String _toGenderEnum(String? gender) {
     switch (gender) {
       case 'Nam':
@@ -91,7 +89,6 @@ class _RegisterViewState extends State<_RegisterView> {
     return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
         if (state is AuthSuccess) {
-          // Đăng ký/đăng nhập bằng Google thành công → vào HomeScreen
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted) {
               Navigator.pushReplacementNamed(context, '/home');
@@ -155,7 +152,6 @@ class _RegisterViewState extends State<_RegisterView> {
           );
         } else if (state is AuthError) {
           final msg = state.message.toLowerCase();
-          // Lỗi liên quan đến email → hiện dưới field email
           if (msg.contains('email')) {
             setState(() => _emailError = state.message);
             _formKey.currentState?.validate();

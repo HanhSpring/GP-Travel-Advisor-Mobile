@@ -5,8 +5,6 @@ import 'package:travel_advisor_mobile/core/theme/app_colors.dart';
 import 'package:travel_advisor_mobile/features/city/domain/entities/city_entity.dart';
 import 'package:travel_advisor_mobile/features/city/domain/usecases/search_cities_usecase.dart';
 
-/// Bottom sheet cho phép user tìm kiếm thành phố với debounce.
-/// Trả về [CityEntity] được chọn qua [Navigator.pop].
 class CitySearchBottomSheet extends StatefulWidget {
   final SearchCitiesUseCase searchCitiesUseCase;
   final String title;
@@ -49,7 +47,7 @@ class _CitySearchBottomSheetState extends State<CitySearchBottomSheet> {
   @override
   void initState() {
     super.initState();
-    _search(''); // load toàn bộ thành phố khi mở
+    _search('');
     WidgetsBinding.instance.addPostFrameCallback((_) => _focusNode.requestFocus());
   }
 

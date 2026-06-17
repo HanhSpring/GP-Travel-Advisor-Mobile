@@ -26,7 +26,6 @@ class LocationLoaded extends LocationState {
 class LocationError extends LocationState {
   final String message;
 
-  /// true khi do quyền/dịch vụ vị trí — UI có thể gợi ý cấp quyền/bật GPS.
   final bool permissionDenied;
 
   const LocationError(this.message, {this.permissionDenied = false});

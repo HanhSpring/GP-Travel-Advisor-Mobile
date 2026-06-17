@@ -10,9 +10,8 @@ class TrackingState extends Equatable {
   final DateTime? date;
   final List<TrackingPlaceStatus> places;
   final int registeredCount;
-  final String? checkingInDetailId; // điểm đang check-in thủ công
-  final String? message; // lỗi hoặc thông báo ngắn
-  // Quán ăn gần vị trí hiện tại (trong kBán kính cấu hình)
+  final String? checkingInDetailId;
+  final String? message;
   final String? nearbyRestaurantDetailId;
   final String? nearbyRestaurantName;
 
@@ -35,7 +34,6 @@ class TrackingState extends Equatable {
       places.where((p) => p.status == VisitStatus.visited).length;
   int get totalCount => places.length;
 
-  /// Tra trạng thái theo itineraryDetailId.
   TrackingPlaceStatus? byDetailId(String id) {
     for (final p in places) {
       if (p.itineraryDetailId == id) return p;

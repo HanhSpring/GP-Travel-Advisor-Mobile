@@ -20,7 +20,6 @@ class SearchRemoteDataSourceImpl implements SearchRemoteDataSource {
       queryParameters: {'q': query},
     );
 
-    // Response là List trực tiếp: [{"id":..., "name":..., "type":..., "score":...}]
     final List<dynamic> data = response.data;
     return data.map((item) => SearchLocationModel.fromJson(item)).toList();
   }

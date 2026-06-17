@@ -1,5 +1,3 @@
-/// Hằng số kích thước chuẩn cho toàn bộ ứng dụng.
-/// Tuân theo Material Design 3 — 4dp grid system.
 class AppSizes {
   AppSizes._();
 
@@ -27,26 +25,20 @@ class AppSizes {
   static const double r24 = 24.0;
   static const double r32 = 32.0;
 
-  // ─── Component Sizes (chuẩn Android) ──────────────────────────────
-  /// ElevatedButton height chuẩn (Material: 40-56dp)
   static const double buttonHeight = 52.0;
 
   /// TextField height
   static const double inputHeight = 52.0;
 
-  /// AppBar height chuẩn Android
   static const double appBarHeight = 56.0;
 
   /// BottomNavigationBar height (Material 3: 80dp)
   static const double bottomNavHeight = 80.0;
 
-  /// FAB size ở bottom nav
   static const double fabSize = 44.0;
 
-  /// Nút tròn (header icon buttons)
   static const double iconButtonSize = 40.0;
 
-  /// Thanh tìm kiếm height
   static const double searchBarHeight = 48.0;
 
   /// Avatar sizes

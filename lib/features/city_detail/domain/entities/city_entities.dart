@@ -10,7 +10,7 @@ class CityItinerary with _$CityItinerary {
     required String authorName,
     required String authorAvatar,
     required String imageUrl,
-    required String duration, // e.g., "3 NGÀY"
+    required String duration,
     required String views,
     required String likes,
     @Default('') String location,
@@ -26,12 +26,12 @@ class CityActivity with _$CityActivity {
     @Default(0.0) double rating,
     @Default(0) int reviewCount,
     @Default('') String address,
-    @Default('') String status, // e.g., "Đang mở cửa"
+    @Default('') String status,
     @Default(false) bool isFavorite,
     // === Filter fields ===
     @Default('') String category,   // 'cultural_history', 'nature', 'entertainment'
     @Default('') String priceType,  // 'free', 'paid'
-    @Default('') String district,   // 'Quận 1', 'Quận 3'...
+    @Default('') String district,
   }) = _CityActivity;
 }
 
@@ -44,7 +44,7 @@ class CityRestaurant with _$CityRestaurant {
     required double rating,
     required int reviewCount,
     @Default('') String address,
-    @Default('') String status, // e.g., "Đang mở cửa"
+    @Default('') String status,
     @Default(false) bool isFavorite,
     // === Filter fields ===
     @Default('') String cuisine,          // 'vietnamese', 'foreign', 'vegetarian'
@@ -61,12 +61,12 @@ class CityHotel with _$CityHotel {
     required String imageUrl,
     required double rating,
     required int reviewCount,
-    required String price, // e.g., "5.450.000đ"
+    required String price,
     @Default('') String address,
     @Default(false) bool isFavorite,
     // === Filter fields ===
     @Default(0) int starRating,               // 1-5
-    @Default(0) double priceValue,            // Số tiền thực tế (dùng cho filter/sort)
+    @Default(0) double priceValue,
     @Default('') String accommodationType,    // 'hotel','homestay','resort','apartment','guesthouse'
     @Default([]) List<String> amenities,      // ['pool','wifi','breakfast','gym']
   }) = _CityHotel;

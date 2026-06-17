@@ -33,7 +33,6 @@ class RemoteProfileDataSource implements ProfileDataSource {
 
   @override
   Future<List<ActivityItemModel>> getRecentActivities() async {
-    // Chưa có API — trả về danh sách rỗng
     return [];
   }
 
@@ -82,7 +81,6 @@ class RemoteProfileDataSource implements ProfileDataSource {
     return null;
   }
 
-  // UI label → backend enum (dùng khi gửi lên API)
   static const _interestToEnum = {
     'Biển': 'BEACH',
     'Núi': 'MOUNTAIN',
@@ -94,7 +92,6 @@ class RemoteProfileDataSource implements ProfileDataSource {
     'Thể thao mạo hiểm': 'SPORTS',
   };
 
-  // Backend enum → UI label (dùng khi nhận từ API)
   static const _enumToInterest = {
     'BEACH': 'Biển',
     'MOUNTAIN': 'Núi',

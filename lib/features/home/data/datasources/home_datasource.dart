@@ -189,7 +189,6 @@ class RemoteHomeDataSource implements HomeDataSource {
 
     // If backend returns no current_itinerary (server may provide a separate
     // endpoint to fetch it), try to request it explicitly so the UI can show
-    // "Lịch trình của tôi" when available.
     if (mapped.currentItinerary == null) {
       try {
         final curResp = await _client.dio.get('/explore/current', queryParameters: {'tourist_id': touristId});
@@ -286,7 +285,6 @@ class RemoteHomeDataSource implements HomeDataSource {
       imageUrl: (json['image'] ?? '').toString(),
       rating: ((json['rating'] as num?) ?? 0).toDouble(),
       reviewCount: (json['review_count'] as num?)?.toInt() ?? 0,
-      // Try to read a numeric or formatted price from payload. Fall back to 0đ
       price: () {
         final rawPrice = (json['price'] ?? json['min_price'] ?? '').toString().trim();
         final priceValue = rawPrice.isNotEmpty ? rawPrice : '0đ';

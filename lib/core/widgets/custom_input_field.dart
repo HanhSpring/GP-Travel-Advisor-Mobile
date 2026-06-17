@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:travel_advisor_mobile/core/constants/app_colors.dart';
 import 'package:travel_advisor_mobile/core/constants/app_sizes.dart';
 
-/// Input field chuẩn cho toàn bộ ứng dụng.
-/// Hỗ trợ label, hint, icon, obscure text và validation.
 class CustomInputField extends StatelessWidget {
   final TextEditingController? controller;
   final String label;

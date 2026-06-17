@@ -111,7 +111,6 @@ class _DrawerContent extends StatelessWidget {
             const Divider(height: 1, color: Color(0xFFF3F4F6)),
             const SizedBox(height: 12),
 
-            // Lịch trình
             const _PillHeader(
                 icon: Icons.calendar_today_outlined, label: 'LỊCH TRÌNH & ĐỊA ĐIỂM'),
             const _SubHeader(label: 'Sắp đến'),
@@ -119,7 +118,6 @@ class _DrawerContent extends StatelessWidget {
                 .map((e) => _ActivityTile(item: e, icon: Icons.bed_outlined, isImage: false)),
             const SizedBox(height: 16),
 
-            // Đánh giá
             const _PillHeader(
                 icon: Icons.star_border_rounded, label: 'ĐÁNH GIÁ ĐỊA ĐIỂM'),
             const _SubHeader(label: 'Đã đánh giá'),
@@ -163,7 +161,6 @@ class _DrawerContent extends StatelessWidget {
                 .map((e) => _ActivityTile(item: e, icon: Icons.image_outlined, isImage: true)),
             const SizedBox(height: 16),
 
-            // Ẩm thực
             const _PillHeader(
                 icon: Icons.restaurant_outlined, label: 'ẨM THỰC ĐÃ ĐẶT'),
             const _SubHeader(label: 'Đơn hàng của tôi'),

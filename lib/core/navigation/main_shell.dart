@@ -83,7 +83,6 @@ class _MainShellState extends State<MainShell> {
                     );
                   }
                 } catch (e) {
-                  // Fallback nếu không lấy được nội dung chi tiết
                   if (mounted) {
                     NotificationService().showNotification(
                       title: 'Thông báo mới',
@@ -116,7 +115,6 @@ class _MainShellState extends State<MainShell> {
       child: _TrackingRestorer(
         child: BlocBuilder<TabCubit, int>(
           builder: (context, currentIndex) {
-            // Bắt trường hợp Profile đã load xong trước khi Widget build (ví dụ Hot Reload)
             final currentState = context.read<ProfileCubit>().state;
             if (currentState is ProfileLoaded && _notificationChannel == null) {
               _listenToNotifications(currentState.profile.id);
@@ -167,9 +165,6 @@ class _MainShellState extends State<MainShell> {
   }
 }
 
-/// Widget đặt bên trong MultiBlocProvider để gọi restoreIfActive() từ đúng
-/// descendant context — tránh lỗi ProviderNotFoundException khi gọi từ
-/// ancestor context trong initState() của _MainShellState.
 class _TrackingRestorer extends StatefulWidget {
   final Widget child;
   const _TrackingRestorer({required this.child});

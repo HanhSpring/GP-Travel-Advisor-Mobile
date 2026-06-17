@@ -30,15 +30,11 @@ void main() async {
     anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
   );
   await initializeDateFormatting('vi_VN', null);
-  // AlarmManager chỉ hỗ trợ Android — guard để không crash trên iOS/web.
   if (!kIsWeb && Platform.isAndroid) {
     await AndroidAlarmManager.initialize();
   }
   await initDependencies();
   
-  // ✅ KHỞI TẠO MAPBOX SDK
-  // Lưu ý: Mapbox v2 bắt buộc dùng Mapbox Public Token (pk...) để khởi động engine.
-  // Goong Key sẽ được dùng riêng trong Style URL ở các Widget.
   if (!kIsWeb) {
     String mapboxPublicToken = dotenv.env['MAPBOX_PUBLIC_TOKEN'] ?? 'pk.eyJ1IjoibWFwdHJhdmVsNjgiLCJhIjoiY21vbmpkdXh4MDF0YTJxczlhMzQ3ZzF1cSJ9.gC1J7jzlMnFD_yHe-4JgqQ';
     MapboxOptions.setAccessToken(mapboxPublicToken);
@@ -67,12 +63,10 @@ class _TravelAdvisorAppState extends State<TravelAdvisorApp> {
   void _initDeepLinks() {
     _appLinks = AppLinks();
 
-    // Lắng nghe deeplink khi app đang chạy
     _appLinks.uriLinkStream.listen((uri) {
       _handleDeepLink(uri);
     });
 
-    // Kiểm tra deeplink khi app khởi động cold (vừa bị tắt)
     _appLinks.getInitialLink().then((uri) {
       if (uri != null) {
         _handleDeepLink(uri);
@@ -80,14 +74,10 @@ class _TravelAdvisorAppState extends State<TravelAdvisorApp> {
     });
   }
 
-  /// Xử lý deeplink từ email Supabase reset-password.
-  /// URL sẽ có dạng: gptraveladvisor://reset-password?access_token=xxx&...
   void _handleDeepLink(Uri uri) {
     if (uri.host == 'reset-password') {
-      // Lấy access_token từ query params hoặc fragment (#access_token=...)
       String? accessToken = uri.queryParameters['access_token'];
 
-      // Supabase đôi khi đặt token trong fragment (#)
       if (accessToken == null && uri.fragment.isNotEmpty) {
         final fragmentParams = Uri.splitQueryString(uri.fragment);
         accessToken = fragmentParams['access_token'];

@@ -47,7 +47,6 @@ class AuthBackground extends StatelessWidget {
       );
 }
 
-/// "Hoặc" divider with horizontal lines on both sides.
 class OrDivider extends StatelessWidget {
   const OrDivider({super.key});
 

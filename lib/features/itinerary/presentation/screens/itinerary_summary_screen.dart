@@ -16,7 +16,6 @@ import 'package:travel_advisor_mobile/features/itinerary/presentation/cubit/itin
 import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/itinerary_review_dialog.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/short_itinerary_item.dart';
 
-/// ðŸ”§ CHáº¾ Äá»˜ THIáº¾T Káº¾: Set true đá»ƒ dÃ¹ng dá»¯ liá»‡u máº«u, false đá»ƒ dÃ¹ng API
 const bool _useMockData = AppConfig.kUseMockData;
 
 class ItinerarySummaryScreen extends StatefulWidget {
@@ -151,7 +150,6 @@ class _ItinerarySummaryView extends StatelessWidget {
         ),
         centerTitle: true,
         actions: [
-          // NÃºt chá»‰nh sá»­a tiÃªu đá»
           Container(
             margin: const EdgeInsets.only(right: 8),
             decoration: BoxDecoration(
@@ -217,7 +215,6 @@ class _ItinerarySummaryView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // â”€â”€ Header vá»›i Glassmorphism Image Card â”€â”€
                 _buildDestinationHeader(context, itin, dateRange),
 
                 Padding(
@@ -288,7 +285,6 @@ class _ItinerarySummaryView extends StatelessWidget {
               ],
             ),
           ),
-          // â”€â”€ NÃºt xem chi tiáº¿t á»Ÿ dÆ°á»›i cÃ¹ng (Floating effect) â”€â”€
           Positioned(
             bottom: 30,
             left: 20,
@@ -313,7 +309,7 @@ class _ItinerarySummaryView extends StatelessWidget {
           // Background Image
           Positioned.fill(
             child: Image.network(
-              'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1000&q=80', // HÃ¬nh áº£nh biá»ƒn PhÃº Quá»‘c
+              'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1000&q=80',
               fit: BoxFit.cover,
             ),
           ),
@@ -476,8 +472,6 @@ class _ItinerarySummaryView extends StatelessWidget {
     final TextEditingController controller = TextEditingController(
       text: itin.title,
     );
-    // Capture cubit và scaffoldMessenger trước khi showDialog,
-    // vì context bên trong builder của dialog không thuộc subtree của BlocProvider.
     final cubit = context.read<ItineraryCubit>();
     final messenger = ScaffoldMessenger.of(context);
 
@@ -893,7 +887,6 @@ class _ItinerarySummaryView extends StatelessWidget {
 
   Widget _buildActionBtn(BuildContext context, ItineraryDetailEntity itin) {
     final now = DateTime.now();
-    // Logic xÃ©t tráº¡ng thÃ¡i dá»±a trÃªn thá»i gian thá»±c
     final bool isFuture = now.isBefore(itin.startDate);
 
     String btnText = 'XEM CHI TIẾT LỊCH TRÌNH';
@@ -1028,7 +1021,6 @@ class _ItinerarySummaryView extends StatelessWidget {
   Widget _buildCulinarySection(ItineraryDetailEntity itin) {
     final formatter = NumberFormat('#,###', 'vi_VN');
 
-    // TÃ­nh tá»•ng táº¥t cáº£ món Äƒn
     double grandTotal = 0;
     for (var restaurant in itin.visitedRestaurants) {
       for (var dish in restaurant.dishes) {
@@ -1055,7 +1047,6 @@ class _ItinerarySummaryView extends StatelessWidget {
           ...itin.visitedRestaurants.map((food) {
             return _CulinaryExpandableItem(food: food);
           }),
-          // DÃ²ng tá»•ng cá»™ng chung
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -1092,8 +1083,8 @@ class _ItinerarySummaryView extends StatelessWidget {
       title: 'Ká»³ nghá»‰ HÃ¨ PhÃº Quá»‘c 2024',
       destination: 'PhÃº Quá»‘c',
       startDate: now.subtract(const Duration(days: 5)),
-      endDate: now.subtract(const Duration(days: 1)), // Káº¿t thÃºc ngÃ y hÃ´m qua
-      status: 'COMPLETED', // Äá»ƒ kiá»ƒm tra tráº¡ng thÃ¡i ÄÃ¡nh giÃ¡
+      endDate: now.subtract(const Duration(days: 1)),
+      status: 'COMPLETED',
       durationDays: 4,
       activitiesCount: 12,
       hotelsCount: 1,

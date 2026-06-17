@@ -7,10 +7,7 @@ import 'package:travel_advisor_mobile/features/itinerary/domain/entities/itinera
 import 'package:travel_advisor_mobile/features/itinerary/domain/repositories/itinerary_repository.dart';
 import 'package:travel_advisor_mobile/features/trip_planner/domain/usecases/create_itinerary_usecase.dart';
 
-/// Implementation cụ thể của [ItineraryRepository].
 ///
-/// Delegate mọi thao tác sang [ItineraryDataSource] và chuyển đổi
-/// Model → Entity trước khi trả về cho tầng Domain.
 class ItineraryRepositoryImpl implements ItineraryRepository {
   final ItineraryDataSource _dataSource;
   ItineraryRepositoryImpl(this._dataSource);
@@ -23,7 +20,6 @@ class ItineraryRepositoryImpl implements ItineraryRepository {
     final models = await _dataSource.getItineraries(query: query);
     final entities = models.map((m) => m.toEntity()).toList();
 
-    // Lọc theo status nếu có.
     if (status != null) {
       return entities.where((e) => e.status == status).toList();
     }
@@ -119,7 +115,6 @@ class ItineraryRepositoryImpl implements ItineraryRepository {
       childCount: params.childCount,
       budget: params.budget,
       foodPreferences: params.foodPreferences,
-      // [TRIP_NAME_INPUT] Truyền tên chuyến đi qua description
       description: params.tripName,
     );
     return _dataSource.createItinerary(request);

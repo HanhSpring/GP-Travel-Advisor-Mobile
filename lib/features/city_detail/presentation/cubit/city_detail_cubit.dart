@@ -11,8 +11,6 @@ class CityDetailCubit extends Cubit<CityDetailState> {
   CityDetailCubit(this._getCityOverview)
     : super(const CityDetailState.initial());
 
-  /// Tải dữ liệu tổng quan của thành phố.
-  /// Sau khi load xong, khởi tạo filteredList = danh sách gốc (chưa filter).
 Future<void> loadCityDetail(String cityId, String cityName) async {
   emit(const CityDetailState.loading());
   try {
@@ -33,41 +31,34 @@ Future<void> loadCityDetail(String cityId, String cityName) async {
   }
 }
 
-  /// Chuyển tab
   void changeTab(int index) {
     state.mapOrNull(loaded: (s) => emit(s.copyWith(activeTab: index)));
   }
 
   // ============================================================
-  // FILTER & SORT — Tab Hoạt động tham quan
   // ============================================================
 
-  /// Cập nhật bộ lọc cho tab "Hoạt động tham quan" và áp dụng lọc.
   void updateActivityFilter(ActivityFilter filter) {
     state.mapOrNull(
       loaded: (s) {
         var result = s.overview.activities.toList();
 
-        // 1. Lọc theo loại hình (chọn nhiều, rỗng = tất cả)
         if (filter.categories.isNotEmpty) {
           result = result.where((a) {
             return filter.categories.any((c) => c.name == a.category);
           }).toList();
         }
 
-        // 2. Lọc theo khoảng giá (chọn 1)
         if (filter.priceType != ActivityPriceType.all) {
           result = result
               .where((a) => a.priceType == filter.priceType.name)
               .toList();
         }
 
-        // 3. Lọc theo khu vực
         if (filter.district != null && filter.district!.isNotEmpty) {
           result = result.where((a) => a.district == filter.district).toList();
         }
 
-        // 5. Sắp xếp
         switch (filter.sortOption) {
           case SortOption.mostPopular:
             result.sort((a, b) => b.reviewCount.compareTo(a.reviewCount));
@@ -84,29 +75,24 @@ Future<void> loadCityDetail(String cityId, String cityName) async {
     );
   }
 
-  /// Đặt lại filter cho tab Hoạt động về mặc định
   void resetActivityFilter() {
     updateActivityFilter(const ActivityFilter());
   }
 
   // ============================================================
-  // FILTER & SORT — Tab Nhà hàng
   // ============================================================
 
-  /// Cập nhật bộ lọc cho tab "Nhà hàng" và áp dụng lọc.
   void updateRestaurantFilter(RestaurantFilter filter) {
     state.mapOrNull(
       loaded: (s) {
         var result = s.overview.restaurants.toList();
 
-        // 1. Lọc theo danh mục (chọn nhiều)
         if (filter.cuisines.isNotEmpty) {
           result = result.where((r) {
             return filter.cuisines.any((c) => c.name == r.cuisine);
           }).toList();
         }
 
-        // 2. Lọc theo mức giá (chọn 1)
         if (filter.priceLevel != RestaurantPriceLevel.all) {
           final priceLevelStr =
               filter.priceLevel == RestaurantPriceLevel.midRange
@@ -115,7 +101,6 @@ Future<void> loadCityDetail(String cityId, String cityName) async {
           result = result.where((r) => r.priceLevel == priceLevelStr).toList();
         }
 
-        // 3. Lọc theo tiện ích (phải có TẤT CẢ tiện ích đã chọn)
         if (filter.amenities.isNotEmpty) {
           result = result.where((r) {
             return filter.amenities.every(
@@ -124,13 +109,11 @@ Future<void> loadCityDetail(String cityId, String cityName) async {
           }).toList();
         }
 
-        // 5. Sắp xếp
         switch (filter.sortOption) {
           case SortOption.highestRated:
             result.sort((a, b) => b.rating.compareTo(a.rating));
             break;
           case SortOption.cheapest:
-            // Sort theo thứ tự: budget < mid_range < premium
             result.sort(
               (a, b) => _priceLevelOrder(
                 a.priceLevel,
@@ -146,12 +129,10 @@ Future<void> loadCityDetail(String cityId, String cityName) async {
     );
   }
 
-  /// Đặt lại filter cho tab Nhà hàng về mặc định
   void resetRestaurantFilter() {
     updateRestaurantFilter(const RestaurantFilter());
   }
 
-  /// Helper: Chuyển priceLevel string thành số thứ tự để so sánh
   int _priceLevelOrder(String priceLevel) {
     switch (priceLevel) {
       case 'budget':
@@ -166,16 +147,13 @@ Future<void> loadCityDetail(String cityId, String cityName) async {
   }
 
   // ============================================================
-  // FILTER & SORT — Tab Khách sạn
   // ============================================================
 
-  /// Cập nhật bộ lọc cho tab "Khách sạn" và áp dụng lọc.
   void updateHotelFilter(HotelFilter filter) {
     state.mapOrNull(
       loaded: (s) {
         var result = s.overview.hotels.toList();
 
-        // 2. Lọc theo khoảng giá (RangeSlider)
         if (filter.minPrice > 0 || filter.maxPrice > 0) {
           result = result.where((h) {
             final aboveMin = h.priceValue >= filter.minPrice;
@@ -185,7 +163,6 @@ Future<void> loadCityDetail(String cityId, String cityName) async {
           }).toList();
         }
 
-        // 3. Lọc theo loại hình lưu trú (chọn nhiều)
         if (filter.accommodationTypes.isNotEmpty) {
           result = result.where((h) {
             return filter.accommodationTypes.any(
@@ -194,7 +171,6 @@ Future<void> loadCityDetail(String cityId, String cityName) async {
           }).toList();
         }
 
-        // 4. Lọc theo tiện nghi (phải có TẤT CẢ tiện nghi đã chọn)
         if (filter.amenities.isNotEmpty) {
           result = result.where((h) {
             return filter.amenities.every(
@@ -203,7 +179,6 @@ Future<void> loadCityDetail(String cityId, String cityName) async {
           }).toList();
         }
 
-        // 5. Sắp xếp
         switch (filter.sortOption) {
           case SortOption.highestRated:
             result.sort((a, b) => b.rating.compareTo(a.rating));
@@ -220,7 +195,6 @@ Future<void> loadCityDetail(String cityId, String cityName) async {
     );
   }
 
-  /// Đặt lại filter cho tab Khách sạn về mặc định
   void resetHotelFilter() {
     updateHotelFilter(const HotelFilter());
   }

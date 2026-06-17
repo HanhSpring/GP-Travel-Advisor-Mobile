@@ -137,7 +137,6 @@ class _ReplacePlaceSheetState extends State<ReplacePlaceSheet> {
   }
 
   void _onSelect(NearbyPlaceModel place) async {
-    // Validate opening hours dựa theo giờ hiện tại của activity đang thay thế
     if (place.openHourCompressed != null) {
       final slot = _openSlotForDay(
           place.openHourCompressed!, DateTime.now());

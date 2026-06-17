@@ -1,7 +1,6 @@
 import 'package:travel_advisor_mobile/features/auth/domain/entities/login_result.dart';
 import 'package:travel_advisor_mobile/features/auth/domain/repositories/auth_repository.dart';
 
-/// Use-case: Đăng nhập.
 class LoginUseCase {
   final AuthRepository _repository;
   LoginUseCase(this._repository);
@@ -14,7 +13,6 @@ class LoginUseCase {
   }
 }
 
-/// Use-case: Đăng ký tài khoản du khách.
 class RegisterTouristUseCase {
   final AuthRepository _repository;
   RegisterTouristUseCase(this._repository);
@@ -36,7 +34,6 @@ class RegisterTouristUseCase {
   }
 }
 
-/// Use-case: Gửi email magic link quên mật khẩu.
 class ForgotPasswordUseCase {
   final AuthRepository _repository;
   ForgotPasswordUseCase(this._repository);
@@ -46,7 +43,6 @@ class ForgotPasswordUseCase {
   }
 }
 
-/// Use-case: Đặt lại mật khẩu mới với token từ deeplink.
 class UpdatePasswordUseCase {
   final AuthRepository _repository;
   UpdatePasswordUseCase(this._repository);
@@ -62,7 +58,6 @@ class UpdatePasswordUseCase {
   }
 }
 
-/// Use-case: Đổi mật khẩu trong app.
 class ChangePasswordUseCase {
   final AuthRepository _repository;
   ChangePasswordUseCase(this._repository);
@@ -78,7 +73,6 @@ class ChangePasswordUseCase {
   }
 }
 
-/// Use-case: Đăng nhập bằng Google.
 class LoginWithGoogleUseCase {
   final AuthRepository repository;
   LoginWithGoogleUseCase(this.repository);

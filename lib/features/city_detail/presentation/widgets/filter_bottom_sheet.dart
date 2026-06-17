@@ -6,10 +6,8 @@ import 'package:travel_advisor_mobile/core/utils/input_formatter.dart';
 import 'package:travel_advisor_mobile/features/city_detail/domain/entities/filter_enums.dart';
 
 // ============================================================
-// HELPER: Các widget con dùng chung trong 3 Bottom Sheet
 // ============================================================
 
-/// Tiêu đề section trong bottom sheet (ví dụ: "Loại hình", "Khoảng giá"...)
 class _SectionTitle extends StatelessWidget {
   final String title;
   const _SectionTitle(this.title);
@@ -30,7 +28,6 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-/// Nút "Áp dụng" + "Đặt lại" ở cuối bottom sheet
 class _ActionButtons extends StatelessWidget {
   final VoidCallback onApply;
   final VoidCallback onReset;
@@ -43,7 +40,6 @@ class _ActionButtons extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         children: [
-          // Nút "Đặt lại"
           Expanded(
             flex: 1,
             child: OutlinedButton(
@@ -66,7 +62,6 @@ class _ActionButtons extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          // Nút "Áp dụng"
           Expanded(
             flex: 2,
             child: ElevatedButton(
@@ -96,7 +91,6 @@ class _ActionButtons extends StatelessWidget {
 }
 
 // ============================================================
-// BOTTOM SHEET 1: Hoạt động tham quan
 // ============================================================
 
 class ActivityFilterSheet extends StatefulWidget {
@@ -122,7 +116,6 @@ class _ActivityFilterSheetState extends State<ActivityFilterSheet> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
-  // Danh sách quận/huyện mẫu
   final List<String> _districts = [
     'Quận 1',
     'Quận 3',
@@ -205,7 +198,6 @@ class _ActivityFilterSheetState extends State<ActivityFilterSheet> {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              // Tiêu đề "Bộ lọc"
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 12),
                 child: Text(
@@ -218,13 +210,11 @@ class _ActivityFilterSheetState extends State<ActivityFilterSheet> {
                 ),
               ),
               const Divider(height: 1),
-              // Nội dung cuộn
               Expanded(
                 child: ListView(
                   controller: scrollController,
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   children: [
-                    // --- Loại hình ---
                     const _SectionTitle('Loại hình địa điểm'),
                     
                     // Search Bar
@@ -294,7 +284,6 @@ class _ActivityFilterSheetState extends State<ActivityFilterSheet> {
                       );
                     }),
 
-                    // --- Khoảng giá ---
                     const _SectionTitle('Khoảng giá'),
                     Wrap(
                       spacing: 8,
@@ -324,7 +313,6 @@ class _ActivityFilterSheetState extends State<ActivityFilterSheet> {
                       }).toList(),
                     ),
 
-                    // --- Khu vực ---
                     const _SectionTitle('Khu vực'),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -353,7 +341,6 @@ class _ActivityFilterSheetState extends State<ActivityFilterSheet> {
                       ),
                     ),
 
-                    // --- Sắp xếp theo ---
                     const _SectionTitle('Sắp xếp theo'),
                     ...[SortOption.none, SortOption.mostPopular, SortOption.highestRated]
                         .map((opt) => RadioListTile<SortOption>(
@@ -375,7 +362,6 @@ class _ActivityFilterSheetState extends State<ActivityFilterSheet> {
                   ],
                 ),
               ),
-              // Nút "Đặt lại" + "Áp dụng"
               _ActionButtons(
                 onReset: _reset,
                 onApply: () {
@@ -397,7 +383,6 @@ class _ActivityFilterSheetState extends State<ActivityFilterSheet> {
 }
 
 // ============================================================
-// BOTTOM SHEET 2: Nhà hàng
 // ============================================================
 
 class RestaurantFilterSheet extends StatefulWidget {
@@ -489,7 +474,6 @@ class _RestaurantFilterSheetState extends State<RestaurantFilterSheet> {
                   controller: scrollController,
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   children: [
-                    // --- Danh mục ---
                     const _SectionTitle('Danh mục'),
                     Wrap(
                       spacing: 8,
@@ -521,7 +505,6 @@ class _RestaurantFilterSheetState extends State<RestaurantFilterSheet> {
                         );
                       }).toList(),
                     ),
-                    // --- Mức giá ---
                     const _SectionTitle('Mức giá'),
                     Wrap(
                       spacing: 8,
@@ -548,7 +531,6 @@ class _RestaurantFilterSheetState extends State<RestaurantFilterSheet> {
                         );
                       }).toList(),
                     ),
-                    // --- Tiện ích ---
                     const _SectionTitle('Tiện ích'),
                     ...RestaurantAmenity.values.map((amenity) {
                       final isSelected = _amenities.contains(amenity);
@@ -582,7 +564,6 @@ class _RestaurantFilterSheetState extends State<RestaurantFilterSheet> {
                       );
                     }),
 
-                    // --- Sắp xếp theo ---
                     const _SectionTitle('Sắp xếp theo'),
                     ...SortOption.values
                         .map((opt) => RadioListTile<SortOption>(
@@ -624,7 +605,6 @@ class _RestaurantFilterSheetState extends State<RestaurantFilterSheet> {
 }
 
 // ============================================================
-// BOTTOM SHEET 3: Khách sạn
 // ============================================================
 
 class HotelFilterSheet extends StatefulWidget {
@@ -752,7 +732,6 @@ class _HotelFilterSheetState extends State<HotelFilterSheet> {
                   controller: scrollController,
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   children: [
-                    // --- Khoảng giá (InputFields) ---
                     const _SectionTitle('Khoảng giá (VNĐ)'),
                     Row(
                       children: [
@@ -814,7 +793,6 @@ class _HotelFilterSheetState extends State<HotelFilterSheet> {
                         ),
                       ],
                     ),
-                    // --- Loại hình lưu trú ---
                     const _SectionTitle('Loại hình lưu trú'),
                     ...AccommodationType.values.map((type) {
                       final isSelected = _accommodationTypes.contains(type);
@@ -847,7 +825,6 @@ class _HotelFilterSheetState extends State<HotelFilterSheet> {
                         },
                       );
                     }),
-                    // --- Tiện nghi ---
                     const _SectionTitle('Tiện nghi'),
                     ...HotelAmenity.values.map((amenity) {
                       final isSelected = _amenities.contains(amenity);
@@ -880,7 +857,6 @@ class _HotelFilterSheetState extends State<HotelFilterSheet> {
                         },
                       );
                     }),
-                    // --- Sắp xếp theo ---
                     const _SectionTitle('Sắp xếp theo'),
                     ...SortOption.values
                         .map((opt) => RadioListTile<SortOption>(
@@ -904,7 +880,6 @@ class _HotelFilterSheetState extends State<HotelFilterSheet> {
               _ActionButtons(
                 onReset: _reset,
                 onApply: () {
-                  // Loại bỏ dấu phân cách trước khi parse (ví dụ: "1.000.000" -> "1000000")
                   final minStr = _minPriceController.text.replaceAll(RegExp(r'\D'), '');
                   final maxStr = _maxPriceController.text.replaceAll(RegExp(r'\D'), '');
                   

@@ -237,7 +237,6 @@ class ItineraryCubit extends Cubit<ItineraryState> {
     if (state is! ItineraryLoaded) return;
     final previousState = state as ItineraryLoaded;
 
-    // Optimistic update: cập nhật UI ngay lập tức
     if (previousState.selectedItinerary?.id == id) {
       final updatedItineraries = previousState.itineraries
           .map((e) => e.id == id ? e.copyWith(title: title) : e)
@@ -262,7 +261,6 @@ class ItineraryCubit extends Cubit<ItineraryState> {
         await _updateTitle(id, title);
       }
     } catch (e) {
-      // Rollback về state cũ nếu API lỗi
       emit(
         ItineraryError('Không thể cập nhật tên lịch trình: ${e.toString()}'),
       );
@@ -394,7 +392,7 @@ class ItineraryCubit extends Cubit<ItineraryState> {
     required String activityId,
     required int deltaMinutes,
     bool shiftStartTimeOnly =
-        true, // true = đang chỉnh startTime, false = đang chỉnh endTime
+        true,
   }) {
     if (state is ItineraryLoaded) {
       final currentState = state as ItineraryLoaded;
@@ -410,19 +408,16 @@ class ItineraryCubit extends Cubit<ItineraryState> {
           if (activity.id == activityId) {
             foundActivity = true;
             if (shiftStartTimeOnly) {
-              // Đang chỉnh startTime → tịnh tiến cả activity hiện tại
               return activity.copyWith(
                 startTime: _shiftTimeStr(activity.startTime, deltaMinutes),
                 endTime: _shiftTimeStr(activity.endTime, deltaMinutes),
               );
             } else {
-              // Đang chỉnh endTime → chỉ cập nhật endTime của activity hiện tại
               return activity.copyWith(
                 endTime: _shiftTimeStr(activity.endTime, deltaMinutes),
               );
             }
           }
-          // Các activity phía sau → tịnh tiến toàn bộ
           if (foundActivity) {
             return activity.copyWith(
               startTime: _shiftTimeStr(activity.startTime, deltaMinutes),
@@ -467,8 +462,6 @@ class ItineraryCubit extends Cubit<ItineraryState> {
     final itin = currentState.selectedItinerary;
     if (itin == null) return;
 
-    // Optimistic: cập nhật UI ngay bằng dữ liệu đã có trong memory,
-    // không cần re-fetch vì server vừa nhận đúng data này.
     emit(currentState.copyWithSelected(itin));
 
     try {
@@ -476,7 +469,6 @@ class ItineraryCubit extends Cubit<ItineraryState> {
         await _updateActivities(id, itin.days);
       }
     } catch (e) {
-      // Rollback về state cũ nếu API lỗi
       emit(ItineraryError('Không thể cập nhật lịch trình: ${e.toString()}'));
       emit(currentState);
     }
@@ -521,7 +513,6 @@ class ItineraryCubit extends Cubit<ItineraryState> {
 
     emit(const ItineraryLoading());
 
-    // Thay thế địa điểm, giữ nguyên vị trí trong ngày
     var updatedDays = itin.days.map((day) {
       if (!day.activities.any((a) => a.id == oldActivityId)) return day;
       final updatedActivities = day.activities.map((a) {
@@ -542,7 +533,6 @@ class ItineraryCubit extends Cubit<ItineraryState> {
       return day.copyWith(activities: updatedActivities);
     }).toList();
 
-    // Tìm ngày chứa địa điểm vừa thay thế
     int? dayNum;
     ItineraryDayEntity? originalDay;
     for (final d in itin.days) {
@@ -553,13 +543,11 @@ class ItineraryCubit extends Cubit<ItineraryState> {
       }
     }
 
-    // Chạy OR-Tools để tìm lộ trình tối ưu sau khi thay thế
     List<ItineraryDayEntity>? optimizedDays;
     if (dayNum != null) {
       optimizedDays = await _optimizeSpecificDay(updatedDays, dayNum);
     }
 
-    // So sánh tổng khoảng cách trước/sau để quyết định đề xuất sắp xếp lại
     List<ItineraryDayEntity>? suggestion;
     int? suggestionDayNum;
     if (originalDay != null && optimizedDays != null && dayNum != null) {
@@ -570,7 +558,6 @@ class ItineraryCubit extends Cubit<ItineraryState> {
       final distBefore = _totalRouteDistanceKm(currentDay.activities);
       final distAfter = _totalRouteDistanceKm(optimizedDay.activities);
 
-      // Đề xuất nếu lộ trình tối ưu cải thiện > 15% khoảng cách
       if (distBefore > 0.5 && distAfter < distBefore * 0.85) {
         suggestion = optimizedDays;
         suggestionDayNum = dayNum;
@@ -634,13 +621,11 @@ class ItineraryCubit extends Cubit<ItineraryState> {
       return day.copyWith(activities: [...day.activities, newActivity]);
     }).toList();
 
-    // OR-Tools tìm vị trí chèn tối ưu trong ngày
     updatedDays = await _optimizeSpecificDay(updatedDays, dayNumber);
 
     emit(currentState.copyWithSelected(itin.copyWith(days: updatedDays)));
   }
 
-  /// Tổng khoảng cách Haversine của toàn bộ lộ trình (km).
   double _totalRouteDistanceKm(List<ItineraryActivityEntity> activities) {
     double total = 0;
     for (int i = 0; i < activities.length - 1; i++) {
@@ -676,7 +661,6 @@ class ItineraryCubit extends Cubit<ItineraryState> {
     return r * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
   }
 
-  /// Áp dụng lộ trình được đề xuất sau khi người dùng chấp nhận.
   void applySuggestedReorder() {
     if (state is! ItineraryLoaded) return;
     final s = state as ItineraryLoaded;
@@ -696,7 +680,6 @@ class ItineraryCubit extends Cubit<ItineraryState> {
     );
   }
 
-  /// Bỏ qua đề xuất sắp xếp lại.
   void dismissReorderSuggestion() {
     if (state is! ItineraryLoaded) return;
     final s = state as ItineraryLoaded;

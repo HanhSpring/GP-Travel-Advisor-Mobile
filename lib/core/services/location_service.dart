@@ -3,8 +3,6 @@ import 'package:geolocator/geolocator.dart';
 
 import 'package:travel_advisor_mobile/features/home/domain/entities/user_location.dart';
 
-/// Lỗi khi lấy vị trí. [permissionDenied] = true khi người dùng từ chối quyền
-/// hoặc dịch vụ vị trí đang tắt (UI nên gợi ý mở cài đặt).
 class LocationFailure implements Exception {
   final String message;
   final bool permissionDenied;
@@ -14,12 +12,7 @@ class LocationFailure implements Exception {
   String toString() => message;
 }
 
-/// Lấy vị trí hiện tại của thiết bị và reverse-geocode ra Phường/Xã, Tỉnh/TP.
 ///
-/// - Quyền vị trí: dùng `geolocator` (hiển thị hộp thoại xin quyền hệ thống).
-/// - Reverse geocoding: Nominatim (OpenStreetMap) — miễn phí, không cần API key,
-///   `accept-language=vi` để trả tên tiếng Việt. Có hỗ trợ CORS nên chạy được
-///   cả web lẫn mobile.
 class LocationService {
   final Dio _dio;
 
@@ -43,11 +36,7 @@ class LocationService {
     );
   }
 
-  /// Stream vị trí realtime — emit khi người dùng di chuyển >= [distanceFilter] m.
-  /// Yêu cầu quyền/dịch vụ đã được cấp (kiểm tra trước qua [getCurrentLocation]).
   ///
-  /// Mặc định dùng `medium` accuracy: tên Phường/Xã chỉ đổi sau hàng trăm mét
-  /// nên không cần GPS chính xác cao -> tiết kiệm pin.
   Stream<Position> positionStream({int distanceFilter = 100}) {
     return Geolocator.getPositionStream(
       locationSettings: LocationSettings(
@@ -57,8 +46,6 @@ class LocationService {
     );
   }
 
-  /// Reverse-geocode một toạ độ ra (ward, province) — public để cubit gọi lại
-  /// khi vị trí thay đổi mà không cần lấy lại GPS.
   Future<UserLocation> reverseGeocode(double lat, double lng) async {
     final geo = await _reverseGeocode(lat, lng);
     return UserLocation(
@@ -69,7 +56,6 @@ class LocationService {
     );
   }
 
-  /// Kiểm tra dịch vụ + quyền, rồi lấy toạ độ hiện tại.
   Future<Position> _resolvePosition() async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
@@ -101,7 +87,6 @@ class LocationService {
     );
   }
 
-  /// Trả về (ward, province). Phần nào không xác định được sẽ là null.
   Future<(String?, String?)> _reverseGeocode(double lat, double lng) async {
     try {
       final res = await _dio.get(
@@ -115,8 +100,6 @@ class LocationService {
           'zoom': 18,
         },
         options: Options(
-          // Nominatim yêu cầu User-Agent định danh ứng dụng (trên web trình
-          // duyệt sẽ bỏ qua header này và tự gắn UA của nó — vẫn hợp lệ).
           headers: {'User-Agent': 'GPTravelAdvisor/1.0 (thesis app)'},
         ),
       );
@@ -133,7 +116,6 @@ class LocationService {
         return null;
       }
 
-      // Phường/Xã (cấp cơ sở ở VN theo dữ liệu OSM).
       final ward = pick([
         'quarter',
         'ward',
@@ -143,12 +125,10 @@ class LocationService {
         'hamlet',
         'town',
       ]);
-      // Tỉnh/Thành phố trực thuộc TW.
       final province = pick(['state', 'city', 'region', 'county']);
 
       return (ward, province);
     } on DioException {
-      // Mạng lỗi -> trả null, cubit vẫn coi là Loaded với toạ độ.
       return (null, null);
     }
   }

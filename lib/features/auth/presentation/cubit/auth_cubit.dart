@@ -28,7 +28,6 @@ class AuthCubit extends Cubit<AuthState> {
        super(const AuthInitial());
 
   // ── Login ──────────────────────────────────────────────────────────────────
-  /// Token được lưu tự động trong RemoteAuthDataSource sau khi server xác thực.
   Future<void> login({
     required String emailOrPhone,
     required String password,
@@ -45,7 +44,6 @@ class AuthCubit extends Cubit<AuthState> {
       debugPrint('Error: $e');
       debugPrint('StackTrace: $stackTrace');
 
-      // Báo lỗi thân thiện cho User
       emit(AuthError('Sai thông tin đăng nhập hoặc tài khoản không tồn tại.'));
     }
   }
@@ -69,12 +67,10 @@ class AuthCubit extends Cubit<AuthState> {
       );
       emit(const RegisterSuccess());
     } catch (e, stackTrace) {
-      // Bắn log ra màn hình console cho dev
       debugPrint('=== LỖI ĐĂNG KÝ TÀI KHOẢN ===');
       debugPrint('Error: $e');
       debugPrint('StackTrace: $stackTrace');
 
-      // Hiển thị lỗi từ server cho người dùng (vd: Email đã tồn tại)
       emit(AuthError(_cleanMessage(e)));
     }
   }
@@ -94,7 +90,6 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  // ── Update Password (dùng accessToken từ deeplink) ─────────────────────────
   Future<void> updatePassword({
     required String accessToken,
     required String newPassword,
@@ -142,12 +137,10 @@ class AuthCubit extends Cubit<AuthState> {
       final result = await _loginWithGoogleUseCase();
       emit(AuthSuccess(result));
     } catch (e, stackTrace) {
-      // Log lỗi kỹ thuật (PlatformException, SupabaseException...) cho Dev
       debugPrint('--- LỖI ĐĂNG NHẬP GOOGLE ---');
       debugPrint('Error: $e');
       debugPrint('StackTrace: $stackTrace');
 
-      // Báo lỗi thân thiện cho User
       emit(AuthError('Đăng nhập Google thất bại. Vui lòng thử lại sau.'));
     }
   }

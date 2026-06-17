@@ -135,7 +135,6 @@ class ItineraryDetailView extends StatelessWidget {
 
             return Stack(
               children: [
-                // ✅ MAP CHIẾM TOÀN MÀN HÌNH (full-screen, tương tác hoàn toàn)
                 Positioned.fill(
                   child: ItineraryMapView(
                     activities: currentDayData.activities,
@@ -146,11 +145,10 @@ class ItineraryDetailView extends StatelessWidget {
                   ),
                 ),
 
-                // ✅ BOTTOM SHEET KÉO LÊN/XUỐNG (DraggableScrollableSheet)
                 DraggableScrollableSheet(
-                  initialChildSize: 0.45, // Mở 45% màn hình ban đầu
-                  minChildSize: 0.12, // Thu nhỏ tối đa → gần như chỉ thấy map
-                  maxChildSize: 0.85, // Mở rộng tối đa → che gần hết map
+                  initialChildSize: 0.45,
+                  minChildSize: 0.12,
+                  maxChildSize: 0.85,
                   snap: true,
                   snapSizes: const [0.12, 0.45, 0.85],
                   builder: (context, sheetScrollController) {
@@ -170,7 +168,6 @@ class ItineraryDetailView extends StatelessWidget {
                       ),
                       child: Column(
                         children: [
-                          // Thanh kéo (drag handle)
                           Padding(
                             padding: const EdgeInsets.only(top: 12, bottom: 8),
                             child: Container(
@@ -182,7 +179,6 @@ class ItineraryDetailView extends StatelessWidget {
                               ),
                             ),
                           ),
-                          // Nội dung cuộn được
                           Expanded(
                             child: ListView(
                               controller: sheetScrollController,
@@ -203,7 +199,6 @@ class ItineraryDetailView extends StatelessWidget {
                   },
                 ),
 
-                // ✅ FLOATING BUTTONS (Back, Share, Rate) ở trên cùng
                 Positioned(
                   top: MediaQuery.of(context).padding.top + AppSizes.s12,
                   left: AppSizes.s20,
@@ -368,7 +363,6 @@ class ItineraryDetailView extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSizes.s16),
-          // ── Theo dõi lịch trình (geofence + dwell) ──────────────────────
           TrackingSection(
             itineraryId: itin.id,
             date: currentDayData.date,
@@ -379,8 +373,6 @@ class ItineraryDetailView extends StatelessWidget {
             onStopped: () =>
                 context.read<ItineraryCubit>().toggleItineraryStatus(itin.id, false),
           ),
-          // Dùng Builder để đọc TrackingCubit (được provide ở ItineraryDetailScreen)
-          // và truyền trackingStatus cho từng TimelineActivityCard.
           Builder(builder: (context) {
             final tracking = context.watch<TrackingCubit>().state;
             final activities = visibleActivities;
@@ -399,7 +391,6 @@ class ItineraryDetailView extends StatelessWidget {
                             activity.latitude, activity.longitude,
                             nextActivity.latitude, nextActivity.longitude,
                           ));
-                // Lấy trạng thái tracking theo itineraryDetailId (= activity.id)
                 final TrackingPlaceStatus? trackingStatus =
                     tracking.isActive ? tracking.byDetailId(activity.id) : null;
                 return TimelineActivityCard(
@@ -474,7 +465,6 @@ class ItineraryDetailView extends StatelessWidget {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}';
   }
 
-  // Ước tính thời gian di chuyển từ tọa độ (Haversine + tốc độ 25 km/h)
   static String _estimateTransit(
     double? lat1,
     double? lng1,

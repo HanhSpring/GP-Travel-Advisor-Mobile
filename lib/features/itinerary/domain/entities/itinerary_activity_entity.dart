@@ -19,7 +19,7 @@ class ItineraryActivityEntity with _$ItineraryActivityEntity {
     @Default('VNĐ') String currency,
     String? transportInfo,
     @Default(false) bool isFree,
-    String? category, // e.g. "Cà phê", "Tham quan"
+    String? category,
 
     // Geographical coordinates
     double? latitude,

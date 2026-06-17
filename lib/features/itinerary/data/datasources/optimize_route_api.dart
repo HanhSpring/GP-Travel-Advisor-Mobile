@@ -11,7 +11,6 @@ class OptimizeRouteApi {
       
       final payload = {
         'activities': activities.map((a) {
-          // Tính duration từ startTime/endTime
           int startMin = 0, endMin = 60;
           try {
             final sp = a.startTime.split(':');
@@ -35,9 +34,8 @@ class OptimizeRouteApi {
             'price':             a.price,
             'rating':            a.rating,
             'reviewCount':       a.reviewCount,
-            // ─── Fields mới cho TSPTW ───────────────────
             'durationMinutes':   duration,
-            'isLocked':          false,          // entity chưa có field này → mặc định false
+            'isLocked':          false,
             'lockedArriveTime':  null,
             'openHourCompressed': a.openHourCompressed,
           };
@@ -49,7 +47,6 @@ class OptimizeRouteApi {
       final data = response.data['optimized'] as List;
       if (data.isEmpty) return activities;
 
-      // Build lookup map để tra nhanh bằng id
       final originalMap = {for (final a in activities) a.id: a};
 
       return data.map((json) {
@@ -57,7 +54,6 @@ class OptimizeRouteApi {
         final original = originalMap[id];
 
         if (original == null) {
-          // Fallback nếu không tìm thấy — tạo entity tối thiểu
           return ItineraryActivityEntity(
             id: id,
             title: json['title'] ?? '',
@@ -70,7 +66,6 @@ class OptimizeRouteApi {
           );
         }
 
-        // Giữ toàn bộ dữ liệu gốc, chỉ cập nhật time và transport
         return original.copyWith(
           startTime:     json['startTime'] ?? original.startTime,
           endTime:       json['endTime']   ?? original.endTime,

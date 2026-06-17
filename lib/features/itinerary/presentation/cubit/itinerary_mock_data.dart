@@ -10,7 +10,6 @@ class ItineraryMockData {
 
     final firstDayDate = itin.startDate;
 
-    // ✅ DỮ LIỆU DEMO ĐÀ NẴNG - CÁC ĐIỂM CỰC GẦN NHAU
     final mockActivitiesDay1 = [
       ItineraryActivityEntity(
         id: 'dn_1',
@@ -27,7 +26,7 @@ class ItineraryMockData {
         price: 60000,
         status: ActivityStatus.daDi,
         latitude: 16.0614,
-        longitude: 108.2248, // Tọa độ thật
+        longitude: 108.2248,
       ),
       ItineraryActivityEntity(
         id: 'dn_2',
@@ -44,7 +43,7 @@ class ItineraryMockData {
         isFree: true,
         status: ActivityStatus.daDi,
         latitude: 16.0611,
-        longitude: 108.2274, // Tọa độ thật
+        longitude: 108.2274,
       ),
       ItineraryActivityEntity(
         id: 'dn_3',
@@ -60,7 +59,7 @@ class ItineraryMockData {
         reviewCount: 8200,
         isFree: true,
         latitude: 16.0664,
-        longitude: 108.2227, // Tọa độ thật
+        longitude: 108.2227,
       ),
       ItineraryActivityEntity(
         id: 'dn_4',
@@ -76,7 +75,7 @@ class ItineraryMockData {
         reviewCount: 15000,
         isFree: true,
         latitude: 16.0682,
-        longitude: 108.2244, // Tọa độ thật
+        longitude: 108.2244,
       ),
     ];
 

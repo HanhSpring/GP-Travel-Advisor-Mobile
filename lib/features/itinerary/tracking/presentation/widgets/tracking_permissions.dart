@@ -3,29 +3,23 @@ import 'package:permission_handler/permission_handler.dart';
 
 enum TrackingPermResult { granted, serviceOff, deniedForeground, deniedBackground }
 
-/// Xin quyền theo đúng luồng use case (bước 2): vị trí + **Always Allow /
-/// Background Location**, kèm quyền thông báo (Android 13+).
 class TrackingPermissions {
   static Future<TrackingPermResult> ensure() async {
-    // 1) Dịch vụ định vị bật chưa?
     final serviceOn = await Geolocator.isLocationServiceEnabled();
     if (!serviceOn) return TrackingPermResult.serviceOff;
 
-    // 2) Quyền vị trí khi dùng app.
     var whenInUse = await Permission.locationWhenInUse.status;
     if (!whenInUse.isGranted) {
       whenInUse = await Permission.locationWhenInUse.request();
     }
     if (!whenInUse.isGranted) return TrackingPermResult.deniedForeground;
 
-    // 3) Quyền nền (Always Allow) — bắt buộc cho geofence chạy nền.
     var always = await Permission.locationAlways.status;
     if (!always.isGranted) {
       always = await Permission.locationAlways.request();
     }
     if (!always.isGranted) return TrackingPermResult.deniedBackground;
 
-    // 4) Quyền thông báo (không bắt buộc, để hiện push "Đã đến nơi").
     final notif = await Permission.notification.status;
     if (!notif.isGranted) {
       await Permission.notification.request();

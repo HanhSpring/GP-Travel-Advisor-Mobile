@@ -5,7 +5,6 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:travel_advisor_mobile/core/config/app_config.dart';
 
 class MapUtils {
-  /// Sinh ra URL ảnh bản đồ tĩnh dựa trên cấu hình trong AppConfig
   static String getStaticMapUrl(
     double lat,
     double lng, {
@@ -22,7 +21,6 @@ class MapUtils {
     }
   }
 
-  /// Sinh ra link dẫn đường tới một địa điểm
   static String getDirectionUrl(double lat, double lng, {String? name}) {
     final latStr = lat.toStringAsFixed(6);
     final lngStr = lng.toStringAsFixed(6);
@@ -32,7 +30,6 @@ class MapUtils {
     return 'https://www.google.com/maps/search/?api=1&query=$query';
   }
 
-  /// Sinh ra link chỉ đường từ điểm xuất phát đến điểm đến (Google Maps)
   static String getDirectionsUrl(
     double originLat,
     double originLng,
@@ -44,7 +41,6 @@ class MapUtils {
         '&destination=${destLat.toStringAsFixed(6)},${destLng.toStringAsFixed(6)}';
   }
 
-  /// Lấy danh sách tọa độ uốn lượn theo đường đi thực tế từ Goong
   static Future<List<mapbox.Position>> getGoongRoute(
     List<mapbox.Position> waypoints,
   ) async {
@@ -53,7 +49,6 @@ class MapUtils {
     final origin = '${waypoints.first.lat},${waypoints.first.lng}';
     final destination = '${waypoints.last.lat},${waypoints.last.lng}';
 
-    // API v2 hỗ trợ origin và destination. Nếu có waypoints trung gian, v2 cũng xử lý tốt hơn
     final url =
         'https://rsapi.goong.io/v2/direction?origin=$origin&destination=$destination&vehicle=car&api_key=${AppConfig.kGoongApiKey}';
 

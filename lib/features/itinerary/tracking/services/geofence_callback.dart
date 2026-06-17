@@ -9,12 +9,8 @@ import '../tracking_config.dart';
 import 'tracking_context.dart';
 import 'tracking_http.dart';
 
-/// Hàm chạy trong **background isolate** mỗi khi geofence kích hoạt
-/// (ENTER / DWELL / EXIT). Phải là top-level + `@pragma('vm:entry-point')`
-/// để native_geofence gọi lại được sau khi app bị kill.
 @pragma('vm:entry-point')
 Future<void> geofenceTriggered(GeofenceCallbackParams params) async {
-  // Isolate nền: cần khởi tạo binding + plugin registrant thủ công.
   WidgetsFlutterBinding.ensureInitialized();
   DartPluginRegistrant.ensureInitialized();
 
@@ -46,7 +42,6 @@ Future<void> geofenceTriggered(GeofenceCallbackParams params) async {
       final result = GeofenceEventResult.fromAny(res.data);
       debugPrint('[Geofence] $eventType → detailId=$detailId status=${result.status}');
 
-      // Đủ dwell -> "Đã ghé" -> bắn push "Bạn đã đến [Tên địa điểm]".
       if (eventType == 'DWELL' && result.status == VisitStatus.visited) {
         await _showArrivalNotification(
           detailId: detailId,
@@ -54,7 +49,6 @@ Future<void> geofenceTriggered(GeofenceCallbackParams params) async {
         );
       }
     } catch (e) {
-      // Ghi log để trace qua ADB logcat: adb logcat | grep Geofence
       debugPrint('[Geofence] ERR send event $eventType detailId=$detailId: $e');
       await TrackingContextStore.saveLastError('$eventType $detailId: $e');
     }

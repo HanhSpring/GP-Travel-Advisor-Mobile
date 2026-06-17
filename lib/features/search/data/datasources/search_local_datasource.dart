@@ -12,7 +12,7 @@ abstract class SearchLocalDataSource {
 
 class SearchLocalDataSourceImpl implements SearchLocalDataSource {
   static const String _key = 'recent_searches';
-  static const int _maxItems = 10; // Giới hạn tối đa 10 mục
+  static const int _maxItems = 10;
 
   final SharedPreferences sharedPreferences;
 
@@ -31,7 +31,6 @@ class SearchLocalDataSourceImpl implements SearchLocalDataSource {
   Future<void> saveRecentSearch(SearchLocationModel location) async {
     final jsonList = sharedPreferences.getStringList(_key)?.toList() ?? [];
 
-    // Tạo JSON string cho location mới
     final newItem = json.encode({
       'id': location.id,
       'name': location.name,
@@ -39,14 +38,12 @@ class SearchLocalDataSourceImpl implements SearchLocalDataSource {
       'type': location.type,
     });
 
-    // Xoá nếu đã tồn tại (tránh trùng), rồi thêm lên đầu
     jsonList.removeWhere((item) {
       final map = json.decode(item);
       return map['id'] == location.id;
     });
     jsonList.insert(0, newItem);
 
-    // Giới hạn số lượng
     if (jsonList.length > _maxItems) {
       jsonList.removeRange(_maxItems, jsonList.length);
     }

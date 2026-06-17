@@ -12,11 +12,9 @@ class CityDetailState with _$CityDetailState {
   const factory CityDetailState.loaded(
     CityOverview overview,
     int activeTab, {
-    // === Filter state cho từng tab ===
     @Default(ActivityFilter()) ActivityFilter activityFilter,
     @Default(RestaurantFilter()) RestaurantFilter restaurantFilter,
     @Default(HotelFilter()) HotelFilter hotelFilter,
-    // === Danh sách đã được lọc/sắp xếp (UI đọc từ đây) ===
     @Default([]) List<CityActivity> filteredActivities,
     @Default([]) List<CityRestaurant> filteredRestaurants,
     @Default([]) List<CityHotel> filteredHotels,

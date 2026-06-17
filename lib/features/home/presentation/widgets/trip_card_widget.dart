@@ -146,7 +146,7 @@ class _TripCardWidgetState extends State<TripCardWidget> {
               const Icon(Icons.favorite, size: 14, color: Colors.redAccent),
               const SizedBox(width: 4),
               Text(widget.item.likes, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-              const SizedBox(width: 8), // Thụt vào một xíu
+              const SizedBox(width: 8),
             ],
           ),
         ],

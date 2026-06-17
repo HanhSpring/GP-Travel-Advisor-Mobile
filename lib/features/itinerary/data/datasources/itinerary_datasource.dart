@@ -28,7 +28,6 @@ abstract class ItineraryDataSource {
   });
   Future<void> deleteActivity(String itineraryId, String activityId);
 
-  /// Gọi POST /itinerary/plan → trả về itineraryId.
   Future<String> createItinerary(CreateItineraryRequestModel request);
   Future<void> updateItineraryActivities(
     String id,

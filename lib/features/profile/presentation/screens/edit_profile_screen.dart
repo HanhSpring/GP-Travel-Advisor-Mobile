@@ -156,7 +156,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           );
         }
 
-        // ProfileLoaded — hiện giao diện đầy đủ
         return Scaffold(
           backgroundColor: Colors.white,
           body: Stack(

@@ -22,7 +22,6 @@ import '../../services/tracking_context.dart';
 import '../../tracking_config.dart';
 import 'tracking_state.dart';
 
-/// Thông tin tối giản về quán ăn, dùng để lưu/khôi phục qua SharedPreferences.
 class _FoodSpot {
   final String id;
   final String name;
@@ -41,8 +40,6 @@ class _FoodSpot {
       );
 }
 
-/// Điều phối luồng theo dõi lịch trình ở main isolate:
-/// `/start` → đăng ký geofence → đặt AlarmManager 23h → tải trạng thái bản đồ.
 class TrackingCubit extends Cubit<TrackingState> with WidgetsBindingObserver {
   final StartTrackingUseCase _start;
   final GetTrackingStatusUseCase _status;
@@ -54,7 +51,6 @@ class TrackingCubit extends Cubit<TrackingState> with WidgetsBindingObserver {
 
   static double get _foodProximityKm => TrackingConfig.foodProximityKm;
 
-  // Category keywords nhận diện địa điểm ăn uống
   static const _foodKeywords = [
     'nhà hàng', 'restaurant', 'cafe', 'cà phê', 'ăn uống',
     'quán ăn', 'buffet', 'fastfood', 'fast food', 'food', 'ẩm thực',
@@ -101,7 +97,6 @@ class TrackingCubit extends Cubit<TrackingState> with WidgetsBindingObserver {
       final isOnline = results.any((r) => r != ConnectivityResult.none);
       if (isOnline && _wasOffline && state.isActive) {
         refreshStatus();
-        // Có mạng trở lại -> gửi ngay sự kiện geofence còn tồn đọng.
         _evaluateGeofences();
       }
       _wasOffline = !isOnline;
@@ -117,26 +112,19 @@ class TrackingCubit extends Cubit<TrackingState> with WidgetsBindingObserver {
   bool _wasOffline = false;
   final _connectivity = Connectivity();
 
-  // ── Phát hiện geofence chủ động ở foreground (nhanh hơn native passive) ──────
-  /// Geofence của ngày (lat/lng/bán kính/ngưỡng dwell) để tự tính khoảng cách.
   List<TrackingGeofence> _geofences = [];
   Position? _lastPosition;
-  final Set<String> _insideIds = {}; // đang ở trong vùng
-  final Map<String, DateTime> _enteredAt = {}; // mốc vào vùng -> tính dwell
-  final Set<String> _dwellSentIds = {}; // đã gửi DWELL thành công (chống lặp)
-  final Set<String> _visitedIds = {}; // đã "Đã ghé" -> bỏ qua, không gửi lại
+  final Set<String> _insideIds = {};
+  final Map<String, DateTime> _enteredAt = {};
+  final Set<String> _dwellSentIds = {};
+  final Set<String> _visitedIds = {};
 
-  /// true = stream đang chạy GPS độ chính xác cao (khi tới gần điểm).
   bool _highAccuracyMode = false;
 
-  /// Trong bán kính này (m) tới điểm gần nhất thì bật GPS chính xác cao.
-  /// Xa hơn -> dùng medium để tiết kiệm pin lúc đang di chuyển/đứng xa.
   static const double _highAccuracyRangeM = 500;
 
-  /// Ngưỡng dwell foreground (giây): nhỏ để phản hồi nhanh, vẫn >= backend.
   static int _foregroundDwell(int threshold) => threshold.clamp(15, 120);
 
-  /// Xoá trạng thái phát hiện geofence (khi bắt đầu/khôi phục/dừng).
   void _resetDetectionState() {
     _geofences = [];
     _lastPosition = null;
@@ -147,7 +135,6 @@ class TrackingCubit extends Cubit<TrackingState> with WidgetsBindingObserver {
     _visitedIds.clear();
   }
 
-  // Stale detection được xử lý trong cubit, không phải từ widget lifecycle.
 
   @override
   Future<void> close() {
@@ -159,12 +146,11 @@ class TrackingCubit extends Cubit<TrackingState> with WidgetsBindingObserver {
     return super.close();
   }
 
-  /// Refresh ngay khi app trở về foreground (sau geofence trigger nền).
   @override
   void didChangeAppLifecycleState(AppLifecycleState lifecycleState) {
     if (lifecycleState == AppLifecycleState.resumed && state.isActive) {
       refreshStatus();
-      _evaluateGeofences(); // đánh giá lại ngay khi mở app
+      _evaluateGeofences();
     }
   }
 
@@ -214,14 +200,10 @@ class TrackingCubit extends Cubit<TrackingState> with WidgetsBindingObserver {
 
   void _subscribeLocationStream({bool highAccuracy = false}) {
     _locationSub?.cancel();
-    // Luôn cần stream khi đang theo dõi: phục vụ cả phát hiện geofence chủ động
-    // (không phụ thuộc native passive) lẫn gợi ý quán ăn gần đây.
     if (!state.isActive) return;
     _highAccuracyMode = highAccuracy;
     try {
       _locationSub = Geolocator.getPositionStream(
-        // Gần điểm -> high + filter 10m (bắt ENTER/DWELL chính xác).
-        // Xa điểm  -> medium + filter 100m (nhẹ pin lúc di chuyển/đứng xa).
         locationSettings: LocationSettings(
           accuracy:
               highAccuracy ? LocationAccuracy.high : LocationAccuracy.medium,
@@ -231,8 +213,6 @@ class TrackingCubit extends Cubit<TrackingState> with WidgetsBindingObserver {
     } catch (_) {}
   }
 
-  /// Xử lý mỗi cập nhật vị trí: lưu lại + chạy phát hiện geofence + quán ăn +
-  /// điều chỉnh độ chính xác GPS theo khoảng cách tới điểm gần nhất.
   void _onPosition(Position pos) {
     if (isClosed) return;
     _lastPosition = pos;
@@ -241,8 +221,6 @@ class TrackingCubit extends Cubit<TrackingState> with WidgetsBindingObserver {
     _maybeSwitchAccuracy(pos);
   }
 
-  /// Bật GPS chính xác cao khi tới gần điểm chưa ghé (<= [_highAccuracyRangeM]),
-  /// hạ về medium khi đã đi xa -> tiết kiệm pin mà vẫn nhạy lúc cần.
   void _maybeSwitchAccuracy(Position pos) {
     if (_geofences.isEmpty) return;
     double? nearest;
@@ -253,15 +231,13 @@ class TrackingCubit extends Cubit<TrackingState> with WidgetsBindingObserver {
               1000;
       if (nearest == null || m < nearest) nearest = m;
     }
-    if (nearest == null) return; // tất cả đã ghé
+    if (nearest == null) return;
     final shouldHigh = nearest <= _highAccuracyRangeM;
     if (shouldHigh != _highAccuracyMode) {
       _subscribeLocationStream(highAccuracy: shouldHigh);
     }
   }
 
-  /// Timer 5s chỉ chạy khi đang ở trong ít nhất một vùng (để DWELL fire dù
-  /// đứng yên). Ngoài vùng -> tắt, nhường cho stream -> đỡ tốn pin/CPU.
   void _ensureDwellTimer() {
     _geofenceTimer ??=
         Timer.periodic(const Duration(seconds: 5), (_) => _evaluateGeofences());
@@ -293,9 +269,6 @@ class TrackingCubit extends Cubit<TrackingState> with WidgetsBindingObserver {
     }
   }
 
-  /// Phát hiện geofence **chủ động** ở foreground: tính khoảng cách tới từng
-  /// điểm dừng và tự gửi ENTER/DWELL/EXIT — phản hồi trong vài giây thay vì chờ
-  /// native geofence (passive, có thể trễ vài phút).
   void _evaluateGeofences() {
     if (isClosed || !state.isActive) return;
     final pos = _lastPosition;
@@ -315,7 +288,7 @@ class TrackingCubit extends Cubit<TrackingState> with WidgetsBindingObserver {
         if (!_insideIds.contains(id)) {
           _insideIds.add(id);
           _enteredAt[id] = now;
-          _ensureDwellTimer(); // vào vùng -> bật timer chờ dwell
+          _ensureDwellTimer();
           _sendGeofenceEvent(id, 'ENTER');
         } else if (!_dwellSentIds.contains(id)) {
           final entered = _enteredAt[id] ?? now;
@@ -328,7 +301,6 @@ class TrackingCubit extends Cubit<TrackingState> with WidgetsBindingObserver {
               dwellSeconds: g.dwellThresholdSeconds,
               placeName: g.name,
             ).then((ok) {
-              // Gửi lỗi (mất mạng) -> bỏ cờ để lần poll sau thử lại.
               if (!ok) _dwellSentIds.remove(id);
             });
           }
@@ -339,11 +311,9 @@ class TrackingCubit extends Cubit<TrackingState> with WidgetsBindingObserver {
         _sendGeofenceEvent(id, 'EXIT');
       }
     }
-    _stopDwellTimerIfIdle(); // ra khỏi mọi vùng -> tắt timer cho nhẹ pin
+    _stopDwellTimerIfIdle();
   }
 
-  /// Gửi một sự kiện geofence lên backend. Trả về true nếu thành công.
-  /// Khi DWELL được xác nhận "Đã ghé": cập nhật bản đồ + bắn thông báo cục bộ.
   Future<bool> _sendGeofenceEvent(
     String detailId,
     String eventType, {
@@ -374,7 +344,6 @@ class TrackingCubit extends Cubit<TrackingState> with WidgetsBindingObserver {
     }
   }
 
-  /// Thông báo cục bộ "Đã đến nơi" (song song với native callback nền).
   Future<void> _showArrivalNotification({
     required String detailId,
     required String placeName,
@@ -407,8 +376,6 @@ class TrackingCubit extends Cubit<TrackingState> with WidgetsBindingObserver {
     } catch (_) {}
   }
 
-  /// Dựng lại danh sách geofence để phát hiện chủ động từ trạng thái bản đồ
-  /// (dùng khi khôi phục sau khi app khởi động lại — context chỉ lưu tên/dwell).
   Future<void> _rebuildGeofencesFromStatus(TrackingStatusResult status) async {
     final ctx = await TrackingContextStore.load();
     final radius = ctx?.radiusM ?? TrackingConfig.radiusM;
@@ -433,14 +400,11 @@ class TrackingCubit extends Cubit<TrackingState> with WidgetsBindingObserver {
     _geofences = list;
   }
 
-  /// Cập nhật danh sách activities khi màn hình chi tiết mở (hoặc đổi ngày).
-  /// Dùng để khởi động food proximity watch khi start từ màn hình danh sách.
   void updateActivities(List<ItineraryActivityEntity> activities) {
     if (!state.isActive) return;
     _startFoodProximityWatch(activities);
   }
 
-  /// Ẩn popup gợi ý đặt món (người dùng đã đóng).
   void dismissNearbyRestaurant() {
     emit(state.copyWith(clearNearbyRestaurant: true));
   }
@@ -452,8 +416,6 @@ class TrackingCubit extends Cubit<TrackingState> with WidgetsBindingObserver {
         : (dotenv.env['EXPLORE_TOURIST_ID']?.trim() ?? '');
   }
 
-  /// Khôi phục trạng thái theo dõi khi app khởi động lại.
-  /// Đọc TrackingContext từ SharedPreferences (đã lưu lúc start hoặc qua đêm sang ngày mới).
   Future<void> restoreIfActive() async {
     if (state.isActive) return;
 
@@ -476,8 +438,6 @@ class TrackingCubit extends Cubit<TrackingState> with WidgetsBindingObserver {
       date: date,
     ));
 
-    // Dựng lại geofence từ trạng thái bản đồ để phát hiện chủ động hoạt động
-    // ngay sau khi app khởi động lại.
     try {
       final status = await _status(itineraryId: ctx.itineraryId, date: date);
       emit(state.copyWith(places: status.places));
@@ -486,12 +446,9 @@ class TrackingCubit extends Cubit<TrackingState> with WidgetsBindingObserver {
 
     _startRefreshTimer();
     await _restoreFoodProximityWatch();
-    // Đảm bảo stream vị trí chạy cho phát hiện geofence dù không có quán ăn.
     _subscribeLocationStream();
   }
 
-  /// Bắt đầu theo dõi cho [date] của [itineraryId].
-  /// [activities] dùng để phát hiện quán ăn gần vị trí hiện tại.
   Future<void> start({
     required String itineraryId,
     required DateTime date,
@@ -529,7 +486,6 @@ class TrackingCubit extends Cubit<TrackingState> with WidgetsBindingObserver {
         return;
       }
 
-      // Lưu ngữ cảnh cho background isolate.
       await TrackingContextStore.save(TrackingContextStore.build(
         baseUrl: ApiConfig.baseUrl,
         touristId: _touristId,
@@ -539,10 +495,8 @@ class TrackingCubit extends Cubit<TrackingState> with WidgetsBindingObserver {
         geofences: geofences,
       ));
 
-      // Xóa geofence cũ (từ session trước, cùng địa điểm → ghi nhận trùng).
       await _geofenceSvc.removeAll();
 
-      // Đăng ký geofence (hết hạn cuối ngày).
       final endOfDay = DateTime(date.year, date.month, date.day, 23, 59);
       final ttl = endOfDay.difference(DateTime.now());
       final registered = await _geofenceSvc.registerAll(
@@ -550,13 +504,11 @@ class TrackingCubit extends Cubit<TrackingState> with WidgetsBindingObserver {
         expiration: ttl.isNegative ? null : ttl,
       );
 
-      // Đặt alarm kết thúc ngày (23:00) để remove geofence + mark skipped.
       final dayEndAt = DateTime(date.year, date.month, date.day, 23, 0);
       if (dayEndAt.isAfter(DateTime.now())) {
         await _alarmSvc.scheduleEndOfDay(dayEndAt);
       }
 
-      // Lấy trạng thái bản đồ ban đầu.
       final status = await _status(itineraryId: itineraryId, date: date);
 
       if (registered == 0) {
@@ -575,7 +527,6 @@ class TrackingCubit extends Cubit<TrackingState> with WidgetsBindingObserver {
         places: status.places,
       ));
 
-      // Nạp geofence cho phát hiện chủ động foreground (lat/lng/dwell đầy đủ).
       _resetDetectionState();
       _geofences = geofences;
       for (final p in status.places) {
@@ -584,9 +535,7 @@ class TrackingCubit extends Cubit<TrackingState> with WidgetsBindingObserver {
         }
       }
 
-      // Refresh status mỗi 60 giây
       _startRefreshTimer();
-      // Theo dõi vị trí: phát hiện geofence chủ động + quán ăn gần đây.
       _startFoodProximityWatch(activities);
     } catch (e) {
       emit(state.copyWith(
@@ -596,7 +545,6 @@ class TrackingCubit extends Cubit<TrackingState> with WidgetsBindingObserver {
     }
   }
 
-  /// Tải lại trạng thái màu/icon (gọi khi quay lại app hoặc sau check-in).
   Future<void> refreshStatus() async {
     final id = state.itineraryId;
     final d = state.date;
@@ -604,7 +552,6 @@ class TrackingCubit extends Cubit<TrackingState> with WidgetsBindingObserver {
     try {
       final status = await _status(itineraryId: id, date: d);
       emit(state.copyWith(places: status.places));
-      // Đồng bộ điểm đã ghé (qua native callback / check-in) để không gửi lại.
       for (final p in status.places) {
         if (p.status == VisitStatus.visited || p.status == VisitStatus.skipped) {
           _visitedIds.add(p.itineraryDetailId);
@@ -613,7 +560,6 @@ class TrackingCubit extends Cubit<TrackingState> with WidgetsBindingObserver {
     } catch (_) {/* giữ trạng thái cũ */}
   }
 
-  /// Check-in thủ công "Tôi đã đến đây".
   Future<void> manualCheckIn(String itineraryDetailId) async {
     if (_touristId.isEmpty) _touristId = await _resolveTouristId();
     emit(state.copyWith(checkingInDetailId: itineraryDetailId));
@@ -632,17 +578,12 @@ class TrackingCubit extends Cubit<TrackingState> with WidgetsBindingObserver {
     }
   }
 
-  /// Được gọi từ UI khi DB xác nhận [dbActive] cho itinerary [itineraryId].
-  /// Nếu cubit đang active cho cùng ID nhưng DB nói không active → cache stale → xóa.
   Future<void> notifyDbState(String itineraryId, bool dbActive) async {
     if (state.itineraryId != itineraryId) return;
     if (!state.isActive) return;
     if (!dbActive) await clearStaleCache();
   }
 
-  /// Xóa cache stale khi DB xác nhận tracking không còn active (không gọi backend).
-  /// Quan trọng: gỡ geofences khỏi Android OS để tránh callback giả khi user
-  /// đi qua khu vực đã từng theo dõi.
   Future<void> clearStaleCache() async {
     _refreshTimer?.cancel();
     _refreshTimer = null;
@@ -659,7 +600,6 @@ class TrackingCubit extends Cubit<TrackingState> with WidgetsBindingObserver {
     emit(const TrackingState());
   }
 
-  /// Dừng theo dõi: gỡ toàn bộ geofence + alarm + ngữ cảnh.
   Future<void> stop() async {
     _refreshTimer?.cancel();
     _refreshTimer = null;

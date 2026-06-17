@@ -9,8 +9,6 @@ import 'package:travel_advisor_mobile/features/auth/presentation/cubit/auth_stat
 import 'package:travel_advisor_mobile/features/auth/presentation/widgets/auth_shared_widgets.dart';
 import 'package:travel_advisor_mobile/features/auth/presentation/widgets/auth_text_field.dart';
 
-/// Màn hình đặt lại mật khẩu.
-/// [accessToken] được truyền vào từ deeplink (lấy từ URL query param).
 class ResetPasswordScreen extends StatelessWidget {
   final String accessToken;
 

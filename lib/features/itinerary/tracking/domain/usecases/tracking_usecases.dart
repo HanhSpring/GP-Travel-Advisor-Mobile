@@ -2,7 +2,6 @@ import '../../data/models/tracking_models.dart';
 import '../../tracking_config.dart';
 import '../repositories/tracking_repository.dart';
 
-/// Bắt đầu theo dõi lịch trình trong ngày.
 class StartTrackingUseCase {
   final TrackingRepository repo;
   StartTrackingUseCase(this.repo);
@@ -21,7 +20,6 @@ class StartTrackingUseCase {
       );
 }
 
-/// Lấy danh sách geofence của một ngày (đăng ký lại).
 class GetGeofencesUseCase {
   final TrackingRepository repo;
   GetGeofencesUseCase(this.repo);
@@ -34,7 +32,6 @@ class GetGeofencesUseCase {
       repo.geofences(itineraryId: itineraryId, date: date, radiusM: radiusM);
 }
 
-/// Gửi sự kiện geofence (ENTER / DWELL / EXIT) từ phát hiện chủ động foreground.
 class SendTrackingEventUseCase {
   final TrackingRepository repo;
   SendTrackingEventUseCase(this.repo);
@@ -55,7 +52,6 @@ class SendTrackingEventUseCase {
       );
 }
 
-/// Check-in thủ công ("Tôi đã đến đây").
 class ManualCheckInUseCase {
   final TrackingRepository repo;
   ManualCheckInUseCase(this.repo);
@@ -67,7 +63,6 @@ class ManualCheckInUseCase {
       repo.checkIn(itineraryDetailId: itineraryDetailId, touristId: touristId);
 }
 
-/// Trạng thái bản đồ (màu/icon từng điểm).
 class GetTrackingStatusUseCase {
   final TrackingRepository repo;
   GetTrackingStatusUseCase(this.repo);
@@ -79,7 +74,6 @@ class GetTrackingStatusUseCase {
       repo.status(itineraryId: itineraryId, date: date);
 }
 
-/// Kết thúc ngày — remove geofence + mốc AlarmManager ngày kế.
 class EndTrackingDayUseCase {
   final TrackingRepository repo;
   EndTrackingDayUseCase(this.repo);

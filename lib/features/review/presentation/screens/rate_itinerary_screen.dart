@@ -45,7 +45,7 @@ class _RateItineraryView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA), // Nền màu xám cực nhạt như Figma
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
         title: Text(
           'Đánh giá lịch trình',
@@ -170,7 +170,7 @@ class _RateItineraryView extends StatelessWidget {
                           },
                         ),
                       ),
-                      const SizedBox(height: 100), // Padding cho nút bottom
+                      const SizedBox(height: 100),
                     ],
                   ),
                 ),
@@ -223,10 +223,8 @@ class _RateItineraryView extends StatelessWidget {
                                         backgroundColor: Color(0xFF22C55E),
                                       ),
                                     );
-                                    // Sau khi gửi thành công, quay về màn hình ban đầu (đóng cả trang đánh giá và dialog)
                                     if (context.mounted) {
-                                      Navigator.of(context).pop(); // Đóng RateItineraryScreen
-                                      // Thêm một lần pop nữa để đóng ItineraryReviewDialog
+                                      Navigator.of(context).pop();
                                       if (Navigator.of(context).canPop()) {
                                         Navigator.of(context).pop();
                                       }

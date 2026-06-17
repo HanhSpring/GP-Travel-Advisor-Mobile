@@ -27,13 +27,10 @@ class TimelineActivityCard extends StatelessWidget {
   final bool isEditMode;
   final String? nextTransportInfo;
 
-  /// Trạng thái theo dõi của địa điểm này (null = tracking chưa bật).
   final TrackingPlaceStatus? trackingStatus;
 
-  /// Callback check-in thủ công "Tôi đã đến" khi tracking active.
   final VoidCallback? onCheckIn;
 
-  /// Đang xử lý check-in (hiện loading spinner thay nút).
   final bool isCheckingIn;
 
   const TimelineActivityCard({
@@ -444,7 +441,6 @@ class TimelineActivityCard extends StatelessWidget {
                           ),
                       ],
                     ),
-                    // ── Tracking: badge "Đã ghé" hoặc nút "Tôi đã đến" ──────
                     if (trackingStatus != null) ...[
                       const SizedBox(height: AppSizes.s8),
                       _buildTrackingRow(),
@@ -527,7 +523,6 @@ class TimelineActivityCard extends StatelessWidget {
         ],
       );
     }
-    // notVisited → nút check-in thủ công
     return GestureDetector(
       onTap: isCheckingIn ? null : onCheckIn,
       child: Container(
