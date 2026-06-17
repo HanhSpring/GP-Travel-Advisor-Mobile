@@ -5,7 +5,7 @@ import 'package:travel_advisor_mobile/core/config/app_config.dart';
 
 class ItineraryMockData {
   static ItineraryDetailEntity materializeMockDays(ItineraryDetailEntity itin) {
-    if (!kDemoMode) return itin;
+    if (!AppConfig.kUseMockData) return itin;
     if (itin.days.isNotEmpty) return itin;
 
     final firstDayDate = itin.startDate;

@@ -1,7 +1,7 @@
 import 'package:travel_advisor_mobile/features/food/domain/usecases/food_usecases.dart';
 import 'package:travel_advisor_mobile/features/review/domain/usecases/get_popup_data_usecase.dart';
 import 'package:travel_advisor_mobile/features/food/data/datasources/food_remote_data_source.dart';
-import 'package:travel_advisor_mobile/features/review/domain/entities/rating_popup_data.dart';
+import 'package:travel_advisor_mobile/features/review/data/datasources/review_datasource.dart';
 import 'dart:async';
 
 import 'explore_state.dart';
@@ -345,7 +345,7 @@ class ExploreCubit extends Cubit<ExploreState> {
     return _getOrderPopup(placeId);
   }
 
-  Future<RatingPopupData> getPopupData(String itineraryId) {
+  Future<ItineraryReviewPopupData> getPopupData(String itineraryId) {
     return _getPopupData(itineraryId);
   }
 }

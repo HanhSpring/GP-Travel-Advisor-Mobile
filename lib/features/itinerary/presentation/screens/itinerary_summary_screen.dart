@@ -15,6 +15,9 @@ import 'package:travel_advisor_mobile/features/itinerary/presentation/cubit/itin
 import 'package:travel_advisor_mobile/features/itinerary/presentation/cubit/itinerary_state.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/itinerary_review_dialog.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/short_itinerary_item.dart';
+import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/stat_card_v2.dart';
+import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/culinary_expandable_item.dart';
+
 
 const bool _useMockData = AppConfig.kUseMockData;
 
@@ -667,7 +670,7 @@ class _ItinerarySummaryView extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: _StatCardV2(
+              child: StatCardV2(
                 label: 'Thời gian',
                 value: '${itin.durationDays} ngày',
                 icon: Icons.calendar_today_rounded,
@@ -676,7 +679,7 @@ class _ItinerarySummaryView extends StatelessWidget {
             ),
             const SizedBox(width: 16),
             Expanded(
-              child: _StatCardV2(
+              child: StatCardV2(
                 label: 'Hoạt động',
                 value: '$visitCount điểm',
                 icon: Icons.explore_rounded,
@@ -689,7 +692,7 @@ class _ItinerarySummaryView extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: _StatCardV2(
+              child: StatCardV2(
                 label: 'Chỗ ở',
                 value: hotelCount > 0 ? '$hotelCount khách sạn' : 'Chưa chọn',
                 icon: Icons.hotel_rounded,
@@ -698,7 +701,7 @@ class _ItinerarySummaryView extends StatelessWidget {
             ),
             const SizedBox(width: 16),
             Expanded(
-              child: _StatCardV2(
+              child: StatCardV2(
                 label: 'Di chuyển',
                 value: itin.transportTurns > 0 ? '${itin.transportTurns} chặng' : 'Theo lộ trình',
                 icon: Icons.directions_car_filled_rounded,
@@ -1045,7 +1048,7 @@ class _ItinerarySummaryView extends StatelessWidget {
       child: Column(
         children: [
           ...itin.visitedRestaurants.map((food) {
-            return _CulinaryExpandableItem(food: food);
+            return CulinaryExpandableItem(food: food);
           }),
           Padding(
             padding: const EdgeInsets.all(16),
@@ -1241,212 +1244,3 @@ class _ItinerarySummaryView extends StatelessWidget {
   }
 
 }
-
-class _StatCardV2 extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-
-  const _StatCardV2({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.05),
-            blurRadius: 15,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w900,
-              color: Color(0xFF1E293B),
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Color(0xFF64748B),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CulinaryExpandableItem extends StatefulWidget {
-  final VisitedRestaurant food;
-  const _CulinaryExpandableItem({required this.food});
-
-  @override
-  State<_CulinaryExpandableItem> createState() =>
-      _CulinaryExpandableItemState();
-}
-
-class _CulinaryExpandableItemState extends State<_CulinaryExpandableItem> {
-  bool _isExpanded = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final formatter = NumberFormat('#,###', 'vi_VN');
-    double subTotal = 0;
-    for (var dish in widget.food.dishes) {
-      subTotal += dish.price * dish.quantity;
-    }
-
-    return Column(
-      children: [
-        InkWell(
-          onTap: () => setState(() => _isExpanded = !_isExpanded),
-          borderRadius: BorderRadius.circular(20),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            child: Row(
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: const Icon(
-                    Icons.restaurant_menu_rounded,
-                    color: Color(0xFF2563EB),
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.food.name,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E293B),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          Text(
-                            '${widget.food.dishes.length} món',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF94A3B8),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            width: 3,
-                            height: 3,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFCBD5E1),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '${formatter.format(subTotal)} đ',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF2563EB),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  _isExpanded ? Icons.keyboard_arrow_up : Icons.chevron_right,
-                  color: const Color(0xFFCBD5E1),
-                  size: 24,
-                ),
-              ],
-            ),
-          ),
-        ),
-        if (_isExpanded)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Column(
-              children: widget.food.dishes.map((dish) {
-                final formatter = NumberFormat('#,###', 'vi_VN');
-                return Container(
-                  margin: const EdgeInsets.only(top: 8),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        dish.name,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF334155),
-                        ),
-                      ),
-                      Text(
-                        '${formatter.format(dish.price)} đ x ${dish.quantity}',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF64748B),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          child: Divider(height: 1, color: Color(0xFFF1F5F9)),
-        ),
-      ],
-    );
-  }
-}
-
-
