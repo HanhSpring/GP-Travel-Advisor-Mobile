@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:travel_advisor_mobile/core/di/injection_container.dart';
 import 'package:travel_advisor_mobile/features/place/presentation/cubit/place_detail_cubit.dart';
 import 'package:travel_advisor_mobile/features/place/presentation/cubit/place_detail_state.dart';
+import 'package:travel_advisor_mobile/features/saved/data/datasources/favorite_remote_datasource.dart';
 import 'package:travel_advisor_mobile/features/place/presentation/widgets/place_contact_section.dart';
 import 'package:travel_advisor_mobile/features/place/presentation/widgets/place_description_section.dart';
 import 'package:travel_advisor_mobile/features/place/presentation/widgets/place_gallery_section.dart';
@@ -28,13 +32,34 @@ class PlaceDetailScreen extends StatefulWidget {
 }
 
 class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
+  StreamSubscription<FavoriteChangedEvent>? _favoriteSubscription;
+
   @override
   void initState() {
     super.initState();
+    _favoriteSubscription =
+        sl<FavoriteRemoteDataSource>().changes.listen((event) {
+      if (!mounted ||
+          event.type != FavoriteTargetType.place ||
+          event.id != widget.placeId) {
+        return;
+      }
+
+      context
+          .read<PlaceDetailCubit>()
+          .syncFavoriteState(event.id, event.isFavorite);
+    });
+
     // Load data when screen initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<PlaceDetailCubit>().loadPlaceDetail(widget.placeId);
     });
+  }
+
+  @override
+  void dispose() {
+    _favoriteSubscription?.cancel();
+    super.dispose();
   }
 
   @override
@@ -77,9 +102,11 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                     imageUrl: place.images.isNotEmpty ? place.images[0] : 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=800&q=80',
                     isFavorite: place.isFavorite,
                     onBack: () => Navigator.pop(context),
-                    onFavorite: () {
-                      context.read<PlaceDetailCubit>().toggleFavorite();
-                      if (!place.isFavorite) {
+                    onFavorite: () async {
+                      final result =
+                          await context.read<PlaceDetailCubit>().toggleFavorite();
+                      if (!context.mounted) return;
+                      if (result == true) {
                         ScaffoldMessenger.of(context).clearSnackBars();
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(

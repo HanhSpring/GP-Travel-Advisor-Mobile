@@ -31,6 +31,7 @@ import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/it
 import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/timeline_activity_card.dart';
 import 'package:travel_advisor_mobile/features/place/presentation/cubit/place_detail_cubit.dart';
 import 'package:travel_advisor_mobile/features/place/presentation/screens/place_detail_screen.dart';
+import 'package:travel_advisor_mobile/features/saved/data/datasources/favorite_remote_datasource.dart';
 import '../widgets/itinerary_map_view.dart';
 import '../widgets/replace_place_sheet.dart';
 import '../widgets/add_place_sheet.dart';
@@ -222,13 +223,14 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
   }
 
   void _navigateToPlaceDetail(ItineraryActivityEntity activity) {
+    final placeId = activity.placeId ?? activity.id;
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => BlocProvider(
           create: (_) => sl<PlaceDetailCubit>(),
           child: PlaceDetailScreen(
-            placeId: activity.id,
+            placeId: placeId,
             showRelatedPlaces: false,
           ),
         ),
@@ -402,6 +404,54 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
       context,
       MaterialPageRoute(builder: (_) => ActivityEditScreen(activity: activity)),
     );
+  }
+
+  Future<void> _toggleItineraryFavorite() async {
+    final state = context.read<ItineraryCubit>().state;
+    if (state is! ItineraryLoaded || state.selectedItinerary == null) {
+      return;
+    }
+
+    final itinerary = state.selectedItinerary!;
+    if (!itinerary.isPublic) {
+      return;
+    }
+
+    final nextFavorite = !itinerary.isFavorite;
+    context.read<ItineraryCubit>().setSelectedItineraryFavorite(nextFavorite);
+
+    try {
+      await sl<FavoriteRemoteDataSource>().setItineraryFavorite(
+        itinerary.id,
+        nextFavorite,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            nextFavorite
+                ? 'Đã lưu vào danh mục yêu thích'
+                : 'Đã bỏ khỏi danh mục yêu thích',
+          ),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      context.read<ItineraryCubit>().setSelectedItineraryFavorite(
+        itinerary.isFavorite,
+      );
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Chưa thể cập nhật yêu thích, vui lòng thử lại'),
+          duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   void _onEditTime(
@@ -1050,11 +1100,24 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
             onEditTime: _onEditTime,
             onDirectionTap: _launchDirections,
             onShareTap: _showShareSheet,
+            onFavoriteTap: _toggleItineraryFavorite,
             onMarkerTap: (id) => _scrollToActivity(id),
             highlightedActivityId: _highlightedActivityId,
             isEditMode: _isEditMode,
             onEditModeTap: _onEditModeTap,
             onDiscardTap: _onDiscardChanges,
+              onRateActivity: _onRateActivity,
+              onEditTime: _onEditTime,
+              onDirectionTap: _launchDirections,
+              onShareTap: _showShareSheet,
+              onFavoriteTap: _toggleItineraryFavorite,
+              onMarkerTap: (id) => _scrollToActivity(id),
+              highlightedActivityId: _highlightedActivityId,
+              isEditMode: _isEditMode,
+              onEditModeTap: _onEditModeTap,
+              onDiscardTap: _onDiscardChanges,
+            ),
+
           ),
         ),
       ),
@@ -1449,6 +1512,7 @@ class _ItineraryDetailView extends StatelessWidget {
   final Function(ItineraryActivityEntity, ItineraryActivityEntity)
   onDirectionTap;
   final VoidCallback onShareTap;
+  final VoidCallback onFavoriteTap;
   final Function(String) onMarkerTap;
   final String? highlightedActivityId;
   final bool isEditMode;
@@ -1476,6 +1540,7 @@ class _ItineraryDetailView extends StatelessWidget {
     required this.onEditTime,
     required this.onDirectionTap,
     required this.onShareTap,
+    required this.onFavoriteTap,
     required this.onMarkerTap,
     this.highlightedActivityId,
     required this.isEditMode,
@@ -1644,6 +1709,18 @@ class _ItineraryDetailView extends StatelessWidget {
                         active: isEditMode,
                       ),
                       if (!isEditMode) ...[
+                        if (itin.isPublic) ...[
+                          const SizedBox(width: AppSizes.s12),
+                          _floatingCircleButton(
+                            itin.isFavorite
+                                ? Icons.favorite
+                                : Icons.favorite_border,
+                            onFavoriteTap,
+                            iconColor: itin.isFavorite
+                                ? Colors.redAccent
+                                : Colors.white,
+                          ),
+                        ],
                         const SizedBox(width: AppSizes.s12),
                         _floatingCircleButton(Icons.share_outlined, onShareTap),
                       ],
