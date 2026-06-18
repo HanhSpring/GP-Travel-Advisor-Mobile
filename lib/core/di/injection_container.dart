@@ -141,18 +141,30 @@ Future<void> initDependencies() async {
       getHotelsByCategories: sl(),
     ),
   );
-  
-    // ── Notifications ─────────────────────────────────────────────────────────
-    sl.registerLazySingleton<NotificationDataSource>(() => RemoteNotificationDataSource(sl()));
-    sl.registerLazySingleton<NotificationRepository>(() => NotificationRepositoryImpl(sl()));
-    sl.registerLazySingleton(() => GetNotificationsUseCase(sl()));
-    sl.registerFactory(
-      () => NotificationCubit(getNotifications: sl()),
-    );
+
+  // ── Notifications ─────────────────────────────────────────────────────────
+  sl.registerLazySingleton<NotificationDataSource>(
+    () => RemoteNotificationDataSource(sl()),
+  );
+  sl.registerLazySingleton<NotificationRepository>(
+    () => NotificationRepositoryImpl(sl()),
+  );
+  sl.registerLazySingleton(() => GetNotificationsUseCase(sl()));
+  sl.registerLazySingleton(() => GetNotificationDetailUseCase(sl()));
+  sl.registerLazySingleton(() => MarkAllNotificationsAsReadUseCase(sl()));
+  sl.registerLazySingleton(() => MarkNotificationAsReadUseCase(sl()));
+  sl.registerFactory(
+    () => NotificationCubit(
+      getNotifications: sl(),
+      getNotificationDetail: sl(),
+      markAllAsRead: sl(),
+      markAsRead: sl(),
+    ),
+  );
 
   // ── Itinerary ──────────────────────────────────────────────────────────────
   sl.registerLazySingleton<ItineraryDataSource>(
-    () => RemoteItineraryDataSource(),//MockItineraryDataSource(),
+    () => RemoteItineraryDataSource(), //MockItineraryDataSource(),
     // TODO: swap → RemoteItineraryDataSource(sl<DioClient>())
   );
   sl.registerLazySingleton<ItineraryRepository>(
@@ -208,8 +220,12 @@ Future<void> initDependencies() async {
   );
 
   // ── Profile ────────────────────────────────────────────────────────────────
-  sl.registerLazySingleton<ProfileDataSource>(() => RemoteProfileDataSource(sl()));
-  sl.registerLazySingleton<ProfileRepository>(() => ProfileRepositoryImpl(sl()));
+  sl.registerLazySingleton<ProfileDataSource>(
+    () => RemoteProfileDataSource(sl()),
+  );
+  sl.registerLazySingleton<ProfileRepository>(
+    () => ProfileRepositoryImpl(sl()),
+  );
   sl.registerLazySingleton(() => GetProfileUseCase(sl()));
   sl.registerLazySingleton(() => GetRecentActivitiesUseCase(sl()));
   sl.registerLazySingleton(() => UploadAvatarUseCase(sl()));
@@ -224,13 +240,15 @@ Future<void> initDependencies() async {
   );
 
   // ── Review ─────────────────────────────────────────────────────────────────
-  sl.registerLazySingleton<ReviewDataSource>(() => RemoteReviewDataSource(sl()));
+  sl.registerLazySingleton<ReviewDataSource>(
+    () => RemoteReviewDataSource(sl()),
+  );
   sl.registerLazySingleton<ReviewRepository>(() => ReviewRepositoryImpl(sl()));
   sl.registerLazySingleton(() => GetItineraryForReviewUseCase(sl()));
   sl.registerFactory(
     () => ReviewCubit(getItineraryForReview: sl(), reviewRepository: sl()),
   );
-// Trong hàm initDependencies(), thêm SharedPreferences ở phần đầu (trước tất cả features):
+  // Trong hàm initDependencies(), thêm SharedPreferences ở phần đầu (trước tất cả features):
   final sharedPreferences = await SharedPreferences.getInstance();
   sl.registerLazySingleton<SharedPreferences>(() => sharedPreferences);
 
@@ -254,13 +272,19 @@ Future<void> initDependencies() async {
   sl.registerFactory(() => SearchCubit(sl(), sl(), sl(), sl()));
 
   // ── City Detail ────────────────────────────────────────────────────────────
-  sl.registerLazySingleton<CityDetailDataSource>(() => RemoteCityDetailDataSource(sl()));
-  sl.registerLazySingleton<CityDetailRepository>(() => CityDetailRepositoryImpl(sl()));
+  sl.registerLazySingleton<CityDetailDataSource>(
+    () => RemoteCityDetailDataSource(sl()),
+  );
+  sl.registerLazySingleton<CityDetailRepository>(
+    () => CityDetailRepositoryImpl(sl()),
+  );
   sl.registerLazySingleton(() => GetCityOverviewUseCase(sl()));
   sl.registerFactory(() => CityDetailCubit(sl()));
 
   // ── Food / Orders ─────────────────────────────────────────────────────────
-  sl.registerLazySingleton<FoodRemoteDataSource>(() => FoodRemoteDataSource(sl()));
+  sl.registerLazySingleton<FoodRemoteDataSource>(
+    () => FoodRemoteDataSource(sl()),
+  );
   sl.registerFactory(() => FoodCubit(remote: sl()));
 
   // ── Place ──────────────────────────────────────────────────────────────────
@@ -284,7 +308,9 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<SavedRepository>(
     () => SavedRepositoryImpl(dataSource: sl()),
   );
-  sl.registerLazySingleton(() => GetFavoriteItinerariesUseCase(repository: sl()));
+  sl.registerLazySingleton(
+    () => GetFavoriteItinerariesUseCase(repository: sl()),
+  );
   sl.registerLazySingleton(() => GetFavoritePlacesUseCase(repository: sl()));
   sl.registerFactory(
     () => SavedCubit(
