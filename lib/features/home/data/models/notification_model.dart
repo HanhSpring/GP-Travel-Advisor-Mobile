@@ -38,8 +38,18 @@ class NotificationModel {
     required this.isUnread,
   });
 
-  factory NotificationModel.fromJson(Map<String, dynamic> json) =>
-      _$NotificationModelFromJson(json);
+  factory NotificationModel.fromJson(Map<String, dynamic> json) {
+    final status = (json['status'] ?? '').toString().toLowerCase();
+    final normalizedJson = Map<String, dynamic>.from(json);
+
+    if (status == 'read' || json['read_at'] != null) {
+      normalizedJson['is_unread'] = false;
+    } else {
+      normalizedJson['is_unread'] = json['is_unread'] == true;
+    }
+
+    return _$NotificationModelFromJson(normalizedJson);
+  }
 
   Map<String, dynamic> toJson() => _$NotificationModelToJson(this);
 

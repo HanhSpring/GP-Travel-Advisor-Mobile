@@ -14,6 +14,7 @@ import 'package:travel_advisor_mobile/core/constants/app_colors.dart';
 import 'package:travel_advisor_mobile/core/constants/app_sizes.dart';
 import 'package:travel_advisor_mobile/core/di/injection_container.dart';
 import 'package:travel_advisor_mobile/core/theme/app_theme.dart';
+import 'package:travel_advisor_mobile/features/home/presentation/cubit/notification_cubit.dart';
 import 'package:travel_advisor_mobile/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:travel_advisor_mobile/features/profile/presentation/cubit/profile_state.dart';
 
@@ -132,10 +133,15 @@ class ProfileScreen extends StatelessWidget {
                 icon: Icons.notifications,
                 title: 'Thông báo',
                 onTap: () {
+                  final notificationCubit = context.read<NotificationCubit>()
+                    ..loadNotifications();
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const NotificationsScreen(),
+                      builder: (context) => BlocProvider.value(
+                        value: notificationCubit,
+                        child: const NotificationsScreen(),
+                      ),
                     ),
                   );
                 },
