@@ -9,6 +9,7 @@ import 'package:travel_advisor_mobile/core/services/activity_service.dart';
 import 'package:travel_advisor_mobile/core/theme/app_colors.dart';
 import 'package:travel_advisor_mobile/features/place/presentation/cubit/place_detail_cubit.dart';
 import 'package:travel_advisor_mobile/features/place/presentation/cubit/place_detail_state.dart';
+import 'package:travel_advisor_mobile/features/saved/data/datasources/favorite_remote_datasource.dart';
 import 'package:travel_advisor_mobile/features/place/presentation/widgets/place_contact_section.dart';
 import 'package:travel_advisor_mobile/features/place/presentation/widgets/place_description_section.dart';
 import 'package:travel_advisor_mobile/features/place/presentation/widgets/place_gallery_section.dart';
@@ -36,10 +37,25 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
   final _activityService = sl<ActivityService>();
   Timer? _dwellTimer;
   bool _viewTracked = false;
+  StreamSubscription<FavoriteChangedEvent>? _favoriteSubscription;
 
   @override
   void initState() {
     super.initState();
+    _favoriteSubscription =
+        sl<FavoriteRemoteDataSource>().changes.listen((event) {
+      if (!mounted ||
+          event.type != FavoriteTargetType.place ||
+          event.id != widget.placeId) {
+        return;
+      }
+
+      context
+          .read<PlaceDetailCubit>()
+          .syncFavoriteState(event.id, event.isFavorite);
+    });
+
+    // Load data when screen initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<PlaceDetailCubit>().loadPlaceDetail(widget.placeId);
     });
@@ -48,6 +64,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
   @override
   void dispose() {
     _dwellTimer?.cancel();
+    _favoriteSubscription?.cancel();
     super.dispose();
   }
 
@@ -101,7 +118,6 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
       ),
     );
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -148,10 +164,11 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                         : 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=800&q=80',
                     isFavorite: place.isFavorite,
                     onBack: () => Navigator.pop(context),
-                    onFavorite: () {
-                      final wasFavorite = place.isFavorite;
-                      context.read<PlaceDetailCubit>().toggleFavorite();
-                      if (!wasFavorite) {
+                    onFavorite: () async {
+                      final result =
+                          await context.read<PlaceDetailCubit>().toggleFavorite();
+                      if (!context.mounted) return;
+                      if (result == true) {
                         _activityService.trackSave(widget.placeId);
                         ScaffoldMessenger.of(context).clearSnackBars();
                         ScaffoldMessenger.of(context).showSnackBar(

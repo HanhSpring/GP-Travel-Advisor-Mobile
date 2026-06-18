@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:travel_advisor_mobile/core/config/app_config.dart';
+import 'package:travel_advisor_mobile/core/di/injection_container.dart';
 
 import 'itinerary_detail_screen.dart';
 import 'package:travel_advisor_mobile/features/itinerary/tracking/data/models/tracking_models.dart';
@@ -17,6 +18,7 @@ import 'package:travel_advisor_mobile/features/itinerary/presentation/cubit/itin
 import 'package:travel_advisor_mobile/features/itinerary/presentation/cubit/itinerary_state.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/widgets/itinerary_rating_popup.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/short_itinerary_item.dart';
+import 'package:travel_advisor_mobile/features/saved/data/datasources/favorite_remote_datasource.dart';
 
 /// Chế độ thiết kế: true dùng dữ liệu mẫu, false dùng API.
 const bool _useMockData = AppConfig.kUseMockData;
@@ -176,6 +178,33 @@ class _ItinerarySummaryView extends StatelessWidget {
               onPressed: () => _showEditTitleDialog(context, itin),
             ),
           ),
+          if (itin.isPublic)
+            Container(
+              margin: EdgeInsets.only(right: canReview ? 8 : 16),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.9),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 8,
+                    offset: const Offset(1, 2),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                icon: Icon(
+                  itin.isFavorite
+                      ? Icons.favorite_rounded
+                      : Icons.favorite_border_rounded,
+                  color: itin.isFavorite
+                      ? const Color(0xFFEF4444)
+                      : const Color(0xFF2563EB),
+                  size: 22,
+                ),
+                onPressed: () => _toggleFavorite(context, itin),
+              ),
+            ),
           if (canReview)
             Container(
               margin: const EdgeInsets.only(right: 16),
@@ -311,7 +340,53 @@ class _ItinerarySummaryView extends StatelessWidget {
           ),
         ],
       ),
-    );
+      );
+  }
+
+  Future<void> _toggleFavorite(
+    BuildContext context,
+    ItineraryDetailEntity itin,
+  ) async {
+    if (!itin.isPublic) {
+      return;
+    }
+
+    final cubit = context.read<ItineraryCubit>();
+    final messenger = ScaffoldMessenger.of(context);
+    final nextFavorite = !itin.isFavorite;
+
+    cubit.setSelectedItineraryFavorite(nextFavorite);
+
+    try {
+      await sl<FavoriteRemoteDataSource>().setItineraryFavorite(
+        itin.id,
+        nextFavorite,
+      );
+      if (!context.mounted) return;
+      messenger.clearSnackBars();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            nextFavorite
+                ? 'Đã lưu vào danh mục yêu thích'
+                : 'Đã bỏ khỏi danh mục yêu thích',
+          ),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (_) {
+      cubit.setSelectedItineraryFavorite(itin.isFavorite);
+      if (!context.mounted) return;
+      messenger.clearSnackBars();
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Chưa thể cập nhật yêu thích, vui lòng thử lại'),
+          duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   Widget _buildDestinationHeader(
