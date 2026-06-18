@@ -33,7 +33,7 @@ class ItineraryDetailEntity {
   final DateTime endDate;
   final String status;
   final bool isPublic;
-
+  final bool isFavorite;
   final int durationDays;
   final int activitiesCount;
   final int totalLocations;
@@ -65,6 +65,7 @@ class ItineraryDetailEntity {
     required this.endDate,
     required this.status,
     this.isPublic = true,
+    this.isFavorite = false,
     required this.durationDays,
     required this.activitiesCount,
     this.totalLocations = 0,
@@ -94,6 +95,7 @@ class ItineraryDetailEntity {
     DateTime? endDate,
     String? status,
     bool? isPublic,
+    bool? isFavorite,
     int? durationDays,
     int? activitiesCount,
     int? totalLocations,
@@ -122,6 +124,7 @@ class ItineraryDetailEntity {
       endDate: endDate ?? this.endDate,
       status: status ?? this.status,
       isPublic: isPublic ?? this.isPublic,
+      isFavorite: isFavorite ?? this.isFavorite,
       durationDays: durationDays ?? this.durationDays,
       activitiesCount: activitiesCount ?? this.activitiesCount,
       totalLocations: totalLocations ?? this.totalLocations,

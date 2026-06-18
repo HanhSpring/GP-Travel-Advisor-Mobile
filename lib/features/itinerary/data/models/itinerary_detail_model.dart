@@ -11,6 +11,7 @@ class ItineraryDetailModel {
   final DateTime endDate;
   final String status;
   final bool isPublic;
+  final bool isFavorite;
   final int durationDays;
   final int activitiesCount;
   final int totalLocations;
@@ -39,6 +40,7 @@ class ItineraryDetailModel {
     required this.endDate,
     required this.status,
     this.isPublic = true,
+    this.isFavorite = false,
     required this.durationDays,
     required this.activitiesCount,
     this.totalLocations = 0,
@@ -92,16 +94,9 @@ class ItineraryDetailModel {
       endDate: end,
       status: json['status'] ?? '',
       isPublic: json['isPublic'] ?? json['is_public'] ?? true,
-      durationDays:
-          json['durationDays'] ??
-          json['duration_days'] ??
-          json['totalDays'] ??
-          0,
-      activitiesCount:
-          json['activitiesCount'] ??
-          json['activities_count'] ??
-          json['totalPlaces'] ??
-          0,
+      isFavorite: json['isFavorite'] == true || json['is_favorite'] == true,
+      durationDays: json['durationDays'] ?? json['duration_days'] ?? json['totalDays'] ?? 0,
+      activitiesCount: json['activitiesCount'] ?? json['activities_count'] ?? json['totalPlaces'] ?? 0,
       totalLocations:
           json['totalLocations'] ??
           json['total_locations'] ??
@@ -166,6 +161,7 @@ class ItineraryDetailModel {
       endDate: endDate,
       status: status,
       isPublic: isPublic,
+      isFavorite: isFavorite,
       durationDays: durationDays,
       activitiesCount: activitiesCount,
       totalLocations: totalLocations,
@@ -237,6 +233,9 @@ class VisitedDishModel {
     );
   }
 
-  VisitedDish toEntity() =>
-      VisitedDish(name: name, price: price, quantity: quantity);
+  VisitedDish toEntity() => VisitedDish(
+        name: name,
+        price: price,
+        quantity: quantity,
+      );
 }
