@@ -31,13 +31,14 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   RealtimeChannel? _notificationChannel;
+  late final SavedCubit _savedCubit = sl<SavedCubit>();
 
-  final List<Widget> _pages = [
+  late final List<Widget> _pages = [
     const ExploreScreen(),
     const ItineraryScreen(),
     const SizedBox.shrink(),
-    BlocProvider(
-      create: (context) => sl<SavedCubit>(),
+    BlocProvider.value(
+      value: _savedCubit,
       child: const SavedScreen(),
     ),
     const ProfileScreen(),
@@ -101,6 +102,7 @@ class _MainShellState extends State<MainShell> {
     if (_notificationChannel != null) {
       Supabase.instance.client.removeChannel(_notificationChannel!);
     }
+    _savedCubit.close();
     super.dispose();
   }
 
@@ -154,6 +156,9 @@ class _MainShellState extends State<MainShell> {
                     if (i == 4) {
                       final cubit = context.read<ProfileCubit>();
                       if (cubit.state is ProfileInitial) cubit.loadProfile();
+                    }
+                    if (i == 3) {
+                      _savedCubit.loadSavedContent(silent: true);
                     }
                     context.read<TabCubit>().changeTab(i);
                   },

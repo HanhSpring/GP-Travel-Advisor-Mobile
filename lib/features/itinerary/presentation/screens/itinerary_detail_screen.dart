@@ -29,6 +29,7 @@ import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/it
 import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/timeline_activity_card.dart';
 import 'package:travel_advisor_mobile/features/place/presentation/cubit/place_detail_cubit.dart';
 import 'package:travel_advisor_mobile/features/place/presentation/screens/place_detail_screen.dart';
+import 'package:travel_advisor_mobile/features/saved/data/datasources/favorite_remote_datasource.dart';
 import '../widgets/itinerary_map_view.dart';
 import '../widgets/replace_place_sheet.dart';
 import '../widgets/add_place_sheet.dart';
@@ -217,13 +218,14 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
   }
 
   void _navigateToPlaceDetail(ItineraryActivityEntity activity) {
+    final placeId = activity.placeId ?? activity.id;
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => BlocProvider(
           create: (_) => sl<PlaceDetailCubit>(),
           child: PlaceDetailScreen(
-            placeId: activity.id,
+            placeId: placeId,
             showRelatedPlaces: false,
           ),
         ),
@@ -399,6 +401,54 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
     );
   }
 
+  Future<void> _toggleItineraryFavorite() async {
+    final state = context.read<ItineraryCubit>().state;
+    if (state is! ItineraryLoaded || state.selectedItinerary == null) {
+      return;
+    }
+
+    final itinerary = state.selectedItinerary!;
+    if (!itinerary.isPublic) {
+      return;
+    }
+
+    final nextFavorite = !itinerary.isFavorite;
+    context.read<ItineraryCubit>().setSelectedItineraryFavorite(nextFavorite);
+
+    try {
+      await sl<FavoriteRemoteDataSource>().setItineraryFavorite(
+        itinerary.id,
+        nextFavorite,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            nextFavorite
+                ? 'Đã lưu vào danh mục yêu thích'
+                : 'Đã bỏ khỏi danh mục yêu thích',
+          ),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      context.read<ItineraryCubit>().setSelectedItineraryFavorite(
+        itinerary.isFavorite,
+      );
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Chưa thể cập nhật yêu thích, vui lòng thử lại'),
+          duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
   void _onEditTime(
     ItineraryActivityEntity activity,
     bool isStart,
@@ -436,12 +486,12 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
       // ── Validation: kiểm tra tính hợp lệ trước khi cho phép thay đổi ──────
       final newMin = pickedTime.hour * 60 + pickedTime.minute;
 
-      int _toMinutes(String t) {
+      int toMinutes(String t) {
         final p = t.split(':');
         return int.parse(p[0]) * 60 + int.parse(p[1]);
       }
 
-      Future<void> _showTimeError(String message) async {
+      Future<void> showTimeError(String message) async {
         await showDialog<void>(
           context: context,
           builder: (ctx) => AlertDialog(
@@ -477,16 +527,16 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
 
       if (isStart) {
         // Đang chỉnh giờ ĐẾN → phải trước giờ RỜI hiện tại
-        final endMin = _toMinutes(activity.endTime);
+        final endMin = toMinutes(activity.endTime);
         if (newMin >= endMin) {
-          await _showTimeError(
+          await showTimeError(
             'Giờ đến ($newTime) phải trước giờ rời (${activity.endTime}) của cùng địa điểm.\n\n'
             'Vui lòng chọn lại thời gian.',
           );
           return; // Không áp dụng thay đổi
         }
         if (endMin - newMin > 4 * 60) {
-          await _showTimeError(
+          await showTimeError(
             'Khoảng thời gian tham quan quá dài (hơn 4 tiếng).\n\n'
             'Vui lòng chọn giờ đến hợp lý hơn.',
           );
@@ -494,16 +544,16 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
         }
       } else {
         // Đang chỉnh giờ RỜI → phải sau giờ ĐẾN hiện tại
-        final startMin = _toMinutes(activity.startTime);
+        final startMin = toMinutes(activity.startTime);
         if (newMin <= startMin) {
-          await _showTimeError(
+          await showTimeError(
             'Giờ rời ($newTime) phải sau giờ đến (${activity.startTime}) của cùng địa điểm.\n\n'
             'Vui lòng chọn lại thời gian.',
           );
           return; // Không áp dụng thay đổi
         }
         if (newMin - startMin > 4 * 60) {
-          await _showTimeError(
+          await showTimeError(
             'Khoảng thời gian tham quan quá dài (hơn 4 tiếng).\n\n'
             'Vui lòng chọn giờ rời hợp lý hơn.',
           );
@@ -525,14 +575,14 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
             final closeMin = toM(slot.$2);
             final label = isStart ? 'đến' : 'rời';
             if (newMin < openMin) {
-              await _showTimeError(
+              await showTimeError(
                 '${activity.title} chưa mở cửa lúc $newTime.\n\n'
                 'Địa điểm mở cửa từ ${slot.$1} – ${slot.$2}. Vui lòng chọn giờ $label sau ${slot.$1}.',
               );
               return;
             }
             if (newMin > closeMin) {
-              await _showTimeError(
+              await showTimeError(
                 '${activity.title} đã đóng cửa lúc ${slot.$2}.\n\n'
                 'Giờ $label $newTime vượt quá giờ đóng cửa. Vui lòng chọn trước ${slot.$2}.',
               );
@@ -1043,6 +1093,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
               onEditTime: _onEditTime,
               onDirectionTap: _launchDirections,
               onShareTap: _showShareSheet,
+              onFavoriteTap: _toggleItineraryFavorite,
               onMarkerTap: (id) => _scrollToActivity(id),
               highlightedActivityId: _highlightedActivityId,
               isEditMode: _isEditMode,
@@ -1116,6 +1167,7 @@ class _ItineraryDetailView extends StatelessWidget {
   final Function(ItineraryActivityEntity, ItineraryActivityEntity)
   onDirectionTap;
   final VoidCallback onShareTap;
+  final VoidCallback onFavoriteTap;
   final Function(String) onMarkerTap;
   final String? highlightedActivityId;
   final bool isEditMode;
@@ -1141,6 +1193,7 @@ class _ItineraryDetailView extends StatelessWidget {
     required this.onEditTime,
     required this.onDirectionTap,
     required this.onShareTap,
+    required this.onFavoriteTap,
     required this.onMarkerTap,
     this.highlightedActivityId,
     required this.isEditMode,
@@ -1222,7 +1275,7 @@ class _ItineraryDetailView extends StatelessWidget {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.15),
+                            color: Colors.black.withValues(alpha: 0.15),
                             blurRadius: 20,
                             offset: const Offset(0, -4),
                           ),
@@ -1309,6 +1362,18 @@ class _ItineraryDetailView extends StatelessWidget {
                         active: isEditMode,
                       ),
                       if (!isEditMode) ...[
+                        if (itin.isPublic) ...[
+                          const SizedBox(width: AppSizes.s12),
+                          _floatingCircleButton(
+                            itin.isFavorite
+                                ? Icons.favorite
+                                : Icons.favorite_border,
+                            onFavoriteTap,
+                            iconColor: itin.isFavorite
+                                ? Colors.redAccent
+                                : Colors.white,
+                          ),
+                        ],
                         const SizedBox(width: AppSizes.s12),
                         _floatingCircleButton(Icons.share_outlined, onShareTap),
                       ],

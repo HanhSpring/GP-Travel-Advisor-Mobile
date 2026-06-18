@@ -59,6 +59,7 @@ import 'package:travel_advisor_mobile/features/review/domain/repositories/review
 import 'package:travel_advisor_mobile/features/review/domain/usecases/get_itinerary_for_review_usecase.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_cubit.dart';
 import 'package:travel_advisor_mobile/features/saved/data/datasources/collections_datasource.dart';
+import 'package:travel_advisor_mobile/features/saved/data/datasources/favorite_remote_datasource.dart';
 import 'package:travel_advisor_mobile/features/saved/data/repositories/saved_repository_impl.dart';
 import 'package:travel_advisor_mobile/features/saved/domain/repositories/saved_repository.dart';
 import 'package:travel_advisor_mobile/features/saved/domain/usecases/get_favorite_itineraries_usecase.dart';
@@ -258,11 +259,19 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<PlaceDataSource>(() => RemotePlaceDataSource(sl()));
   sl.registerLazySingleton<PlaceRepository>(() => PlaceRepositoryImpl(sl()));
   sl.registerLazySingleton(() => GetPlaceDetailUseCase(sl()));
-  sl.registerFactory(() => PlaceDetailCubit(getPlaceDetailUseCase: sl()));
+  sl.registerFactory(
+    () => PlaceDetailCubit(
+      getPlaceDetailUseCase: sl(),
+      favoriteRemoteDataSource: sl(),
+    ),
+  );
 
   // ── Saved ──────────────────────────────────────────────────────────────────
   sl.registerLazySingleton<CollectionsDataSource>(
     () => RemoteCollectionsDataSource(sl()),
+  );
+  sl.registerLazySingleton<FavoriteRemoteDataSource>(
+    () => FavoriteRemoteDataSource(sl()),
   );
   sl.registerLazySingleton<SavedRepository>(
     () => SavedRepositoryImpl(dataSource: sl()),
