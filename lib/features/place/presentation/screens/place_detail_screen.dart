@@ -42,17 +42,19 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _favoriteSubscription =
-        sl<FavoriteRemoteDataSource>().changes.listen((event) {
+    _favoriteSubscription = sl<FavoriteRemoteDataSource>().changes.listen((
+      event,
+    ) {
       if (!mounted ||
           event.type != FavoriteTargetType.place ||
           event.id != widget.placeId) {
         return;
       }
 
-      context
-          .read<PlaceDetailCubit>()
-          .syncFavoriteState(event.id, event.isFavorite);
+      context.read<PlaceDetailCubit>().syncFavoriteState(
+        event.id,
+        event.isFavorite,
+      );
     });
 
     // Load data when screen initializes
@@ -165,8 +167,9 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                     isFavorite: place.isFavorite,
                     onBack: () => Navigator.pop(context),
                     onFavorite: () async {
-                      final result =
-                          await context.read<PlaceDetailCubit>().toggleFavorite();
+                      final result = await context
+                          .read<PlaceDetailCubit>()
+                          .toggleFavorite();
                       if (!context.mounted) return;
                       if (result == true) {
                         _activityService.trackSave(widget.placeId);
@@ -183,7 +186,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                       }
                     },
                   ),
-                  
+
                   // 2. Title, Rating, Location, Vibes
                   PlaceInfoSection(
                     name: place.name,
@@ -198,15 +201,16 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                       place.address,
                     ),
                   ),
-                  
+
                   // 3. Image Gallery
                   PlaceGallerySection(images: place.images),
 
+                  // 4. Description
                   PlaceDescriptionSection(description: place.description),
 
+                  // 5. Contact Info (Hours, Phone, Address)
                   PlaceContactSection(
-                    openingTime: place.openingHours,
-                    closingTime: place.closingHours,
+                    openHourCompressed: place.openHourCompressed,
                     phone: place.phone,
                     address: place.address,
                     onLocationTap: () => _showMap(
@@ -217,7 +221,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                       place.address,
                     ),
                   ),
-                  
+
                   // 6. Reviews Section
                   PlaceReviewSection(
                     rating: place.rating,
@@ -225,6 +229,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                     reviews: place.reviews,
                   ),
 
+                  // 7. Related Places - ONLY SHOW if showRelatedPlaces is true
                   if (widget.showRelatedPlaces)
                     RelatedPlacesSection(relatedPlaces: place.relatedPlaces),
 
@@ -240,7 +245,13 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
     );
   }
 
-  void _showMap(BuildContext context, double lat, double lng, String title, String address) {
+  void _showMap(
+    BuildContext context,
+    double lat,
+    double lng,
+    String title,
+    String address,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
