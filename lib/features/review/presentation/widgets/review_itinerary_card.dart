@@ -62,7 +62,7 @@ class ReviewItineraryCard extends StatelessWidget {
                   color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
-                )
+                ),
               ],
             ),
             clipBehavior: Clip.antiAlias,
@@ -72,9 +72,7 @@ class ReviewItineraryCard extends StatelessWidget {
                   url: itinerary.imageUrl,
                   placeholderColor: AppColors.blobMedium.toARGB32(),
                 ),
-                Container(
-                  color: Colors.black.withValues(alpha: 0.3),
-                ),
+                Container(color: Colors.black.withValues(alpha: 0.3)),
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -83,7 +81,9 @@ class ReviewItineraryCard extends StatelessWidget {
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.primary.withValues(alpha: 0.8),
                           borderRadius: BorderRadius.circular(12),
@@ -91,9 +91,10 @@ class ReviewItineraryCard extends StatelessWidget {
                         child: Text(
                           itinerary.status,
                           style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold),
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -115,7 +116,7 @@ class ReviewItineraryCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                )
+                ),
               ],
             ),
           ),
@@ -129,7 +130,11 @@ class ReviewItineraryCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          StarRatingInput(rating: rating, onRatingChanged: onRatingChanged),
+          StarRatingInput(
+            rating: rating,
+            onRatingChanged: onRatingChanged,
+            mainAxisAlignment: MainAxisAlignment.center,
+          ),
           const SizedBox(height: 16),
           Row(
             children: [
@@ -140,10 +145,14 @@ class ReviewItineraryCard extends StatelessWidget {
                   height: 20,
                   decoration: BoxDecoration(
                     color: applyToAll ? AppColors.primary : Colors.white,
-                    border: applyToAll ? null : Border.all(color: Colors.grey.shade400),
+                    border: applyToAll
+                        ? null
+                        : Border.all(color: Colors.grey.shade400),
                     shape: BoxShape.circle,
                   ),
-                  child: applyToAll ? const Icon(Icons.check, color: Colors.white, size: 14) : null,
+                  child: applyToAll
+                      ? const Icon(Icons.check, color: Colors.white, size: 14)
+                      : null,
                 ),
               ),
               const SizedBox(width: 12),
@@ -152,7 +161,7 @@ class ReviewItineraryCard extends StatelessWidget {
                   'Áp dụng xếp hạng này cho tất cả các địa điểm',
                   style: TextStyle(fontSize: 12, color: Color(0xFF4B5563)),
                 ),
-              )
+              ),
             ],
           ),
           const SizedBox(height: 20),
@@ -183,7 +192,8 @@ class ReviewItineraryCard extends StatelessWidget {
                 errorBorder: InputBorder.none,
                 disabledBorder: InputBorder.none,
                 filled: false,
-                hintText: 'Hãy cho chúng tôi biết về những điểm nổi bật, về vấn đề hậu cần và những gì có thể được cải thiện...',
+                hintText:
+                    'Hãy cho chúng tôi biết về những điểm nổi bật, về vấn đề hậu cần và những gì có thể được cải thiện...',
                 hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 12),
                 contentPadding: const EdgeInsets.symmetric(vertical: 8),
               ),
