@@ -1,12 +1,15 @@
+import 'dart:io';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:image_picker/image_picker.dart';
 import 'review_state.dart';
 
 import 'package:travel_advisor_mobile/features/review/data/datasources/review_datasource.dart';
 import 'package:travel_advisor_mobile/features/review/domain/entities/itinerary_review_entity.dart';
 import 'package:travel_advisor_mobile/features/review/domain/entities/location_review_entity.dart';
+import 'package:travel_advisor_mobile/features/review/domain/entities/review_media_item.dart';
 import 'package:travel_advisor_mobile/features/review/domain/repositories/review_repository.dart';
 import 'package:travel_advisor_mobile/features/review/domain/usecases/get_itinerary_for_review_usecase.dart';
+import 'package:travel_advisor_mobile/features/review/presentation/utils/review_media_picker.dart';
 import 'package:travel_advisor_mobile/core/config/app_config.dart';
 import 'package:travel_advisor_mobile/core/utils/demo_review_store.dart';
 
@@ -21,21 +24,28 @@ class ReviewCubit extends Cubit<ReviewState> {
 
   /// 🔧 CHẾ ĐỘ DEMO: Set true để bỏ qua lỗi Backend và dùng dữ liệu mẫu
   static const bool kDemoMode = AppConfig.kUseMockData;
+  static const int _maxImageSizeBytes = 2 * 1024 * 1024;
+  static const int _maxVideoSizeBytes = 20 * 1024 * 1024;
+  static const Duration _maxVideoDuration = Duration(seconds: 20);
 
   Future<void> loadReviewData(String itineraryId) async {
     emit(ReviewLoading());
-    
+
     if (kDemoMode) {
       await Future.delayed(const Duration(milliseconds: 500));
       final itinerary = _generateDemoData();
-      final generalRating = DemoReviewStore.itineraryOverallRatings[itineraryId] ?? 0.0;
-      final generalComment = DemoReviewStore.itineraryOverallComments[itineraryId] ?? '';
-      
-      emit(ReviewLoaded(
-        itinerary: itinerary,
-        generalRating: generalRating,
-        generalComment: generalComment,
-      ));
+      final generalRating =
+          DemoReviewStore.itineraryOverallRatings[itineraryId] ?? 0.0;
+      final generalComment =
+          DemoReviewStore.itineraryOverallComments[itineraryId] ?? '';
+
+      emit(
+        ReviewLoaded(
+          itinerary: itinerary,
+          generalRating: generalRating,
+          generalComment: generalComment,
+        ),
+      );
       return;
     }
 
@@ -49,7 +59,13 @@ class ReviewCubit extends Cubit<ReviewState> {
 
   ItineraryReviewEntity _generateDemoData() {
     // Generate data that matches ItineraryCubit's mock structure
-    final List<String> day1Ids = ['mock_1_1', 'mock_1_2', 'mock_1_3', 'mock_1_4', 'mock_1_5'];
+    final List<String> day1Ids = [
+      'mock_1_1',
+      'mock_1_2',
+      'mock_1_3',
+      'mock_1_4',
+      'mock_1_5',
+    ];
     final List<String> day2Ids = ['mock_2_1', 'mock_2_2', 'mock_2_3'];
     final List<String> day3Ids = ['mock_3_1', 'mock_3_2'];
     final allIds = [...day1Ids, ...day2Ids, ...day3Ids];
@@ -58,13 +74,21 @@ class ReviewCubit extends Cubit<ReviewState> {
       final locId = entry.value;
       final index = entry.key;
       final storedRating = DemoReviewStore.getLocationRating(locId);
-      final storedComment = DemoReviewStore.userComments[locId];
-      
+
       return LocationReviewEntity(
         id: locId,
-        name: index == 0 ? 'Dinh Độc Lập' : index == 1 ? 'Nhà thờ Đức Bà' : 'Địa điểm ${index + 1}',
-        imageUrl: 'https://images.unsplash.com/photo-1559506825-f933e38714eb?w=100&q=80',
-        day: index < 5 ? 1 : index < 8 ? 2 : 3,
+        name: index == 0
+            ? 'Dinh Độc Lập'
+            : index == 1
+            ? 'Nhà thờ Đức Bà'
+            : 'Địa điểm ${index + 1}',
+        imageUrl:
+            'https://images.unsplash.com/photo-1559506825-f933e38714eb?w=100&q=80',
+        day: index < 5
+            ? 1
+            : index < 8
+            ? 2
+            : 3,
         isVisited: true,
         rating: storedRating, // Priority to user rating
       );
@@ -73,7 +97,8 @@ class ReviewCubit extends Cubit<ReviewState> {
     return ItineraryReviewEntity(
       id: 'mock_ongoing',
       title: 'Phú Quốc Hè 2024',
-      imageUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800',
+      imageUrl:
+          'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800',
       dateRange: '15/06 - 18/06/2024',
       status: 'PLANNING',
       locations: locations,
@@ -86,22 +111,77 @@ class ReviewCubit extends Cubit<ReviewState> {
     }
   }
 
+  Map<String, double?> _snapshotLocationRatings(
+    List<LocationReviewEntity> locations,
+  ) {
+    return {for (final loc in locations) loc.id: loc.rating};
+  }
+
+  ItineraryReviewEntity _applyRatingToAllLocations(
+    ItineraryReviewEntity itinerary,
+    double rating,
+  ) {
+    final appliedRating = rating > 0 ? rating : null;
+    final newLocations = itinerary.locations
+        .map((loc) {
+          if (loc.rating == appliedRating) {
+            return loc;
+          }
+          return loc.copyWith(rating: appliedRating);
+        })
+        .toList(growable: false);
+
+    return itinerary.copyWith(locations: newLocations);
+  }
+
+  ItineraryReviewEntity _restoreLocationRatings(
+    ItineraryReviewEntity itinerary,
+    Map<String, double?> ratingsByLocationId,
+  ) {
+    if (ratingsByLocationId.isEmpty) {
+      return itinerary;
+    }
+
+    final newLocations = itinerary.locations
+        .map((loc) {
+          if (!ratingsByLocationId.containsKey(loc.id)) {
+            return loc;
+          }
+
+          final restoredRating = ratingsByLocationId[loc.id];
+          if (loc.rating == restoredRating) {
+            return loc;
+          }
+
+          return loc.copyWith(rating: restoredRating);
+        })
+        .toList(growable: false);
+
+    return itinerary.copyWith(locations: newLocations);
+  }
+
   void setGeneralRating(double rating) {
     if (state is ReviewLoaded) {
       final currentState = state as ReviewLoaded;
       var newItinerary = currentState.itinerary;
-      
+      var ratingsBeforeApplyAll = currentState.locationRatingsBeforeApplyAll;
+
       if (currentState.applyToAllLocations) {
-        final newLocations = newItinerary.locations.map((loc) {
-          return loc.copyWith(rating: rating);
-        }).toList();
-        newItinerary = newItinerary.copyWith(locations: newLocations);
+        if (ratingsBeforeApplyAll.isEmpty) {
+          ratingsBeforeApplyAll = _snapshotLocationRatings(
+            newItinerary.locations,
+          );
+        }
+        newItinerary = _applyRatingToAllLocations(newItinerary, rating);
       }
-      
-      emit(currentState.copyWith(
-        generalRating: rating,
-        itinerary: newItinerary,
-      ));
+
+      emit(
+        currentState.copyWith(
+          generalRating: rating,
+          itinerary: newItinerary,
+          locationRatingsBeforeApplyAll: ratingsBeforeApplyAll,
+        ),
+      );
     }
   }
 
@@ -114,26 +194,39 @@ class ReviewCubit extends Cubit<ReviewState> {
   void toggleApplyToAll(bool value) {
     if (state is ReviewLoaded) {
       final currentState = state as ReviewLoaded;
-      
+
       var newItinerary = currentState.itinerary;
+      var ratingsBeforeApplyAll = currentState.locationRatingsBeforeApplyAll;
       if (value) {
-        final newLocations = newItinerary.locations.map((loc) {
-          return loc.copyWith(rating: currentState.generalRating);
-        }).toList();
-        newItinerary = newItinerary.copyWith(locations: newLocations);
+        ratingsBeforeApplyAll = _snapshotLocationRatings(
+          newItinerary.locations,
+        );
+        newItinerary = _applyRatingToAllLocations(
+          newItinerary,
+          currentState.generalRating,
+        );
+      } else {
+        newItinerary = _restoreLocationRatings(
+          newItinerary,
+          ratingsBeforeApplyAll,
+        );
+        ratingsBeforeApplyAll = const {};
       }
-      
-      emit(currentState.copyWith(
-        applyToAllLocations: value,
-        itinerary: newItinerary,
-      ));
+
+      emit(
+        currentState.copyWith(
+          applyToAllLocations: value,
+          itinerary: newItinerary,
+          locationRatingsBeforeApplyAll: ratingsBeforeApplyAll,
+        ),
+      );
     }
   }
 
   void setLocationRating(String locationId, double rating) {
     if (state is ReviewLoaded) {
       final currentState = state as ReviewLoaded;
-      
+
       // Persist to DemoStore immediately for sync with other screens
       if (kDemoMode) {
         DemoReviewStore.saveLocationRating(locationId, rating);
@@ -145,13 +238,18 @@ class ReviewCubit extends Cubit<ReviewState> {
         }
         return loc;
       }).toList();
-      
-      final newItinerary = currentState.itinerary.copyWith(locations: newLocations);
-      
-      emit(currentState.copyWith(
-        itinerary: newItinerary,
-        applyToAllLocations: false,
-      ));
+
+      final newItinerary = currentState.itinerary.copyWith(
+        locations: newLocations,
+      );
+
+      emit(
+        currentState.copyWith(
+          itinerary: newItinerary,
+          applyToAllLocations: false,
+          locationRatingsBeforeApplyAll: const {},
+        ),
+      );
     }
   }
 
@@ -160,7 +258,7 @@ class ReviewCubit extends Cubit<ReviewState> {
     double? rating,
     String? reviewText,
     List<String>? reviewTags,
-    List<String>? mediaPaths,
+    List<ReviewMediaItem>? mediaItems,
   }) {
     if (state is ReviewLoaded) {
       final currentState = state as ReviewLoaded;
@@ -170,48 +268,271 @@ class ReviewCubit extends Cubit<ReviewState> {
             rating: rating ?? loc.rating,
             reviewText: reviewText ?? loc.reviewText,
             reviewTags: reviewTags ?? loc.reviewTags,
-            mediaPaths: mediaPaths ?? loc.mediaPaths,
           );
         }
         return loc;
       }).toList();
 
-      final newItinerary = currentState.itinerary.copyWith(locations: newLocations);
+      final newItinerary = currentState.itinerary.copyWith(
+        locations: newLocations,
+      );
+      final newLocationMedia = Map<String, List<ReviewMediaItem>>.from(
+        currentState.locationMediaByDetailId,
+      );
+      if (mediaItems != null) {
+        newLocationMedia[locationId] = List<ReviewMediaItem>.unmodifiable(
+          mediaItems,
+        );
+      }
 
-      emit(currentState.copyWith(
-        itinerary: newItinerary,
-        applyToAllLocations: false,
-      ));
+      emit(
+        currentState.copyWith(
+          itinerary: newItinerary,
+          applyToAllLocations: false,
+          locationRatingsBeforeApplyAll: const {},
+          locationMediaByDetailId: newLocationMedia,
+        ),
+      );
     }
   }
 
-  Future<void> addMedia() async {
+  Future<void> addImages() async {
     if (state is ReviewLoaded) {
-      final picker = ImagePicker();
-      final pickedFiles = await picker.pickMultiImage();
-      
-      if (pickedFiles.isNotEmpty) {
-        final currentState = state as ReviewLoaded;
-        final newMedia = List<String>.from(currentState.mediaPaths);
-        newMedia.addAll(pickedFiles.map((f) => f.path));
-        emit(currentState.copyWith(mediaPaths: newMedia));
+      final currentState = state as ReviewLoaded;
+      final pickedMedia = await ReviewMediaPicker.pickImages(
+        startSortOrder: currentState.itineraryMedia.length,
+      );
+
+      if (pickedMedia.isNotEmpty) {
+        final newMedia = List<ReviewMediaItem>.from(currentState.itineraryMedia)
+          ..addAll(pickedMedia);
+        emit(currentState.copyWith(itineraryMedia: newMedia));
       }
     }
   }
 
-  void removeMedia(String path) {
+  Future<void> addVideo() async {
     if (state is ReviewLoaded) {
       final currentState = state as ReviewLoaded;
-      final newMedia = List<String>.from(currentState.mediaPaths)..remove(path);
-      emit(currentState.copyWith(mediaPaths: newMedia));
+      final video = await ReviewMediaPicker.pickVideo(
+        sortOrder: currentState.itineraryMedia.length,
+      );
+
+      if (video != null) {
+        final newMedia = List<ReviewMediaItem>.from(currentState.itineraryMedia)
+          ..add(video);
+        emit(currentState.copyWith(itineraryMedia: newMedia));
+      }
+    }
+  }
+
+  void removeMedia(String mediaId) {
+    if (state is ReviewLoaded) {
+      final currentState = state as ReviewLoaded;
+      final newMedia = List<ReviewMediaItem>.from(currentState.itineraryMedia)
+        ..removeWhere((item) => item.id == mediaId);
+      emit(currentState.copyWith(itineraryMedia: newMedia));
     }
   }
 
   void clearAllMedia() {
     if (state is ReviewLoaded) {
       final currentState = state as ReviewLoaded;
-      emit(currentState.copyWith(mediaPaths: []));
+      emit(currentState.copyWith(itineraryMedia: []));
     }
+  }
+
+  void _setSubmitting(bool isSubmitting) {
+    if (state is ReviewLoaded) {
+      emit((state as ReviewLoaded).copyWith(isSubmitting: isSubmitting));
+    }
+  }
+
+  void _updateItineraryMediaItem(ReviewMediaItem updatedItem) {
+    if (state is! ReviewLoaded) {
+      return;
+    }
+
+    final currentState = state as ReviewLoaded;
+    final media = currentState.itineraryMedia
+        .map((item) => item.id == updatedItem.id ? updatedItem : item)
+        .toList(growable: false);
+    emit(currentState.copyWith(itineraryMedia: media));
+  }
+
+  void _updateLocationMediaItem(
+    String locationId,
+    ReviewMediaItem updatedItem,
+  ) {
+    if (state is! ReviewLoaded) {
+      return;
+    }
+
+    final currentState = state as ReviewLoaded;
+    final locationMedia = Map<String, List<ReviewMediaItem>>.from(
+      currentState.locationMediaByDetailId,
+    );
+    final media = (locationMedia[locationId] ?? const <ReviewMediaItem>[])
+        .map((item) => item.id == updatedItem.id ? updatedItem : item)
+        .toList(growable: false);
+    locationMedia[locationId] = media;
+    emit(currentState.copyWith(locationMediaByDetailId: locationMedia));
+  }
+
+  String _fileNameFromPath(String path) {
+    return path.split(RegExp(r'[\\/]')).last;
+  }
+
+  int _maxSizeForMedia(ReviewMediaType type) {
+    return switch (type) {
+      ReviewMediaType.image => _maxImageSizeBytes,
+      ReviewMediaType.video => _maxVideoSizeBytes,
+    };
+  }
+
+  Future<List<SubmitReviewMediaInput>> _uploadMediaScope({
+    required String scope,
+    required String itineraryId,
+    String? itineraryDetailId,
+    required List<ReviewMediaItem> mediaItems,
+    required void Function(ReviewMediaItem item) onItemChanged,
+  }) async {
+    if (mediaItems.isEmpty) {
+      return const [];
+    }
+
+    final candidates = <ReviewMediaUploadCandidate>[];
+    final hydratedItems = <ReviewMediaItem>[];
+
+    for (final item in mediaItems) {
+      final file = File(item.localPath);
+      final exists = await file.exists();
+      if (!exists) {
+        final failed = item.copyWith(
+          status: ReviewMediaUploadStatus.failed,
+          errorMessage: 'Không tìm thấy tệp đã chọn',
+        );
+        onItemChanged(failed);
+        throw Exception('Không tìm thấy tệp media: ${item.localPath}');
+      }
+
+      final size = await file.length();
+      final maxSize = _maxSizeForMedia(item.type);
+      if (size <= 0 || size > maxSize) {
+        final failed = item.copyWith(
+          status: ReviewMediaUploadStatus.failed,
+          fileSize: size,
+          errorMessage: 'Tệp vượt quá dung lượng cho phép',
+        );
+        onItemChanged(failed);
+        throw Exception('Tệp media vượt quá dung lượng cho phép');
+      }
+
+      if (item.type == ReviewMediaType.video) {
+        final duration = item.duration;
+        if (duration == null || duration > _maxVideoDuration) {
+          final failed = item.copyWith(
+            status: ReviewMediaUploadStatus.failed,
+            fileSize: size,
+            errorMessage: 'Video phải ngắn hơn hoặc bằng 20 giây',
+          );
+          onItemChanged(failed);
+          throw Exception('Video vượt quá thời lượng cho phép');
+        }
+      }
+
+      final contentType =
+          item.contentType ??
+          (item.type == ReviewMediaType.video ? 'video/mp4' : 'image/jpeg');
+      final hydrated = item.copyWith(
+        status: ReviewMediaUploadStatus.requestingUrl,
+        contentType: contentType,
+        fileSize: size,
+        errorMessage: '',
+      );
+      hydratedItems.add(hydrated);
+      onItemChanged(hydrated);
+      candidates.add(
+        ReviewMediaUploadCandidate(
+          fileName: _fileNameFromPath(item.localPath),
+          contentType: contentType,
+          size: size,
+          sortOrder: item.sortOrder,
+        ),
+      );
+    }
+
+    final presignedUrls = await reviewRepository.createReviewPresignedUrls(
+      scope: scope,
+      itineraryId: itineraryId,
+      itineraryDetailId: itineraryDetailId,
+      files: candidates,
+    );
+
+    if (presignedUrls.length != hydratedItems.length) {
+      for (final item in hydratedItems) {
+        onItemChanged(
+          item.copyWith(
+            status: ReviewMediaUploadStatus.failed,
+            errorMessage: 'Không nhận đủ upload URL',
+          ),
+        );
+      }
+      throw Exception('Không nhận đủ presigned URL cho media');
+    }
+
+    final submitMedia = <SubmitReviewMediaInput>[];
+
+    await Future.wait(
+      hydratedItems.asMap().entries.map((entry) async {
+        final index = entry.key;
+        final item = entry.value;
+        final presignedUrl = presignedUrls[index];
+        final uploading = item.copyWith(
+          status: ReviewMediaUploadStatus.uploading,
+          objectKey: presignedUrl.objectKey,
+          remoteUrl: presignedUrl.publicUrl,
+        );
+        onItemChanged(uploading);
+
+        try {
+          await reviewRepository.uploadReviewMediaToR2(
+            presignedUrl: presignedUrl,
+            localPath: item.localPath,
+            contentType:
+                item.contentType ??
+                (item.type == ReviewMediaType.video
+                    ? 'video/mp4'
+                    : 'image/jpeg'),
+            contentLength: item.fileSize ?? 0,
+          );
+
+          final uploaded = uploading.copyWith(
+            status: ReviewMediaUploadStatus.uploaded,
+            errorMessage: '',
+          );
+          onItemChanged(uploaded);
+          submitMedia.add(
+            SubmitReviewMediaInput(
+              objectKey: presignedUrl.objectKey,
+              mediaType: presignedUrl.mediaType,
+              sortOrder: presignedUrl.sortOrder,
+            ),
+          );
+        } catch (error) {
+          onItemChanged(
+            uploading.copyWith(
+              status: ReviewMediaUploadStatus.failed,
+              errorMessage: 'Tải media thất bại',
+            ),
+          );
+          rethrow;
+        }
+      }),
+    );
+
+    submitMedia.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+    return submitMedia;
   }
 
   Future<void> submitReview(String itineraryId) async {
@@ -225,17 +546,21 @@ class ReviewCubit extends Cubit<ReviewState> {
     try {
       if (kDemoMode) {
         await Future.delayed(const Duration(seconds: 1));
-        
+
         // Save to DemoStore for persistence across screens
         DemoReviewStore.saveItineraryReview(
-          itineraryId, 
-          currentState.generalRating, 
-          comment: currentState.generalComment
+          itineraryId,
+          currentState.generalRating,
+          comment: currentState.generalComment,
         );
-        
+
         for (var loc in currentState.itinerary.locations) {
           if (loc.rating != null) {
-            DemoReviewStore.saveLocationRating(loc.id, loc.rating!, comment: loc.reviewText);
+            DemoReviewStore.saveLocationRating(
+              loc.id,
+              loc.rating!,
+              comment: loc.reviewText,
+            );
           }
         }
 
@@ -244,31 +569,70 @@ class ReviewCubit extends Cubit<ReviewState> {
         // return;
       }
 
-      final placeReviews = currentState.itinerary.locations
-          .where((loc) => loc.rating != null)
-          .map(
-            (loc) => SubmitPlaceReviewInput(
-              itineraryDetailId: loc.id,
-              rating: loc.rating!.round(),
-              content: loc.reviewText,
-              tags: loc.reviewTags ?? const [],
-            ),
-          )
-          .toList();
+      final itineraryMedia = await _uploadMediaScope(
+        scope: 'itinerary',
+        itineraryId: itineraryId,
+        mediaItems: currentState.itineraryMedia,
+        onItemChanged: _updateItineraryMediaItem,
+      );
+
+      final placeReviews = <SubmitPlaceReviewInput>[];
+      for (final loc in currentState.itinerary.locations) {
+        final locationMedia =
+            currentState.locationMediaByDetailId[loc.id] ??
+            const <ReviewMediaItem>[];
+        final hasLocationMedia = locationMedia.isNotEmpty;
+
+        if (hasLocationMedia && loc.rating == null) {
+          for (final item in locationMedia) {
+            _updateLocationMediaItem(
+              loc.id,
+              item.copyWith(
+                status: ReviewMediaUploadStatus.failed,
+                errorMessage: 'Vui lòng chọn số sao trước khi gửi ảnh',
+              ),
+            );
+          }
+          throw Exception('Vui lòng chọn số sao cho địa điểm có media');
+        }
+
+        if (loc.rating == null) {
+          continue;
+        }
+
+        final uploadedLocationMedia = await _uploadMediaScope(
+          scope: 'place',
+          itineraryId: itineraryId,
+          itineraryDetailId: loc.id,
+          mediaItems: locationMedia,
+          onItemChanged: (item) => _updateLocationMediaItem(loc.id, item),
+        );
+
+        placeReviews.add(
+          SubmitPlaceReviewInput(
+            itineraryDetailId: loc.id,
+            rating: loc.rating!.round(),
+            content: loc.reviewText,
+            tags: loc.reviewTags ?? const [],
+            media: uploadedLocationMedia,
+          ),
+        );
+      }
 
       await reviewRepository.submitItineraryReview(
         itineraryId: itineraryId,
-        overallRating:
-            currentState.generalRating > 0 ? currentState.generalRating : null,
+        overallRating: currentState.generalRating > 0
+            ? currentState.generalRating
+            : null,
         overallContent: currentState.generalComment,
         applyAllPlaces: currentState.applyToAllLocations,
         placeReviews: placeReviews,
-        mediaUrls: currentState.mediaPaths,
+        media: itineraryMedia,
       );
 
-      emit(currentState.copyWith(isSubmitting: false));
+      _setSubmitting(false);
     } catch (_) {
-      emit(currentState.copyWith(isSubmitting: false));
+      _setSubmitting(false);
       rethrow;
     }
   }

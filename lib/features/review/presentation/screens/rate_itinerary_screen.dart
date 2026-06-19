@@ -10,6 +10,7 @@ import 'package:travel_advisor_mobile/core/services/activity_service.dart';
 import 'package:travel_advisor_mobile/core/theme/app_colors.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_cubit.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_state.dart';
+import 'package:travel_advisor_mobile/features/review/presentation/utils/review_media_picker.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/widgets/location_review_list_tile.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/widgets/review_itinerary_card.dart';
 
@@ -100,7 +101,7 @@ class _RateItineraryView extends StatelessWidget {
                         rating: state.generalRating,
                         applyToAll: state.applyToAllLocations,
                         generalComment: state.generalComment,
-                        mediaPaths: state.mediaPaths,
+                        mediaItems: state.itineraryMedia,
                         onRatingChanged: isReadOnly
                             ? (_) {}
                             : (rating) {
@@ -122,15 +123,34 @@ class _RateItineraryView extends StatelessWidget {
                                   value,
                                 );
                               },
-                        onAddMedia: isReadOnly
+                        onAddImages: isReadOnly
                             ? () {}
-                            : () {
-                                context.read<ReviewCubit>().addMedia();
+                            : () async {
+                                await context.read<ReviewCubit>().addImages();
+                              },
+                        onAddVideo: isReadOnly
+                            ? () {}
+                            : () async {
+                                try {
+                                  await context.read<ReviewCubit>().addVideo();
+                                } on ReviewMediaSelectionException catch (e) {
+                                  if (!context.mounted) {
+                                    return;
+                                  }
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(e.message),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
                               },
                         onRemoveMedia: isReadOnly
                             ? (_) {}
-                            : (path) {
-                                context.read<ReviewCubit>().removeMedia(path);
+                            : (mediaId) {
+                                context.read<ReviewCubit>().removeMedia(
+                                  mediaId,
+                                );
                               },
                         onClearAllMedia: isReadOnly
                             ? () {}

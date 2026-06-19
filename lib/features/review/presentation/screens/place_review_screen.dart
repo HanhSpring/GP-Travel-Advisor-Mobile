@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:image_picker/image_picker.dart';
 
 import 'package:travel_advisor_mobile/core/di/injection_container.dart';
 import 'package:travel_advisor_mobile/core/services/activity_service.dart';
 import 'package:travel_advisor_mobile/core/theme/app_colors.dart';
 import 'package:travel_advisor_mobile/core/widgets/net_image.dart';
+import 'package:travel_advisor_mobile/features/review/domain/entities/review_media_item.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_cubit.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_state.dart';
+import 'package:travel_advisor_mobile/features/review/presentation/utils/review_media_picker.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/widgets/review_media_list.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/widgets/star_rating_input.dart';
 
@@ -32,7 +33,7 @@ class PlaceReviewScreen extends StatefulWidget {
 class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
   late double _rating;
   late TextEditingController _reviewController;
-  late List<String> _mediaPaths;
+  late List<ReviewMediaItem> _mediaItems;
   late List<String> _selectedTags;
 
   final List<String> _quickTags = [
@@ -48,15 +49,19 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
     super.initState();
     final state = widget.reviewCubit.state;
     if (state is ReviewLoaded) {
-      final loc = state.itinerary.locations.firstWhere((l) => l.id == widget.locationId);
+      final loc = state.itinerary.locations.firstWhere(
+        (l) => l.id == widget.locationId,
+      );
       _rating = loc.rating ?? 0.0;
       _reviewController = TextEditingController(text: loc.reviewText ?? '');
-      _mediaPaths = List<String>.from(loc.mediaPaths ?? []);
+      _mediaItems = List<ReviewMediaItem>.from(
+        state.locationMediaByDetailId[widget.locationId] ?? const [],
+      );
       _selectedTags = List<String>.from(loc.reviewTags ?? []);
     } else {
       _rating = 0.0;
       _reviewController = TextEditingController();
-      _mediaPaths = [];
+      _mediaItems = [];
       _selectedTags = [];
     }
   }
@@ -76,13 +81,35 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
     return '';
   }
 
-  Future<void> _pickMedia() async {
-    final picker = ImagePicker();
-    final pickedFiles = await picker.pickMultiImage();
-    if (pickedFiles.isNotEmpty) {
+  Future<void> _pickImages() async {
+    final pickedMedia = await ReviewMediaPicker.pickImages(
+      startSortOrder: _mediaItems.length,
+    );
+    if (pickedMedia.isNotEmpty) {
       setState(() {
-        _mediaPaths.addAll(pickedFiles.map((f) => f.path));
+        _mediaItems.addAll(pickedMedia);
       });
+    }
+  }
+
+  Future<void> _pickVideo() async {
+    try {
+      final pickedVideo = await ReviewMediaPicker.pickVideo(
+        sortOrder: _mediaItems.length,
+      );
+
+      if (pickedVideo != null) {
+        setState(() {
+          _mediaItems.add(pickedVideo);
+        });
+      }
+    } on ReviewMediaSelectionException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message), backgroundColor: Colors.red),
+      );
     }
   }
 
@@ -101,7 +128,7 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
       rating: _rating,
       reviewText: _reviewController.text,
       reviewTags: _selectedTags,
-      mediaPaths: _mediaPaths,
+      mediaItems: _mediaItems,
     );
 
     if (placeId != null && placeId.isNotEmpty) {
@@ -124,7 +151,9 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
       builder: (context, state) {
         if (state is! ReviewLoaded) return const Scaffold();
 
-        final location = state.itinerary.locations.firstWhere((l) => l.id == widget.locationId);
+        final location = state.itinerary.locations.firstWhere(
+          (l) => l.id == widget.locationId,
+        );
 
         return Scaffold(
           backgroundColor: Colors.white,
@@ -132,7 +161,11 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
             backgroundColor: Colors.white,
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.textPrimary, size: 20),
+              icon: const Icon(
+                Icons.arrow_back_ios_new,
+                color: AppColors.textPrimary,
+                size: 20,
+              ),
               onPressed: () => Navigator.pop(context),
             ),
             title: Text(
@@ -199,7 +232,11 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
                             const SizedBox(height: 4),
                             const Row(
                               children: [
-                                Icon(Icons.location_on, size: 12, color: AppColors.textSecondary),
+                                Icon(
+                                  Icons.location_on,
+                                  size: 12,
+                                  color: AppColors.textSecondary,
+                                ),
                                 SizedBox(width: 4),
                                 Text(
                                   'TP. HCM',
@@ -231,9 +268,11 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
                 Center(
                   child: StarRatingInput(
                     rating: _rating,
-                    onRatingChanged: widget.isReadOnly ? (_) {} : (val) {
-                      setState(() => _rating = val);
-                    },
+                    onRatingChanged: widget.isReadOnly
+                        ? (_) {}
+                        : (val) {
+                            setState(() => _rating = val);
+                          },
                     size: 32,
                     mainAxisAlignment: MainAxisAlignment.center,
                   ),
@@ -277,14 +316,23 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
                 ),
                 const SizedBox(height: 24),
                 ReviewMediaList(
-                  mediaPaths: _mediaPaths,
-                  onAddMedia: widget.isReadOnly ? () {} : _pickMedia,
-                  onRemoveMedia: widget.isReadOnly ? (_) {} : (path) {
-                    setState(() => _mediaPaths.remove(path));
-                  },
-                  onClearAllMedia: widget.isReadOnly ? () {} : () {
-                    setState(() => _mediaPaths.clear());
-                  },
+                  mediaItems: _mediaItems,
+                  onAddImages: widget.isReadOnly ? () {} : _pickImages,
+                  onAddVideo: widget.isReadOnly ? () {} : _pickVideo,
+                  onRemoveMedia: widget.isReadOnly
+                      ? (_) {}
+                      : (mediaId) {
+                          setState(
+                            () => _mediaItems.removeWhere(
+                              (item) => item.id == mediaId,
+                            ),
+                          );
+                        },
+                  onClearAllMedia: widget.isReadOnly
+                      ? () {}
+                      : () {
+                          setState(() => _mediaItems.clear());
+                        },
                   imageSize: 80,
                 ),
                 const SizedBox(height: 24),
@@ -303,26 +351,35 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
                   children: _quickTags.map((tag) {
                     final isSelected = _selectedTags.contains(tag);
                     return GestureDetector(
-                      onTap: widget.isReadOnly ? () {} : () {
-                        setState(() {
-                          if (isSelected) {
-                            _selectedTags.remove(tag);
-                          } else {
-                            _selectedTags.add(tag);
-                          }
-                        });
-                      },
+                      onTap: widget.isReadOnly
+                          ? () {}
+                          : () {
+                              setState(() {
+                                if (isSelected) {
+                                  _selectedTags.remove(tag);
+                                } else {
+                                  _selectedTags.add(tag);
+                                }
+                              });
+                            },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
-                          color: isSelected ? AppColors.blobLight : const Color(0xFFF0FDF4).withValues(alpha: 0.5),
+                          color: isSelected
+                              ? AppColors.blobLight
+                              : const Color(0xFFF0FDF4).withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
                           tag,
                           style: TextStyle(
                             fontSize: 12,
-                            color: isSelected ? AppColors.primary : const Color(0xFF0D9488),
+                            color: isSelected
+                                ? AppColors.primary
+                                : const Color(0xFF0D9488),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -337,7 +394,10 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
                     const SizedBox(width: 8),
                     Text(
                       'Đánh giá của bạn sẽ được hiển thị công khai',
-                      style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey.shade600,
+                      ),
                     ),
                   ],
                 ),
