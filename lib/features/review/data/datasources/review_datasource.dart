@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
 import 'package:travel_advisor_mobile/core/config/app_config.dart';
 import 'package:travel_advisor_mobile/core/network/dio_client.dart';
 import 'package:travel_advisor_mobile/core/utils/auth_utils.dart';
@@ -23,13 +26,70 @@ class SubmitPlaceReviewInput {
   final int rating;
   final String? content;
   final List<String> tags;
+  final List<SubmitReviewMediaInput> media;
 
   const SubmitPlaceReviewInput({
     required this.itineraryDetailId,
     required this.rating,
     this.content,
     this.tags = const [],
+    this.media = const [],
   });
+}
+
+class SubmitReviewMediaInput {
+  final String objectKey;
+  final String mediaType;
+  final int sortOrder;
+
+  const SubmitReviewMediaInput({
+    required this.objectKey,
+    required this.mediaType,
+    required this.sortOrder,
+  });
+}
+
+class ReviewMediaUploadCandidate {
+  final String fileName;
+  final String contentType;
+  final int size;
+  final int sortOrder;
+
+  const ReviewMediaUploadCandidate({
+    required this.fileName,
+    required this.contentType,
+    required this.size,
+    required this.sortOrder,
+  });
+}
+
+class ReviewMediaPresignedUrl {
+  final String uploadUrl;
+  final String objectKey;
+  final String publicUrl;
+  final String mediaType;
+  final int sortOrder;
+  final int expiresInSeconds;
+
+  const ReviewMediaPresignedUrl({
+    required this.uploadUrl,
+    required this.objectKey,
+    required this.publicUrl,
+    required this.mediaType,
+    required this.sortOrder,
+    required this.expiresInSeconds,
+  });
+
+  factory ReviewMediaPresignedUrl.fromJson(Map<String, dynamic> json) {
+    return ReviewMediaPresignedUrl(
+      uploadUrl: (json['upload_url'] ?? '').toString(),
+      objectKey: (json['object_key'] ?? '').toString(),
+      publicUrl: (json['public_url'] ?? '').toString(),
+      mediaType: (json['media_type'] ?? '').toString(),
+      sortOrder: (json['sort_order'] as num?)?.toInt() ?? 0,
+      expiresInSeconds: (json['expires_in_seconds'] as num?)?.toInt() ?? 0,
+    );
+  }
 }
 
 abstract class ReviewDataSource {
@@ -42,7 +102,19 @@ abstract class ReviewDataSource {
     String? overallContent,
     bool applyAllPlaces = false,
     List<SubmitPlaceReviewInput> placeReviews = const [],
-    List<String> mediaUrls = const [],
+    List<SubmitReviewMediaInput> media = const [],
+  });
+  Future<List<ReviewMediaPresignedUrl>> createReviewPresignedUrls({
+    required String scope,
+    required String itineraryId,
+    String? itineraryDetailId,
+    required List<ReviewMediaUploadCandidate> files,
+  });
+  Future<void> uploadReviewMediaToR2({
+    required ReviewMediaPresignedUrl presignedUrl,
+    required File file,
+    required String contentType,
+    required int contentLength,
   });
 }
 
@@ -50,10 +122,6 @@ class RemoteReviewDataSource implements ReviewDataSource {
   final DioClient _client;
 
   RemoteReviewDataSource(this._client);
-
-  String _requireTouristId() {
-    throw UnimplementedError('Use AuthUtils.requireCurrentUserId() instead');
-  }
 
   int _parseDayLabel(String label) {
     final normalized = label.toUpperCase().trim();
@@ -84,7 +152,8 @@ class RemoteReviewDataSource implements ReviewDataSource {
 
     final data = response.data as Map<String, dynamic>;
     final itinerary =
-        (data['itinerary'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
+        (data['itinerary'] as Map<String, dynamic>?) ??
+        const <String, dynamic>{};
     final places = (data['places'] as List?) ?? const [];
     return ItineraryReviewModel(
       id: (itinerary['id'] ?? itineraryId).toString(),
@@ -117,15 +186,13 @@ class RemoteReviewDataSource implements ReviewDataSource {
     final touristId = await AuthUtils.requireCurrentUserId();
     final response = await _client.dio.get(
       '/itinerary-reviews/popup',
-      queryParameters: {
-        'tourist_id': touristId,
-        'itinerary_id': itineraryId,
-      },
+      queryParameters: {'tourist_id': touristId, 'itinerary_id': itineraryId},
     );
 
     final data = response.data as Map<String, dynamic>;
     final itinerary =
-        (data['itinerary'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
+        (data['itinerary'] as Map<String, dynamic>?) ??
+        const <String, dynamic>{};
 
     return ItineraryReviewPopupData(
       showPopup: data['show_popup'] == true,
@@ -140,10 +207,7 @@ class RemoteReviewDataSource implements ReviewDataSource {
     final touristId = await AuthUtils.requireCurrentUserId();
     await _client.dio.post(
       '/itinerary-reviews/popup/dismiss',
-      data: {
-        'tourist_id': touristId,
-        'itinerary_id': itineraryId,
-      },
+      data: {'tourist_id': touristId, 'itinerary_id': itineraryId},
     );
   }
 
@@ -154,14 +218,18 @@ class RemoteReviewDataSource implements ReviewDataSource {
     String? overallContent,
     bool applyAllPlaces = false,
     List<SubmitPlaceReviewInput> placeReviews = const [],
-    List<String> mediaUrls = const [],
+    List<SubmitReviewMediaInput> media = const [],
   }) async {
     final touristId = await AuthUtils.requireCurrentUserId();
 
     // Để pass qua @IsUUID('4') của NestJS trong chế độ Demo
     final isDemo = AppConfig.kUseMockData;
-    final validItineraryId = isDemo ? '11111111-1111-4111-a111-111111111111' : itineraryId;
-    final validTouristId = isDemo ? '22222222-2222-4222-a222-222222222222' : touristId;
+    final validItineraryId = isDemo
+        ? '11111111-1111-4111-a111-111111111111'
+        : itineraryId;
+    final validTouristId = isDemo
+        ? '22222222-2222-4222-a222-222222222222'
+        : touristId;
 
     await _client.dio.post(
       '/itinerary-reviews/$validItineraryId/submit',
@@ -175,16 +243,111 @@ class RemoteReviewDataSource implements ReviewDataSource {
           'place_reviews': placeReviews
               .map(
                 (item) => {
-                  'itinerary_detail_id': isDemo ? '33333333-3333-4333-a333-333333333333' : item.itineraryDetailId,
+                  'itinerary_detail_id': isDemo
+                      ? '33333333-3333-4333-a333-333333333333'
+                      : item.itineraryDetailId,
                   'rating': item.rating,
                   if (item.content != null && item.content!.trim().isNotEmpty)
                     'content': item.content,
                   if (item.tags.isNotEmpty) 'tags': item.tags,
+                  if (item.media.isNotEmpty)
+                    'media': item.media
+                        .map(
+                          (mediaItem) => {
+                            'object_key': mediaItem.objectKey,
+                            'media_type': mediaItem.mediaType,
+                            'sort_order': mediaItem.sortOrder,
+                          },
+                        )
+                        .toList(),
                 },
               )
               .toList(),
-        if (mediaUrls.isNotEmpty) 'media_urls': mediaUrls,
+        if (media.isNotEmpty)
+          'media': media
+              .map(
+                (item) => {
+                  'object_key': item.objectKey,
+                  'media_type': item.mediaType,
+                  'sort_order': item.sortOrder,
+                },
+              )
+              .toList(),
       },
+    );
+  }
+
+  @override
+  Future<List<ReviewMediaPresignedUrl>> createReviewPresignedUrls({
+    required String scope,
+    required String itineraryId,
+    String? itineraryDetailId,
+    required List<ReviewMediaUploadCandidate> files,
+  }) async {
+    if (files.isEmpty) {
+      return const [];
+    }
+
+    final isDemo = AppConfig.kUseMockData;
+    final validItineraryId = isDemo
+        ? '11111111-1111-4111-a111-111111111111'
+        : itineraryId;
+
+    final response = await _client.dio.post(
+      '/upload/reviews/presigned-urls',
+      data: {
+        'scope': scope,
+        'itinerary_id': validItineraryId,
+        if (itineraryDetailId != null)
+          'itinerary_detail_id': isDemo
+              ? '33333333-3333-4333-a333-333333333333'
+              : itineraryDetailId,
+        'files': files
+            .map(
+              (file) => {
+                'file_name': file.fileName,
+                'content_type': file.contentType,
+                'size': file.size,
+                'sort_order': file.sortOrder,
+              },
+            )
+            .toList(),
+      },
+    );
+
+    final data = response.data as Map<String, dynamic>;
+    final items = (data['items'] as List?) ?? const [];
+    return items
+        .whereType<Map<String, dynamic>>()
+        .map(ReviewMediaPresignedUrl.fromJson)
+        .where((item) => item.uploadUrl.isNotEmpty && item.objectKey.isNotEmpty)
+        .toList();
+  }
+
+  @override
+  Future<void> uploadReviewMediaToR2({
+    required ReviewMediaPresignedUrl presignedUrl,
+    required File file,
+    required String contentType,
+    required int contentLength,
+  }) async {
+    final uploadDio = Dio(
+      BaseOptions(
+        connectTimeout: const Duration(seconds: 20),
+        receiveTimeout: const Duration(seconds: 30),
+        sendTimeout: const Duration(minutes: 2),
+      ),
+    );
+
+    await uploadDio.put(
+      presignedUrl.uploadUrl,
+      data: file.openRead(),
+      options: Options(
+        headers: {
+          Headers.contentTypeHeader: contentType,
+          Headers.contentLengthHeader: contentLength,
+        },
+      ),
     );
   }
 }

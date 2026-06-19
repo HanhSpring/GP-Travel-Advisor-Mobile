@@ -11,6 +11,18 @@ abstract class ReviewRepository {
     String? overallContent,
     bool applyAllPlaces = false,
     List<SubmitPlaceReviewInput> placeReviews = const [],
-    List<String> mediaUrls = const [],
+    List<SubmitReviewMediaInput> media = const [],
+  });
+  Future<List<ReviewMediaPresignedUrl>> createReviewPresignedUrls({
+    required String scope,
+    required String itineraryId,
+    String? itineraryDetailId,
+    required List<ReviewMediaUploadCandidate> files,
+  });
+  Future<void> uploadReviewMediaToR2({
+    required ReviewMediaPresignedUrl presignedUrl,
+    required String localPath,
+    required String contentType,
+    required int contentLength,
   });
 }
