@@ -1,4 +1,5 @@
 import 'package:travel_advisor_mobile/features/review/domain/entities/itinerary_review_entity.dart';
+import 'package:travel_advisor_mobile/features/review/domain/entities/review_media_item.dart';
 
 abstract class ReviewState {}
 
@@ -12,7 +13,9 @@ class ReviewLoaded extends ReviewState {
   final double generalRating;
   final String generalComment;
   final bool applyToAllLocations;
-  final List<String> mediaPaths;
+  final List<ReviewMediaItem> itineraryMedia;
+  final Map<String, List<ReviewMediaItem>> locationMediaByDetailId;
+  final Map<String, double?> locationRatingsBeforeApplyAll;
   final bool isSubmitting;
 
   ReviewLoaded({
@@ -21,7 +24,9 @@ class ReviewLoaded extends ReviewState {
     this.generalRating = 0.0,
     this.generalComment = '',
     this.applyToAllLocations = true,
-    this.mediaPaths = const [],
+    this.itineraryMedia = const [],
+    this.locationMediaByDetailId = const {},
+    this.locationRatingsBeforeApplyAll = const {},
     this.isSubmitting = false,
   });
 
@@ -31,7 +36,9 @@ class ReviewLoaded extends ReviewState {
     double? generalRating,
     String? generalComment,
     bool? applyToAllLocations,
-    List<String>? mediaPaths,
+    List<ReviewMediaItem>? itineraryMedia,
+    Map<String, List<ReviewMediaItem>>? locationMediaByDetailId,
+    Map<String, double?>? locationRatingsBeforeApplyAll,
     bool? isSubmitting,
   }) {
     return ReviewLoaded(
@@ -40,7 +47,11 @@ class ReviewLoaded extends ReviewState {
       generalRating: generalRating ?? this.generalRating,
       generalComment: generalComment ?? this.generalComment,
       applyToAllLocations: applyToAllLocations ?? this.applyToAllLocations,
-      mediaPaths: mediaPaths ?? this.mediaPaths,
+      itineraryMedia: itineraryMedia ?? this.itineraryMedia,
+      locationMediaByDetailId:
+          locationMediaByDetailId ?? this.locationMediaByDetailId,
+      locationRatingsBeforeApplyAll:
+          locationRatingsBeforeApplyAll ?? this.locationRatingsBeforeApplyAll,
       isSubmitting: isSubmitting ?? this.isSubmitting,
     );
   }

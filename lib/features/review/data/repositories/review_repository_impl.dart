@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:travel_advisor_mobile/features/review/data/datasources/review_datasource.dart';
 import 'package:travel_advisor_mobile/features/review/domain/entities/itinerary_review_entity.dart';
 import 'package:travel_advisor_mobile/features/review/domain/repositories/review_repository.dart';
@@ -8,7 +10,9 @@ class ReviewRepositoryImpl implements ReviewRepository {
   ReviewRepositoryImpl(this.dataSource);
 
   @override
-  Future<ItineraryReviewEntity> getItineraryForReview(String itineraryId) async {
+  Future<ItineraryReviewEntity> getItineraryForReview(
+    String itineraryId,
+  ) async {
     final model = await dataSource.getItineraryForReview(itineraryId);
     return model.toEntity();
   }
@@ -30,7 +34,7 @@ class ReviewRepositoryImpl implements ReviewRepository {
     String? overallContent,
     bool applyAllPlaces = false,
     List<SubmitPlaceReviewInput> placeReviews = const [],
-    List<String> mediaUrls = const [],
+    List<SubmitReviewMediaInput> media = const [],
   }) {
     return dataSource.submitItineraryReview(
       itineraryId: itineraryId,
@@ -38,7 +42,37 @@ class ReviewRepositoryImpl implements ReviewRepository {
       overallContent: overallContent,
       applyAllPlaces: applyAllPlaces,
       placeReviews: placeReviews,
-      mediaUrls: mediaUrls,
+      media: media,
+    );
+  }
+
+  @override
+  Future<List<ReviewMediaPresignedUrl>> createReviewPresignedUrls({
+    required String scope,
+    required String itineraryId,
+    String? itineraryDetailId,
+    required List<ReviewMediaUploadCandidate> files,
+  }) {
+    return dataSource.createReviewPresignedUrls(
+      scope: scope,
+      itineraryId: itineraryId,
+      itineraryDetailId: itineraryDetailId,
+      files: files,
+    );
+  }
+
+  @override
+  Future<void> uploadReviewMediaToR2({
+    required ReviewMediaPresignedUrl presignedUrl,
+    required String localPath,
+    required String contentType,
+    required int contentLength,
+  }) {
+    return dataSource.uploadReviewMediaToR2(
+      presignedUrl: presignedUrl,
+      file: File(localPath),
+      contentType: contentType,
+      contentLength: contentLength,
     );
   }
 }

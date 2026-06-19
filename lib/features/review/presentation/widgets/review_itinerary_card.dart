@@ -6,6 +6,7 @@ import 'star_rating_input.dart';
 import 'package:travel_advisor_mobile/core/theme/app_colors.dart';
 import 'package:travel_advisor_mobile/core/widgets/net_image.dart';
 import 'package:travel_advisor_mobile/features/review/domain/entities/itinerary_review_entity.dart';
+import 'package:travel_advisor_mobile/features/review/domain/entities/review_media_item.dart';
 
 class ReviewItineraryCard extends StatelessWidget {
   final ItineraryReviewEntity itinerary;
@@ -15,8 +16,9 @@ class ReviewItineraryCard extends StatelessWidget {
   final ValueChanged<bool> onApplyToAllChanged;
   final String generalComment;
   final ValueChanged<String> onGeneralCommentChanged;
-  final List<String> mediaPaths;
-  final VoidCallback onAddMedia;
+  final List<ReviewMediaItem> mediaItems;
+  final VoidCallback onAddImages;
+  final VoidCallback onAddVideo;
   final ValueChanged<String> onRemoveMedia;
   final VoidCallback onClearAllMedia;
 
@@ -29,8 +31,9 @@ class ReviewItineraryCard extends StatelessWidget {
     required this.onApplyToAllChanged,
     required this.generalComment,
     required this.onGeneralCommentChanged,
-    required this.mediaPaths,
-    required this.onAddMedia,
+    required this.mediaItems,
+    required this.onAddImages,
+    required this.onAddVideo,
     required this.onRemoveMedia,
     required this.onClearAllMedia,
   });
@@ -201,8 +204,9 @@ class ReviewItineraryCard extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           ReviewMediaList(
-            mediaPaths: mediaPaths,
-            onAddMedia: onAddMedia,
+            mediaItems: mediaItems,
+            onAddImages: onAddImages,
+            onAddVideo: onAddVideo,
             onRemoveMedia: onRemoveMedia,
             onClearAllMedia: onClearAllMedia,
           ),
