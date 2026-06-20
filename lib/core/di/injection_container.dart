@@ -105,6 +105,8 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton(() => UpdatePasswordUseCase(sl()));
   sl.registerLazySingleton(() => ChangePasswordUseCase(sl()));
   sl.registerLazySingleton(() => LoginWithGoogleUseCase(sl()));
+  sl.registerLazySingleton(() => CheckSessionUseCase(sl()));
+  sl.registerLazySingleton(() => LogoutUseCase(sl()));
 
   // Đăng ký Cubit
   sl.registerFactory(
@@ -115,6 +117,8 @@ Future<void> initDependencies() async {
       updatePasswordUseCase: sl(),
       changePasswordUseCase: sl(),
       loginWithGoogleUseCase: sl(),
+      checkSessionUseCase: sl(),
+      logoutUseCase: sl(),
     ),
   );
 
