@@ -198,7 +198,7 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
               onPressed: () => Navigator.pop(context),
             ),
             title: Text(
-              'Viết đánh giá',
+              widget.isReadOnly ? 'Chi tiết đánh giá' : 'Viết đánh giá',
               style: TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 16,
