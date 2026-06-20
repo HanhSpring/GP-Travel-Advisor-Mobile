@@ -30,8 +30,6 @@ class LocationReviewListTile extends StatefulWidget {
 }
 
 class _LocationReviewListTileState extends State<LocationReviewListTile> {
-  bool _isExpanded = false;
-
   @override
   Widget build(BuildContext context) {
     final bool isVisited = widget.isVisited;
@@ -148,8 +146,8 @@ class _LocationReviewListTileState extends State<LocationReviewListTile> {
                       padding: const EdgeInsets.only(top: 8.0),
                       child: Text(
                         widget.location.reviewText!,
-                        maxLines: _isExpanded ? null : 1,
-                        overflow: _isExpanded ? null : TextOverflow.ellipsis,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 11,
                           color: Colors.grey.shade600,
@@ -178,12 +176,7 @@ class _LocationReviewListTileState extends State<LocationReviewListTile> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: GestureDetector(
-                      onTap: isVisited
-                          ? (widget.isReadOnly
-                                ? () =>
-                                      setState(() => _isExpanded = !_isExpanded)
-                                : widget.onWriteReview)
-                          : null,
+                      onTap: isVisited ? widget.onWriteReview : null,
                       child: Text(
                         widget.isReadOnly
                             ? 'Xem đầy đủ đánh giá'
