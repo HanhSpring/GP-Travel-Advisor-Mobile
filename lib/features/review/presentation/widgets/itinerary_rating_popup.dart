@@ -5,6 +5,7 @@ import 'package:travel_advisor_mobile/core/theme/app_colors.dart';
 import 'package:travel_advisor_mobile/features/review/data/datasources/review_datasource.dart';
 import 'package:travel_advisor_mobile/features/review/domain/repositories/review_repository.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/screens/rate_itinerary_screen.dart';
+import 'package:travel_advisor_mobile/features/review/presentation/screens/review_catalog_screen.dart';
 
 enum _PopupMode { loading, write, read, error }
 
@@ -122,14 +123,19 @@ class _ItineraryRatingPopupState extends State<ItineraryRatingPopup> {
     }
   }
 
-  void _goToDetailScreen({bool isReadOnly = false}) {
+  Future<void> _goToDetailScreen({bool isReadOnly = false}) async {
+    final navigatorContext = Navigator.of(context).context;
     Navigator.pop(context);
+    if (isReadOnly) {
+      await openReviewedItineraryReview(navigatorContext, widget.itineraryId);
+      return;
+    }
+    if (!navigatorContext.mounted) return;
     Navigator.push(
-      context,
+      navigatorContext,
       MaterialPageRoute(
         builder: (_) => RateItineraryScreen(
           itineraryId: widget.itineraryId,
-          isReadOnly: isReadOnly,
           initialRating: _rating,
           initialComment: _commentController.text,
         ),
