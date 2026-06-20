@@ -76,8 +76,11 @@ class AuthCubit extends Cubit<AuthState> {
       );
       emit(AuthSuccess(result));
     } catch (e, stackTrace) {
-      debugPrint('--- LỖI ĐĂNG NHẬP ---\n$e\n$stackTrace');
-      emit(AuthError('Sai thông tin đăng nhập hoặc tài khoản không tồn tại.'));
+      debugPrint('--- LỖI ĐĂNG NHẬP ---');
+      debugPrint('Error: $e');
+      debugPrint('StackTrace: $stackTrace');
+
+      emit(AuthError(_cleanMessage(e)));
     }
   }
 
