@@ -4,6 +4,7 @@ import 'package:travel_advisor_mobile/core/di/injection_container.dart';
 import 'package:travel_advisor_mobile/core/theme/app_colors.dart';
 import 'package:travel_advisor_mobile/features/review/data/datasources/review_datasource.dart';
 import 'package:travel_advisor_mobile/features/review/domain/repositories/review_repository.dart';
+import 'package:travel_advisor_mobile/features/review/presentation/constants/review_tags.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/screens/rate_itinerary_screen.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/screens/review_catalog_screen.dart';
 
@@ -37,16 +38,10 @@ class _ItineraryRatingPopupState extends State<ItineraryRatingPopup> {
   final TextEditingController _commentController = TextEditingController();
   bool _isSubmitting = false;
 
+
   // Read mode state
   ItineraryReviewSummary? _existingReview;
 
-  final List<String> _suggestedReasons = [
-    'Thời gian quá gấp',
-    'Địa điểm không như mong đợi',
-    'Thời tiết không thuận lợi',
-    'Sức khỏe không đảm bảo',
-    'Tìm thấy địa điểm khác thú vị hơn',
-  ];
 
   bool get _isHighlyCompleted =>
       widget.totalLocations > 0 &&
@@ -78,7 +73,8 @@ class _ItineraryRatingPopupState extends State<ItineraryRatingPopup> {
       } else {
         setState(() => _mode = _PopupMode.write);
       }
-    } catch (_) {
+    } catch (e, st) {
+      debugPrint('[ItineraryRatingPopup] getReviewSummary error: $e\n$st');
       if (!mounted) return;
       // Lỗi mạng → fallback sang write mode thay vì chặn user
       setState(() => _mode = _PopupMode.write);
@@ -258,33 +254,45 @@ class _ItineraryRatingPopupState extends State<ItineraryRatingPopup> {
         TextButton.icon(
           onPressed: () => _goToDetailScreen(),
           icon: const Icon(Icons.stars_rounded, size: 18),
-          label: const Text('Đánh giá chi tiết địa điểm'),
-          style: TextButton.styleFrom(foregroundColor: AppColors.primary),
-        ),
-        const SizedBox(height: 12),
-        if (!_isHighlyCompleted) ...[
-          const Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'Có vẻ lịch trình này chưa thực sự phù hợp với mong đợi của bạn? Chia sẻ lý do bạn bỏ lỡ một số địa điểm nhé:',
-              style: TextStyle(
-                fontSize: 14,
-                color: Color(0xFF475569),
-                fontWeight: FontWeight.w500,
-              ),
+          label: const Text(
+            'Đánh giá chi tiết địa điểm',
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
+          style: TextButton.styleFrom(
+            foregroundColor: AppColors.primary,
+            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
           ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _suggestedReasons.map((reason) {
-              final isSelected = _missedReason == reason;
-              return _choiceChip(reason, isSelected);
-            }).toList(),
+        ),
+        const SizedBox(height: 12),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            _isHighlyCompleted
+                ? 'Chia sẻ cảm nhận nổi bật của bạn về chuyến đi:'
+                : 'Có vẻ lịch trình này chưa thực sự phù hợp với mong đợi của bạn? Chia sẻ lý do bạn bỏ lỡ một số địa điểm nhé:',
+            style: const TextStyle(
+              fontSize: 14,
+              color: Color(0xFF475569),
+              fontWeight: FontWeight.w500,
+            ),
           ),
-          const SizedBox(height: 16),
-        ],
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: (_isHighlyCompleted ? kTravelReviewTags : kMissedLocationReasons)
+              .map((reason) {
+                final isSelected = _missedReason == reason;
+                return _choiceChip(reason, isSelected);
+              })
+              .toList(),
+        ),
+        const SizedBox(height: 16),
         TextField(
           controller: _commentController,
           maxLines: 3,
@@ -482,14 +490,25 @@ class _ItineraryRatingPopupState extends State<ItineraryRatingPopup> {
     return InkWell(
       onTap: () => setState(() => _missedReason = label),
       borderRadius: BorderRadius.circular(20),
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primary : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected ? AppColors.primary : const Color(0xFFE2E8F0),
+            width: isSelected ? 1.5 : 1.0,
           ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  )
+                ]
+              : null,
         ),
         child: Text(
           label,

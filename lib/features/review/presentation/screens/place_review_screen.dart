@@ -7,6 +7,7 @@ import 'package:travel_advisor_mobile/core/services/activity_service.dart';
 import 'package:travel_advisor_mobile/core/theme/app_colors.dart';
 import 'package:travel_advisor_mobile/core/widgets/net_image.dart';
 import 'package:travel_advisor_mobile/features/review/domain/entities/review_media_item.dart';
+import 'package:travel_advisor_mobile/features/review/presentation/constants/review_tags.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_cubit.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_state.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/utils/review_media_picker.dart';
@@ -39,14 +40,6 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
   late TextEditingController _reviewController;
   late List<ReviewMediaItem> _mediaItems;
   late List<String> _selectedTags;
-
-  final List<String> _quickTags = [
-    'Sạch sẽ',
-    'Phù hợp gia đình',
-    'Đông vui',
-    'Đáng tiền',
-    'Check-in đẹp',
-  ];
 
   @override
   void initState() {
@@ -385,48 +378,49 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: (widget.isReadOnly ? _selectedTags : _quickTags)
-                        .map((tag) {
-                          final isSelected = _selectedTags.contains(tag);
-                          return GestureDetector(
-                            onTap: widget.isReadOnly
-                                ? null
-                                : () {
-                                    setState(() {
-                                      if (isSelected) {
-                                        _selectedTags.remove(tag);
-                                      } else {
-                                        _selectedTags.add(tag);
-                                      }
-                                    });
-                                  },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? AppColors.blobLight
-                                    : const Color(
-                                        0xFFF0FDF4,
-                                      ).withValues(alpha: 0.5),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                tag,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: isSelected
-                                      ? AppColors.primary
-                                      : const Color(0xFF0D9488),
-                                  fontWeight: FontWeight.w500,
+                    children:
+                        (widget.isReadOnly ? _selectedTags : kTravelReviewTags)
+                            .map((tag) {
+                              final isSelected = _selectedTags.contains(tag);
+                              return GestureDetector(
+                                onTap: widget.isReadOnly
+                                    ? null
+                                    : () {
+                                        setState(() {
+                                          if (isSelected) {
+                                            _selectedTags.remove(tag);
+                                          } else {
+                                            _selectedTags.add(tag);
+                                          }
+                                        });
+                                      },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? AppColors.blobLight
+                                        : const Color(
+                                            0xFFF0FDF4,
+                                          ).withValues(alpha: 0.5),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    tag,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: isSelected
+                                          ? AppColors.primary
+                                          : const Color(0xFF0D9488),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                          );
-                        })
-                        .toList(),
+                              );
+                            })
+                            .toList(),
                   ),
                 ],
                 if (!widget.isReadOnly) ...[

@@ -12,6 +12,7 @@ class ReviewLoaded extends ReviewState {
   final int selectedDay;
   final double generalRating;
   final String generalComment;
+  final List<String> generalTags;
   final bool applyToAllLocations;
   final List<ReviewMediaItem> itineraryMedia;
   final Map<String, List<ReviewMediaItem>> locationMediaByDetailId;
@@ -23,6 +24,7 @@ class ReviewLoaded extends ReviewState {
     this.selectedDay = 0,
     this.generalRating = 0.0,
     this.generalComment = '',
+    this.generalTags = const [],
     this.applyToAllLocations = true,
     this.itineraryMedia = const [],
     this.locationMediaByDetailId = const {},
@@ -35,6 +37,7 @@ class ReviewLoaded extends ReviewState {
     int? selectedDay,
     double? generalRating,
     String? generalComment,
+    List<String>? generalTags,
     bool? applyToAllLocations,
     List<ReviewMediaItem>? itineraryMedia,
     Map<String, List<ReviewMediaItem>>? locationMediaByDetailId,
@@ -46,6 +49,7 @@ class ReviewLoaded extends ReviewState {
       selectedDay: selectedDay ?? this.selectedDay,
       generalRating: generalRating ?? this.generalRating,
       generalComment: generalComment ?? this.generalComment,
+      generalTags: generalTags ?? this.generalTags,
       applyToAllLocations: applyToAllLocations ?? this.applyToAllLocations,
       itineraryMedia: itineraryMedia ?? this.itineraryMedia,
       locationMediaByDetailId:

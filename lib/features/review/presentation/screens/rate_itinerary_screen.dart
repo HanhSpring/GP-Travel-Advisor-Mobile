@@ -13,7 +13,6 @@ import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_
 import 'package:travel_advisor_mobile/features/review/presentation/utils/review_media_picker.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/widgets/location_review_list_tile.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/widgets/review_itinerary_card.dart';
-import 'package:travel_advisor_mobile/features/review/presentation/widgets/read_only_itinerary_review_body.dart';
 
 class RateItineraryScreen extends StatelessWidget {
   final String itineraryId;
@@ -25,7 +24,6 @@ class RateItineraryScreen extends StatelessWidget {
   const RateItineraryScreen({
     super.key,
     required this.itineraryId,
-    this.isReadOnly = false,
     this.initialRating = 0.0,
     this.initialComment = '',
     this.popExtraOnSubmit = true,
@@ -36,15 +34,11 @@ class RateItineraryScreen extends StatelessWidget {
     return BlocProvider(
       create: (_) {
         final cubit = sl<ReviewCubit>();
-        if (isReadOnly) {
-          cubit.loadSubmittedReview(itineraryId);
-        } else {
-          cubit.loadReviewData(
-            itineraryId,
-            initialRating: initialRating,
-            initialComment: initialComment,
-          );
-        }
+        cubit.loadReviewData(
+          itineraryId,
+          initialRating: initialRating,
+          initialComment: initialComment,
+        );
         return cubit;
       },
       child: _RateItineraryView(
@@ -69,11 +63,9 @@ class _RateItineraryView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(
-        0xFFF8F9FA,
-      ), // Nền màu xám cực nhạt như Figma
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'Đánh giá lịch trình',
           style: TextStyle(
             fontSize: 16,
@@ -127,63 +119,42 @@ class _RateItineraryView extends StatelessWidget {
                         rating: state.generalRating,
                         applyToAll: state.applyToAllLocations,
                         generalComment: state.generalComment,
+                        selectedTags: state.generalTags,
                         mediaItems: state.itineraryMedia,
-                        isReadOnly: isReadOnly,
-                        onRatingChanged: isReadOnly
-                            ? (_) {}
-                            : (rating) {
-                                context.read<ReviewCubit>().setGeneralRating(
-                                  rating,
-                                );
-                              },
-                        onApplyToAllChanged: isReadOnly
-                            ? (_) {}
-                            : (value) {
-                                context.read<ReviewCubit>().toggleApplyToAll(
-                                  value,
-                                );
-                              },
-                        onGeneralCommentChanged: isReadOnly
-                            ? (_) {}
-                            : (value) {
-                                context.read<ReviewCubit>().setGeneralComment(
-                                  value,
-                                );
-                              },
-                        onAddImages: isReadOnly
-                            ? () {}
-                            : () async {
-                                await context.read<ReviewCubit>().addImages();
-                              },
-                        onAddVideo: isReadOnly
-                            ? () {}
-                            : () async {
-                                try {
-                                  await context.read<ReviewCubit>().addVideo();
-                                } on ReviewMediaSelectionException catch (e) {
-                                  if (!context.mounted) {
-                                    return;
-                                  }
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(e.message),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                }
-                              },
-                        onRemoveMedia: isReadOnly
-                            ? (_) {}
-                            : (mediaId) {
-                                context.read<ReviewCubit>().removeMedia(
-                                  mediaId,
-                                );
-                              },
-                        onClearAllMedia: isReadOnly
-                            ? () {}
-                            : () {
-                                context.read<ReviewCubit>().clearAllMedia();
-                              },
+                        onRatingChanged: (rating) {
+                          context.read<ReviewCubit>().setGeneralRating(rating);
+                        },
+                        onApplyToAllChanged: (value) {
+                          context.read<ReviewCubit>().toggleApplyToAll(value);
+                        },
+                        onGeneralCommentChanged: (value) {
+                          context.read<ReviewCubit>().setGeneralComment(value);
+                        },
+                        onTagToggled: (tag) {
+                          context.read<ReviewCubit>().toggleGeneralTag(tag);
+                        },
+                        onAddImages: () async {
+                          await context.read<ReviewCubit>().addImages();
+                        },
+                        onAddVideo: () async {
+                          try {
+                            await context.read<ReviewCubit>().addVideo();
+                          } on ReviewMediaSelectionException catch (e) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(e.message),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                        onRemoveMedia: (mediaId) {
+                          context.read<ReviewCubit>().removeMedia(mediaId);
+                        },
+                        onClearAllMedia: () {
+                          context.read<ReviewCubit>().clearAllMedia();
+                        },
                       ),
                       const SizedBox(height: 32),
                       Padding(
@@ -191,7 +162,7 @@ class _RateItineraryView extends StatelessWidget {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
+                            const Text(
                               'Đánh giá địa điểm',
                               style: TextStyle(
                                 fontSize: 16,
@@ -255,14 +226,14 @@ class _RateItineraryView extends StatelessWidget {
                                 builder: (_) => PlaceReviewScreen(
                                   locationId: loc.id,
                                   reviewCubit: context.read<ReviewCubit>(),
-                                  isReadOnly: isReadOnly,
+                                  isReadOnly: false,
                                 ),
                               ),
                             );
                           },
                         ),
                       ),
-                      const SizedBox(height: 100), // Padding cho nút bottom
+                      const SizedBox(height: 100),
                     ],
                   ),
                 ),
@@ -297,30 +268,22 @@ class _RateItineraryView extends StatelessWidget {
                         minimumSize: const Size(double.infinity, 48),
                         elevation: 0,
                       ),
-                      onPressed: isReadOnly
-                          ? () => Navigator.pop(context)
-                          : state.isSubmitting
+                      onPressed: state.isSubmitting
                           ? null
                           : () async {
                               try {
                                 await context.read<ReviewCubit>().submitReview(
                                   itineraryId,
                                 );
-                                if (!context.mounted) {
-                                  return;
-                                }
+                                if (!context.mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text('Cảm ơn bạn đã đánh giá!'),
                                     backgroundColor: Color(0xFF22C55E),
                                   ),
                                 );
-                                // Sau khi gửi thành công, quay về màn hình ban đầu (đóng cả trang đánh giá và dialog)
                                 if (context.mounted) {
-                                  Navigator.of(
-                                    context,
-                                  ).pop(); // Đóng RateItineraryScreen
-                                  // Thêm một lần pop nữa để đóng ItineraryReviewDialog
+                                  Navigator.of(context).pop();
                                   if (popExtraOnSubmit &&
                                       Navigator.of(context).canPop()) {
                                     Navigator.of(context).pop();
@@ -363,7 +326,7 @@ class _RateItineraryView extends StatelessWidget {
                                 );
                               }
                             },
-                      child: state.isSubmitting && !isReadOnly
+                      child: state.isSubmitting
                           ? const SizedBox(
                               width: 18,
                               height: 18,
@@ -374,9 +337,9 @@ class _RateItineraryView extends StatelessWidget {
                                 ),
                               ),
                             )
-                          : Text(
-                              isReadOnly ? 'Quay lại' : 'Gửi đánh giá',
-                              style: const TextStyle(
+                          : const Text(
+                              'Gửi đánh giá',
+                              style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                               ),

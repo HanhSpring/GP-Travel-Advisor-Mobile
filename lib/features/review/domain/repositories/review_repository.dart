@@ -12,6 +12,7 @@ abstract class ReviewRepository {
     required String itineraryId,
     double? overallRating,
     String? overallContent,
+    List<String> overallTags = const [],
     bool applyAllPlaces = false,
     List<SubmitPlaceReviewInput> placeReviews = const [],
     List<SubmitReviewMediaInput> media = const [],
