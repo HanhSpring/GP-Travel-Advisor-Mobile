@@ -7,9 +7,6 @@ import 'package:travel_advisor_mobile/core/theme/app_colors.dart';
 import 'package:travel_advisor_mobile/core/widgets/net_image.dart';
 import 'package:travel_advisor_mobile/features/review/data/datasources/review_datasource.dart';
 import 'package:travel_advisor_mobile/features/review/domain/repositories/review_repository.dart';
-import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_cubit.dart';
-import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_state.dart';
-import 'package:travel_advisor_mobile/features/review/presentation/screens/place_review_screen.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/screens/rate_itinerary_screen.dart';
 
 bool _isVideoUrl(String url) {
@@ -44,26 +41,73 @@ Future<void> openReviewItem(
     return;
   }
 
-  final cubit = sl<ReviewCubit>();
-  try {
-    await cubit.loadReviewData(item.itineraryId);
-    if (!context.mounted) return;
-    if (cubit.state is! ReviewLoaded || item.itineraryDetailId == null) {
-      throw StateError('Không tìm thấy địa điểm trong lịch trình.');
-    }
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => PlaceReviewScreen(
-          locationId: item.itineraryDetailId!,
-          reviewCubit: cubit,
-          submitOnSave: true,
-          itineraryId: item.itineraryId,
-        ),
+  await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => RateItineraryScreen(
+        itineraryId: item.itineraryId,
+        popExtraOnSubmit: false,
       ),
+    ),
+  );
+}
+
+Future<void> openReviewedItineraryReview(
+  BuildContext context,
+  String itineraryId,
+) async {
+  final messenger = ScaffoldMessenger.maybeOf(context);
+  try {
+    final catalog = await sl<ReviewRepository>().getReviewCatalog();
+    ReviewCatalogItem? target;
+    for (final item in catalog.reviewed) {
+      if (item.isItinerary && item.itineraryId == itineraryId) {
+        target = item;
+        break;
+      }
+    }
+
+    if (target == null) {
+      throw StateError('Khong tim thay danh gia lich trinh da gui.');
+    }
+    if (!context.mounted) return;
+    await openReviewItem(context, target);
+  } catch (e) {
+    if (!context.mounted) return;
+    messenger?.showSnackBar(
+      SnackBar(content: Text('Khong the tai danh gia: $e')),
     );
-  } finally {
-    if (!cubit.isClosed) await cubit.close();
+  }
+}
+
+Future<void> openReviewedPlaceReview(
+  BuildContext context, {
+  required String itineraryId,
+  required String itineraryDetailId,
+}) async {
+  final messenger = ScaffoldMessenger.maybeOf(context);
+  try {
+    final catalog = await sl<ReviewRepository>().getReviewCatalog();
+    ReviewCatalogItem? target;
+    for (final item in catalog.reviewed) {
+      if (!item.isItinerary &&
+          item.itineraryId == itineraryId &&
+          item.itineraryDetailId == itineraryDetailId) {
+        target = item;
+        break;
+      }
+    }
+
+    if (target == null) {
+      throw StateError('Khong tim thay danh gia dia diem da gui.');
+    }
+    if (!context.mounted) return;
+    await openReviewItem(context, target);
+  } catch (e) {
+    if (!context.mounted) return;
+    messenger?.showSnackBar(
+      SnackBar(content: Text('Khong the tai danh gia: $e')),
+    );
   }
 }
 

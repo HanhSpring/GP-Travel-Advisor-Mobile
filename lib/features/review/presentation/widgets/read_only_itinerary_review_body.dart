@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-
 import 'package:travel_advisor_mobile/core/theme/app_colors.dart';
 import 'package:travel_advisor_mobile/core/widgets/net_image.dart';
-import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_cubit.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_state.dart';
-import 'package:travel_advisor_mobile/features/review/presentation/screens/place_review_screen.dart';
+import 'package:travel_advisor_mobile/features/review/presentation/screens/review_catalog_screen.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/widgets/review_media_list.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/widgets/star_rating_input.dart';
 
@@ -62,18 +59,11 @@ class ReadOnlyItineraryReviewBody extends StatelessWidget {
                 (location) => _ReadOnlyLocationReviewCard(
                   locationId: location.id,
                   state: state,
-                  onOpen: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => PlaceReviewScreen(
-                          locationId: location.id,
-                          reviewCubit: context.read<ReviewCubit>(),
-                          isReadOnly: true,
-                        ),
-                      ),
-                    );
-                  },
+                  onOpen: () => openReviewedPlaceReview(
+                    context,
+                    itineraryId: state.itinerary.id,
+                    itineraryDetailId: location.id,
+                  ),
                 ),
               ),
             ],
