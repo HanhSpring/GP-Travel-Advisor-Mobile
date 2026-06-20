@@ -139,12 +139,15 @@ class ReviewItineraryCard extends StatelessWidget {
             rating: rating,
             onRatingChanged: onRatingChanged,
             mainAxisAlignment: MainAxisAlignment.center,
+            enabled: !isReadOnly,
           ),
           const SizedBox(height: 16),
           Row(
             children: [
               GestureDetector(
-                onTap: () => onApplyToAllChanged(!applyToAll),
+                onTap: isReadOnly
+                    ? null
+                    : () => onApplyToAllChanged(!applyToAll),
                 child: Container(
                   width: 20,
                   height: 20,
@@ -189,7 +192,8 @@ class ReviewItineraryCard extends StatelessWidget {
             child: TextFormField(
               maxLines: 4,
               initialValue: generalComment,
-              onChanged: onGeneralCommentChanged,
+              readOnly: isReadOnly,
+              onChanged: isReadOnly ? null : onGeneralCommentChanged,
               decoration: InputDecoration(
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,

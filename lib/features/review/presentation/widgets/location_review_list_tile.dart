@@ -97,7 +97,10 @@ class _LocationReviewListTileState extends State<LocationReviewListTile> {
                         children: List.generate(5, (index) {
                           final starValue = index + 1;
                           return GestureDetector(
-                            onTap: (isVisited && widget.onRatingChanged != null)
+                            onTap:
+                                (isVisited &&
+                                    !widget.isReadOnly &&
+                                    widget.onRatingChanged != null)
                                 ? () => widget.onRatingChanged!(
                                     starValue.toDouble(),
                                   )
@@ -222,14 +225,16 @@ class _LocationMediaThumb extends StatelessWidget {
             color: const Color(0xFFF3F4F6),
             child: item.type == ReviewMediaType.image
                 ? (item.remoteUrl != null
-                    ? Image.network(item.remoteUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stack) => const Icon(
-                          Icons.broken_image_outlined,
-                          size: 24,
-                          color: Color(0xFF94A3B8),
-                        ))
-                    : Image.file(File(item.localPath), fit: BoxFit.cover))
+                      ? Image.network(
+                          item.remoteUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stack) => const Icon(
+                            Icons.broken_image_outlined,
+                            size: 24,
+                            color: Color(0xFF94A3B8),
+                          ),
+                        )
+                      : Image.file(File(item.localPath), fit: BoxFit.cover))
                 : const ColoredBox(
                     color: Color(0xFF111827),
                     child: Center(

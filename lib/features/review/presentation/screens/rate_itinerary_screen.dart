@@ -13,6 +13,7 @@ import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_
 import 'package:travel_advisor_mobile/features/review/presentation/utils/review_media_picker.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/widgets/location_review_list_tile.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/widgets/review_itinerary_card.dart';
+import 'package:travel_advisor_mobile/features/review/presentation/widgets/read_only_itinerary_review_body.dart';
 
 class RateItineraryScreen extends StatelessWidget {
   final String itineraryId;
@@ -96,6 +97,10 @@ class _RateItineraryView extends StatelessWidget {
             return Center(child: Text(state.message));
           }
           if (state is ReviewLoaded) {
+            if (isReadOnly) {
+              return ReadOnlyItineraryReviewBody(state: state);
+            }
+
             final visitedLocations = state.itinerary.locations
                 .where((location) => location.isVisited)
                 .toList();
