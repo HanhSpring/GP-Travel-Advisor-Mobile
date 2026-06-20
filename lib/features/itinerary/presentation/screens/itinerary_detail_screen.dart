@@ -25,7 +25,7 @@ import 'package:travel_advisor_mobile/features/itinerary/domain/entities/itinera
 import 'package:travel_advisor_mobile/features/itinerary/presentation/cubit/itinerary_cubit.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/cubit/itinerary_state.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/day_selector_chip.dart';
-import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/itinerary_review_dialog.dart';
+import 'package:travel_advisor_mobile/features/review/presentation/widgets/itinerary_rating_popup.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/timeline_activity_card.dart';
 import 'package:travel_advisor_mobile/features/place/presentation/cubit/place_detail_cubit.dart';
 import 'package:travel_advisor_mobile/features/place/presentation/screens/place_detail_screen.dart';
@@ -1284,7 +1284,7 @@ class _ItineraryDetailView extends StatelessWidget {
                             () {
                               showDialog(
                                 context: context,
-                                builder: (_) => ItineraryReviewDialog(
+                                builder: (_) => ItineraryRatingPopup(
                                   itineraryId: itin.id,
                                   itineraryTitle: itin.title,
                                   totalLocations: itin.totalLocations,

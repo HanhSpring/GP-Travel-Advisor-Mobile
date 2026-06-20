@@ -13,7 +13,7 @@ import 'package:travel_advisor_mobile/features/itinerary/domain/entities/itinera
 import 'package:travel_advisor_mobile/features/itinerary/domain/entities/itinerary_activity_entity.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/cubit/itinerary_cubit.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/cubit/itinerary_state.dart';
-import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/itinerary_review_dialog.dart';
+import 'package:travel_advisor_mobile/features/review/presentation/widgets/itinerary_rating_popup.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/short_itinerary_item.dart';
 
 /// ðŸ”§ CHáº¾ Äá»˜ THIáº¾T Káº¾: Set true đá»ƒ dÃ¹ng dá»¯ liá»‡u máº«u, false đá»ƒ dÃ¹ng API
@@ -197,7 +197,7 @@ class _ItinerarySummaryView extends StatelessWidget {
                 onPressed: () {
                   showDialog(
                     context: context,
-                    builder: (_) => ItineraryReviewDialog(
+                    builder: (_) => ItineraryRatingPopup(
                       itineraryId: itin.id,
                       itineraryTitle: itin.title,
                       totalLocations: itin.totalLocations,
