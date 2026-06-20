@@ -24,5 +24,6 @@ abstract class ReviewRepository {
     required String localPath,
     required String contentType,
     required int contentLength,
+    void Function(int sent, int total)? onSendProgress,
   });
 }

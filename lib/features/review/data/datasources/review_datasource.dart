@@ -115,6 +115,7 @@ abstract class ReviewDataSource {
     required File file,
     required String contentType,
     required int contentLength,
+    void Function(int sent, int total)? onSendProgress,
   });
 }
 
@@ -330,6 +331,7 @@ class RemoteReviewDataSource implements ReviewDataSource {
     required File file,
     required String contentType,
     required int contentLength,
+    void Function(int sent, int total)? onSendProgress,
   }) async {
     final uploadDio = Dio(
       BaseOptions(
@@ -342,6 +344,7 @@ class RemoteReviewDataSource implements ReviewDataSource {
     await uploadDio.put(
       presignedUrl.uploadUrl,
       data: file.openRead(),
+      onSendProgress: onSendProgress,
       options: Options(
         headers: {
           Headers.contentTypeHeader: contentType,

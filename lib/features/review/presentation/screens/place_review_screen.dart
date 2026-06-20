@@ -91,17 +91,46 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
   }
 
   Future<void> _pickVideo() async {
+    String? preparingVideoId;
     try {
       final pickedVideo = await ReviewMediaPicker.pickVideo(
         sortOrder: _mediaItems.length,
+        onPreparingVideo: (item) {
+          preparingVideoId = item.id;
+          if (!mounted) {
+            return;
+          }
+          setState(() {
+            final existingIndex = _mediaItems.indexWhere(
+              (mediaItem) => mediaItem.id == item.id,
+            );
+            if (existingIndex >= 0) {
+              _mediaItems[existingIndex] = item;
+            } else {
+              _mediaItems.add(item);
+            }
+          });
+        },
       );
 
       if (pickedVideo != null) {
         setState(() {
-          _mediaItems.add(pickedVideo);
+          final existingIndex = _mediaItems.indexWhere(
+            (item) => item.id == pickedVideo.id,
+          );
+          if (existingIndex >= 0) {
+            _mediaItems[existingIndex] = pickedVideo;
+          } else {
+            _mediaItems.add(pickedVideo);
+          }
         });
       }
     } on ReviewMediaSelectionException catch (error) {
+      if (preparingVideoId != null && mounted) {
+        setState(() {
+          _mediaItems.removeWhere((item) => item.id == preparingVideoId);
+        });
+      }
       if (!mounted) {
         return;
       }

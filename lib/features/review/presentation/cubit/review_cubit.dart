@@ -28,22 +28,43 @@ class ReviewCubit extends Cubit<ReviewState> {
   static const int _maxVideoSizeBytes = 20 * 1024 * 1024;
   static const Duration _maxVideoDuration = Duration(seconds: 20);
 
-  Future<void> loadReviewData(String itineraryId) async {
+  Future<void> loadReviewData(
+    String itineraryId, {
+    double initialRating = 0.0,
+    String initialComment = '',
+  }) async {
     emit(ReviewLoading());
 
     if (kDemoMode) {
       await Future.delayed(const Duration(milliseconds: 500));
       final itinerary = _generateDemoData();
-      final generalRating =
+      final storedRating =
           DemoReviewStore.itineraryOverallRatings[itineraryId] ?? 0.0;
-      final generalComment =
+      final storedComment =
           DemoReviewStore.itineraryOverallComments[itineraryId] ?? '';
+      final generalRating = initialRating > 0 ? initialRating : storedRating;
+      final generalComment = initialComment.trim().isNotEmpty
+          ? initialComment
+          : storedComment;
+
+      var loadedItinerary = itinerary;
+      var locationRatingsBeforeApplyAll = const <String, double?>{};
+      if (generalRating > 0) {
+        locationRatingsBeforeApplyAll = _snapshotLocationRatings(
+          loadedItinerary.locations,
+        );
+        loadedItinerary = _applyRatingToAllLocations(
+          loadedItinerary,
+          generalRating,
+        );
+      }
 
       emit(
         ReviewLoaded(
-          itinerary: itinerary,
+          itinerary: loadedItinerary,
           generalRating: generalRating,
           generalComment: generalComment,
+          locationRatingsBeforeApplyAll: locationRatingsBeforeApplyAll,
         ),
       );
       return;
@@ -51,7 +72,26 @@ class ReviewCubit extends Cubit<ReviewState> {
 
     try {
       final itinerary = await getItineraryForReview(itineraryId);
-      emit(ReviewLoaded(itinerary: itinerary));
+      var loadedItinerary = itinerary;
+      var locationRatingsBeforeApplyAll = const <String, double?>{};
+      if (initialRating > 0) {
+        locationRatingsBeforeApplyAll = _snapshotLocationRatings(
+          loadedItinerary.locations,
+        );
+        loadedItinerary = _applyRatingToAllLocations(
+          loadedItinerary,
+          initialRating,
+        );
+      }
+
+      emit(
+        ReviewLoaded(
+          itinerary: loadedItinerary,
+          generalRating: initialRating,
+          generalComment: initialComment,
+          locationRatingsBeforeApplyAll: locationRatingsBeforeApplyAll,
+        ),
+      );
     } catch (e) {
       emit(ReviewError(e.toString()));
     }
@@ -314,14 +354,64 @@ class ReviewCubit extends Cubit<ReviewState> {
   Future<void> addVideo() async {
     if (state is ReviewLoaded) {
       final currentState = state as ReviewLoaded;
-      final video = await ReviewMediaPicker.pickVideo(
-        sortOrder: currentState.itineraryMedia.length,
-      );
+      String? preparingVideoId;
+      void removePreparingVideo() {
+        if (preparingVideoId == null || state is! ReviewLoaded) {
+          return;
+        }
+        final latestState = state as ReviewLoaded;
+        final newMedia = List<ReviewMediaItem>.from(latestState.itineraryMedia)
+          ..removeWhere((item) => item.id == preparingVideoId);
+        emit(latestState.copyWith(itineraryMedia: newMedia));
+      }
+
+      final ReviewMediaItem? video;
+      try {
+        video = await ReviewMediaPicker.pickVideo(
+          sortOrder: currentState.itineraryMedia.length,
+          onPreparingVideo: (item) {
+            preparingVideoId = item.id;
+            if (state is! ReviewLoaded) {
+              return;
+            }
+            final latestState = state as ReviewLoaded;
+            final newMedia = List<ReviewMediaItem>.from(
+              latestState.itineraryMedia,
+            );
+            final existingIndex = newMedia.indexWhere(
+              (mediaItem) => mediaItem.id == item.id,
+            );
+            if (existingIndex >= 0) {
+              newMedia[existingIndex] = item;
+            } else {
+              newMedia.add(item);
+            }
+            emit(latestState.copyWith(itineraryMedia: newMedia));
+          },
+        );
+      } catch (_) {
+        removePreparingVideo();
+        rethrow;
+      }
 
       if (video != null) {
-        final newMedia = List<ReviewMediaItem>.from(currentState.itineraryMedia)
-          ..add(video);
-        emit(currentState.copyWith(itineraryMedia: newMedia));
+        final selectedVideo = video;
+        if (state is! ReviewLoaded) {
+          return;
+        }
+        final latestState = state as ReviewLoaded;
+        final newMedia = List<ReviewMediaItem>.from(latestState.itineraryMedia);
+        final existingIndex = newMedia.indexWhere(
+          (item) => item.id == selectedVideo.id,
+        );
+        if (existingIndex >= 0) {
+          newMedia[existingIndex] = selectedVideo;
+        } else {
+          newMedia.add(selectedVideo);
+        }
+        emit(latestState.copyWith(itineraryMedia: newMedia));
+      } else {
+        removePreparingVideo();
       }
     }
   }
@@ -492,10 +582,12 @@ class ReviewCubit extends Cubit<ReviewState> {
           status: ReviewMediaUploadStatus.uploading,
           objectKey: presignedUrl.objectKey,
           remoteUrl: presignedUrl.publicUrl,
+          uploadProgress: 0,
         );
         onItemChanged(uploading);
 
         try {
+          var lastProgressPercent = 0;
           await reviewRepository.uploadReviewMediaToR2(
             presignedUrl: presignedUrl,
             localPath: item.localPath,
@@ -505,10 +597,25 @@ class ReviewCubit extends Cubit<ReviewState> {
                     ? 'video/mp4'
                     : 'image/jpeg'),
             contentLength: item.fileSize ?? 0,
+            onSendProgress: (sent, total) {
+              final denominator = total > 0 ? total : item.fileSize ?? 0;
+              if (denominator <= 0) {
+                return;
+              }
+              final progress = (sent / denominator).clamp(0.0, 1.0).toDouble();
+              final progressPercent = (progress * 100).floor();
+              if (progressPercent < 100 &&
+                  progressPercent - lastProgressPercent < 5) {
+                return;
+              }
+              lastProgressPercent = progressPercent;
+              onItemChanged(uploading.copyWith(uploadProgress: progress));
+            },
           );
 
           final uploaded = uploading.copyWith(
             status: ReviewMediaUploadStatus.uploaded,
+            uploadProgress: 1,
             errorMessage: '',
           );
           onItemChanged(uploaded);
@@ -569,7 +676,25 @@ class ReviewCubit extends Cubit<ReviewState> {
         // return;
       }
 
-      final itineraryMedia = await _uploadMediaScope(
+      for (final loc in currentState.itinerary.locations) {
+        final locationMedia =
+            currentState.locationMediaByDetailId[loc.id] ??
+            const <ReviewMediaItem>[];
+        if (locationMedia.isNotEmpty && loc.rating == null) {
+          for (final item in locationMedia) {
+            _updateLocationMediaItem(
+              loc.id,
+              item.copyWith(
+                status: ReviewMediaUploadStatus.failed,
+                errorMessage: 'Vui long chon so sao truoc khi gui media',
+              ),
+            );
+          }
+          throw Exception('Vui long chon so sao cho dia diem co media');
+        }
+      }
+
+      final itineraryMediaFuture = _uploadMediaScope(
         scope: 'itinerary',
         itineraryId: itineraryId,
         mediaItems: currentState.itineraryMedia,
@@ -618,6 +743,8 @@ class ReviewCubit extends Cubit<ReviewState> {
           ),
         );
       }
+
+      final itineraryMedia = await itineraryMediaFuture;
 
       await reviewRepository.submitItineraryReview(
         itineraryId: itineraryId,

@@ -16,17 +16,26 @@ import 'package:travel_advisor_mobile/features/review/presentation/widgets/revie
 class RateItineraryScreen extends StatelessWidget {
   final String itineraryId;
   final bool isReadOnly;
+  final double initialRating;
+  final String initialComment;
 
   const RateItineraryScreen({
     super.key,
     required this.itineraryId,
     this.isReadOnly = false,
+    this.initialRating = 0.0,
+    this.initialComment = '',
   });
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => sl<ReviewCubit>()..loadReviewData(itineraryId),
+      create: (_) => sl<ReviewCubit>()
+        ..loadReviewData(
+          itineraryId,
+          initialRating: initialRating,
+          initialComment: initialComment,
+        ),
       child: _RateItineraryView(
         itineraryId: itineraryId,
         isReadOnly: isReadOnly,
@@ -202,6 +211,8 @@ class _RateItineraryView extends StatelessWidget {
                       ...filteredLocations.map(
                         (loc) => LocationReviewListTile(
                           location: loc,
+                          mediaItems:
+                              state.locationMediaByDetailId[loc.id] ?? const [],
                           isVisited: loc.isVisited,
                           isReadOnly: isReadOnly,
                           onRatingChanged: isReadOnly

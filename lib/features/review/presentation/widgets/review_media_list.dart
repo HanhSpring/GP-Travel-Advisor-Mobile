@@ -23,9 +23,7 @@ class ReviewMediaList extends StatelessWidget {
   });
 
   bool _isBusy(ReviewMediaItem item) {
-    return item.status == ReviewMediaUploadStatus.requestingUrl ||
-        item.status == ReviewMediaUploadStatus.uploading ||
-        item.status == ReviewMediaUploadStatus.compressing;
+    return item.status == ReviewMediaUploadStatus.compressing;
   }
 
   @override
@@ -91,21 +89,10 @@ class ReviewMediaList extends StatelessWidget {
                         Positioned.fill(
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.35),
+                              color: Colors.black.withValues(alpha: 0.68),
                               borderRadius: BorderRadius.circular(16),
                             ),
-                            child: const Center(
-                              child: SizedBox(
-                                width: 22,
-                                height: 22,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ),
+                            child: _UploadProgressOverlay(item: item),
                           ),
                         ),
                       if (item.status == ReviewMediaUploadStatus.failed)
@@ -131,27 +118,23 @@ class ReviewMediaList extends StatelessWidget {
                           ),
                         ),
                       Positioned(
-                        top: -12,
-                        right: -12,
-                        child: GestureDetector(
-                          onTap: () => onRemoveMedia(item.id),
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.15),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: const Icon(
-                              Icons.close,
-                              size: 18,
-                              color: Colors.black87,
+                        top: 6,
+                        right: 6,
+                        child: Material(
+                          color: Colors.white,
+                          shape: const CircleBorder(),
+                          elevation: 2,
+                          child: InkWell(
+                            customBorder: const CircleBorder(),
+                            onTap: () => onRemoveMedia(item.id),
+                            child: const SizedBox(
+                              width: 30,
+                              height: 30,
+                              child: Icon(
+                                Icons.close,
+                                size: 18,
+                                color: Colors.black87,
+                              ),
                             ),
                           ),
                         ),
@@ -221,6 +204,26 @@ class ReviewMediaList extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _UploadProgressOverlay extends StatelessWidget {
+  final ReviewMediaItem item;
+
+  const _UploadProgressOverlay({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: SizedBox(
+        width: 22,
+        height: 22,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+        ),
+      ),
     );
   }
 }
