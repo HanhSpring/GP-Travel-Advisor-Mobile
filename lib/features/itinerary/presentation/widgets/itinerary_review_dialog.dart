@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:travel_advisor_mobile/core/theme/app_colors.dart';
+import 'package:travel_advisor_mobile/features/review/presentation/constants/review_tags.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/screens/rate_itinerary_screen.dart';
 
 class ItineraryReviewDialog extends StatefulWidget {
@@ -25,14 +26,6 @@ class _ItineraryReviewDialogState extends State<ItineraryReviewDialog> {
   bool _isPublic = true;
   String _missedReason = '';
   final TextEditingController _commentController = TextEditingController();
-
-  final List<String> _suggestedReasons = [
-    'Thời gian quá gấp',
-    'Địa điểm không như mong đợi',
-    'Thời tiết không thuận lợi',
-    'Sức khỏe không đảm bảo',
-    'Tìm thấy địa điểm khác thú vị hơn',
-  ];
 
   @override
   void dispose() {
@@ -166,9 +159,9 @@ class _ItineraryReviewDialogState extends State<ItineraryReviewDialog> {
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: _suggestedReasons.map((reason) {
-                    final isSelected = _missedReason == reason;
-                    return choiceChip(reason, isSelected);
+                  children: kTravelReviewTags.map((tag) {
+                    final isSelected = _missedReason == tag;
+                    return choiceChip(tag, isSelected);
                   }).toList(),
                 ),
                 const SizedBox(height: 16),
