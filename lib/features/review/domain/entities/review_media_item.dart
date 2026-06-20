@@ -20,6 +20,7 @@ class ReviewMediaItem {
   final int? fileSize;
   final Duration? duration;
   final int sortOrder;
+  final double? uploadProgress;
   final String? errorMessage;
 
   const ReviewMediaItem({
@@ -33,6 +34,7 @@ class ReviewMediaItem {
     this.contentType,
     this.fileSize,
     this.duration,
+    this.uploadProgress,
     this.errorMessage,
   });
 
@@ -79,6 +81,7 @@ class ReviewMediaItem {
     int? fileSize,
     Duration? duration,
     int? sortOrder,
+    double? uploadProgress,
     String? errorMessage,
   }) {
     return ReviewMediaItem(
@@ -92,6 +95,7 @@ class ReviewMediaItem {
       fileSize: fileSize ?? this.fileSize,
       duration: duration ?? this.duration,
       sortOrder: sortOrder ?? this.sortOrder,
+      uploadProgress: uploadProgress ?? this.uploadProgress,
       errorMessage: errorMessage ?? this.errorMessage,
     );
   }
