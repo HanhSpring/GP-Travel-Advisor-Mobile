@@ -19,6 +19,7 @@ class RateItineraryScreen extends StatelessWidget {
   final bool isReadOnly;
   final double initialRating;
   final String initialComment;
+  final bool popExtraOnSubmit;
 
   const RateItineraryScreen({
     super.key,
@@ -26,6 +27,7 @@ class RateItineraryScreen extends StatelessWidget {
     this.isReadOnly = false,
     this.initialRating = 0.0,
     this.initialComment = '',
+    this.popExtraOnSubmit = true,
   });
 
   @override
@@ -47,6 +49,7 @@ class RateItineraryScreen extends StatelessWidget {
       child: _RateItineraryView(
         itineraryId: itineraryId,
         isReadOnly: isReadOnly,
+        popExtraOnSubmit: popExtraOnSubmit,
       ),
     );
   }
@@ -55,9 +58,12 @@ class RateItineraryScreen extends StatelessWidget {
 class _RateItineraryView extends StatelessWidget {
   final String itineraryId;
   final bool isReadOnly;
+  final bool popExtraOnSubmit;
+
   const _RateItineraryView({
     required this.itineraryId,
     required this.isReadOnly,
+    required this.popExtraOnSubmit,
   });
 
   @override
@@ -309,7 +315,8 @@ class _RateItineraryView extends StatelessWidget {
                                     context,
                                   ).pop(); // Đóng RateItineraryScreen
                                   // Thêm một lần pop nữa để đóng ItineraryReviewDialog
-                                  if (Navigator.of(context).canPop()) {
+                                  if (popExtraOnSubmit &&
+                                      Navigator.of(context).canPop()) {
                                     Navigator.of(context).pop();
                                   }
                                 }

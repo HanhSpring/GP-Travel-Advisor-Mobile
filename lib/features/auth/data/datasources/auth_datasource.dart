@@ -91,8 +91,7 @@ class RemoteAuthDataSource implements AuthDataSource {
         refreshToken: refreshToken,
       );
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? 'Đăng nhập thất bại';
-      throw Exception(msg);
+      throw Exception(_extractErrorMessage(e, fallback: 'Đăng nhập thất bại'));
     }
   }
 
@@ -138,8 +137,7 @@ class RemoteAuthDataSource implements AuthDataSource {
 
       // Refresh để lấy token mới nhất sau khi backend đã cập nhật metadata
       final refreshed = await Supabase.instance.client.auth.refreshSession();
-      final freshToken =
-          refreshed.session?.accessToken ?? supabaseToken;
+      final freshToken = refreshed.session?.accessToken ?? supabaseToken;
       final freshRefreshToken =
           refreshed.session?.refreshToken ??
           supabaseResponse.session?.refreshToken ??
@@ -369,6 +367,15 @@ class RemoteAuthDataSource implements AuthDataSource {
             .join('\n');
       }
     }
+
+    if (e.type == DioExceptionType.connectionError ||
+        e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.receiveTimeout ||
+        e.type == DioExceptionType.sendTimeout) {
+      return 'Không thể kết nối đến máy chủ ${e.requestOptions.baseUrl}. '
+          'Vui lòng kiểm tra backend và thử lại.';
+    }
+
     return fallback;
   }
 }
