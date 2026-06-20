@@ -52,6 +52,25 @@ class ReviewMediaItem {
     );
   }
 
+  factory ReviewMediaItem.fromRemoteUrl({
+    required String remoteUrl,
+    required int sortOrder,
+  }) {
+    final url = remoteUrl.toLowerCase();
+    final isVideo = url.contains('/videos/') ||
+        url.endsWith('.mp4') ||
+        url.endsWith('.mov') ||
+        url.endsWith('.webm');
+    return ReviewMediaItem(
+      id: 'remote_${sortOrder}_${remoteUrl.hashCode.abs()}',
+      localPath: remoteUrl,
+      type: isVideo ? ReviewMediaType.video : ReviewMediaType.image,
+      status: ReviewMediaUploadStatus.uploaded,
+      remoteUrl: remoteUrl,
+      sortOrder: sortOrder,
+    );
+  }
+
   factory ReviewMediaItem.localVideo({
     required String localPath,
     required int sortOrder,

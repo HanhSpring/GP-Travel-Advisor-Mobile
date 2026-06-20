@@ -21,6 +21,7 @@ class ReviewItineraryCard extends StatelessWidget {
   final VoidCallback onAddVideo;
   final ValueChanged<String> onRemoveMedia;
   final VoidCallback onClearAllMedia;
+  final bool isReadOnly;
 
   const ReviewItineraryCard({
     super.key,
@@ -36,6 +37,7 @@ class ReviewItineraryCard extends StatelessWidget {
     required this.onAddVideo,
     required this.onRemoveMedia,
     required this.onClearAllMedia,
+    this.isReadOnly = false,
   });
 
   @override
@@ -209,6 +211,7 @@ class ReviewItineraryCard extends StatelessWidget {
             onAddVideo: onAddVideo,
             onRemoveMedia: onRemoveMedia,
             onClearAllMedia: onClearAllMedia,
+            isReadOnly: isReadOnly,
           ),
         ],
       ),

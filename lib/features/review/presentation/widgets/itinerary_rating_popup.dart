@@ -440,7 +440,7 @@ class _ItineraryRatingPopupState extends State<ItineraryRatingPopup> {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
-            onPressed: () => _goToDetailScreen(isReadOnly: false),
+            onPressed: () => _goToDetailScreen(isReadOnly: true),
             icon: const Icon(Icons.edit_rounded, size: 18),
             label: const Text(
               'Xem chi tiết đánh giá',
