@@ -21,6 +21,18 @@ class ItineraryReviewPopupData {
   });
 }
 
+class ItineraryReviewSummary {
+  final bool hasReview;
+  final double? rating;
+  final String? content;
+
+  const ItineraryReviewSummary({
+    required this.hasReview,
+    this.rating,
+    this.content,
+  });
+}
+
 class SubmitPlaceReviewInput {
   final String itineraryDetailId;
   final int rating;
@@ -94,6 +106,7 @@ class ReviewMediaPresignedUrl {
 
 abstract class ReviewDataSource {
   Future<ItineraryReviewModel> getItineraryForReview(String itineraryId);
+  Future<ItineraryReviewSummary> getReviewSummary(String itineraryId);
   Future<ItineraryReviewPopupData> getPopupData(String itineraryId);
   Future<void> dismissPopup(String itineraryId);
   Future<void> submitItineraryReview({
@@ -183,6 +196,21 @@ class RemoteReviewDataSource implements ReviewDataSource {
           )
           .where((item) => item.id.isNotEmpty)
           .toList(),
+    );
+  }
+
+  @override
+  Future<ItineraryReviewSummary> getReviewSummary(String itineraryId) async {
+    final touristId = await AuthUtils.requireCurrentUserId();
+    final response = await _client.dio.get(
+      '/itinerary-reviews/$itineraryId/summary',
+      queryParameters: {'tourist_id': touristId},
+    );
+    final data = response.data as Map<String, dynamic>;
+    return ItineraryReviewSummary(
+      hasReview: data['has_review'] == true,
+      rating: (data['rating'] as num?)?.toDouble(),
+      content: data['content']?.toString(),
     );
   }
 

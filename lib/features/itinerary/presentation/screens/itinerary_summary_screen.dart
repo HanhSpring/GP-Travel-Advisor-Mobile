@@ -15,7 +15,7 @@ import 'package:travel_advisor_mobile/features/itinerary/domain/entities/itinera
 import 'package:travel_advisor_mobile/features/itinerary/domain/entities/itinerary_activity_entity.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/cubit/itinerary_cubit.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/cubit/itinerary_state.dart';
-import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/itinerary_review_dialog.dart';
+import 'package:travel_advisor_mobile/features/review/presentation/widgets/itinerary_rating_popup.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/short_itinerary_item.dart';
 
 /// Chế độ thiết kế: true dùng dữ liệu mẫu, false dùng API.
@@ -153,24 +153,63 @@ class _ItinerarySummaryView extends StatelessWidget {
           ),
         ),
         centerTitle: true,
-        actions: canReview
-            ? [
-                Padding(
-                  padding: const EdgeInsets.only(right: 16),
-                  child: _summaryCircleButton(Icons.star_outline_rounded, () {
-                    showDialog(
-                      context: context,
-                      builder: (_) => ItineraryReviewDialog(
-                        itineraryId: itin.id,
-                        itineraryTitle: itin.title,
-                        totalLocations: totalVisitCount,
-                        visitedLocations: visitedVisitCount,
-                      ),
-                    );
-                  }),
+        actions: [
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.9),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(1, 2),
                 ),
-              ]
-            : null,
+              ],
+            ),
+            child: IconButton(
+              icon: const Icon(
+                Icons.edit_rounded,
+                color: Color(0xFF2563EB),
+                size: 20,
+              ),
+              onPressed: () => _showEditTitleDialog(context, itin),
+            ),
+          ),
+          if (canReview)
+            Container(
+              margin: const EdgeInsets.only(right: 16),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.9),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 8,
+                    offset: const Offset(1, 2),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                icon: const Icon(
+                  Icons.stars_rounded,
+                  color: Color(0xFF10B981),
+                  size: 24,
+                ),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (_) => ItineraryRatingPopup(
+                      itineraryId: itin.id,
+                      itineraryTitle: itin.title,
+                      totalLocations: itin.totalLocations,
+                      visitedLocations: itin.visitedLocations,
+                    ),
+                  );
+                },
+              ),
+            ),
+        ],
       ),
       body: Stack(
         children: [
