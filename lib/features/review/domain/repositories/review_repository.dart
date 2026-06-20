@@ -2,6 +2,7 @@ import 'package:travel_advisor_mobile/features/review/domain/entities/itinerary_
 import 'package:travel_advisor_mobile/features/review/data/datasources/review_datasource.dart';
 
 abstract class ReviewRepository {
+  Future<ReviewCatalog> getReviewCatalog();
   Future<ItineraryReviewEntity> getItineraryForReview(String itineraryId);
   Future<ItineraryReviewPopupData> getPopupData(String itineraryId);
   Future<void> dismissPopup(String itineraryId);

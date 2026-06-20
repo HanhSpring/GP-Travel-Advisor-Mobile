@@ -8,6 +8,9 @@ class ReviewRepositoryImpl implements ReviewRepository {
   ReviewRepositoryImpl(this.dataSource);
 
   @override
+  Future<ReviewCatalog> getReviewCatalog() => dataSource.getReviewCatalog();
+
+  @override
   Future<ItineraryReviewEntity> getItineraryForReview(String itineraryId) async {
     final model = await dataSource.getItineraryForReview(itineraryId);
     return model.toEntity();

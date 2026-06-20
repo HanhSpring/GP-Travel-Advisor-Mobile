@@ -39,6 +39,12 @@ class MockNotificationDataSource implements NotificationDataSource {
         timeLabel: '2 giờ trước',
         iconKey: 'star',
         isUnread: true,
+        actionType: 'review_place',
+        actionLabel: 'Danh gia dia diem',
+        targetType: 'place_review',
+        placeId: 'mock_place_1',
+        itineraryId: 'mock_ongoing',
+        itineraryDetailId: 'mock_1_1',
       ),
       const NotificationModel(
         id: 'notif-003',
@@ -77,6 +83,14 @@ class MockNotificationDataSource implements NotificationDataSource {
       timeLabel: notification.timeLabel,
       iconKey: notification.iconKey,
       isUnread: false,
+      actionType: notification.actionType,
+      actionLabel: notification.actionLabel,
+      targetType: notification.targetType,
+      placeId: notification.placeId,
+      itineraryId: notification.itineraryId,
+      itineraryDetailId: notification.itineraryDetailId,
+      hasPlaceReview: notification.hasPlaceReview,
+      hasItineraryReview: notification.hasItineraryReview,
     );
   }
 

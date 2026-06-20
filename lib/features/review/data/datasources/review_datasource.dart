@@ -32,7 +32,140 @@ class SubmitPlaceReviewInput {
   });
 }
 
+class ReviewCatalogItem {
+  final String kind;
+  final String status;
+  final String? reviewId;
+  final String itineraryId;
+  final String? itineraryDetailId;
+  final String? placeId;
+  final String title;
+  final String? imageUrl;
+  final double? rating;
+  final String? content;
+  final DateTime? reviewedAt;
+  final String? itineraryTitle;
+  final String? destination;
+  final DateTime? startDate;
+  final DateTime? endDate;
+  final DateTime? visitDate;
+  final List<String> tags;
+  final List<String> mediaUrls;
+  final String? reviewStatus;
+  final String? itineraryStatus;
+  final List<ReviewedPlaceItem> placeReviews;
+
+  const ReviewCatalogItem({
+    required this.kind,
+    required this.status,
+    required this.reviewId,
+    required this.itineraryId,
+    required this.itineraryDetailId,
+    required this.placeId,
+    required this.title,
+    required this.imageUrl,
+    required this.rating,
+    required this.content,
+    required this.reviewedAt,
+    required this.itineraryTitle,
+    required this.destination,
+    required this.startDate,
+    required this.endDate,
+    required this.visitDate,
+    required this.tags,
+    required this.mediaUrls,
+    required this.reviewStatus,
+    required this.itineraryStatus,
+    required this.placeReviews,
+  });
+
+  bool get isItinerary => kind == 'itinerary';
+  bool get isReviewed => status == 'reviewed';
+
+  factory ReviewCatalogItem.fromJson(Map<String, dynamic> json) =>
+      ReviewCatalogItem(
+        kind: (json['kind'] ?? 'place').toString(),
+        status: (json['status'] ?? 'pending').toString(),
+        reviewId: json['review_id']?.toString(),
+        itineraryId: (json['itinerary_id'] ?? '').toString(),
+        itineraryDetailId: json['itinerary_detail_id']?.toString(),
+        placeId: json['place_id']?.toString(),
+        title: (json['title'] ?? 'Đánh giá').toString(),
+        imageUrl: json['image_url']?.toString(),
+        rating: (json['rating'] as num?)?.toDouble(),
+        content: json['content']?.toString(),
+        reviewedAt: DateTime.tryParse((json['reviewed_at'] ?? '').toString()),
+        itineraryTitle: json['itinerary_title']?.toString(),
+        destination: json['destination']?.toString(),
+        startDate: DateTime.tryParse((json['start_date'] ?? '').toString()),
+        endDate: DateTime.tryParse((json['end_date'] ?? '').toString()),
+        visitDate: DateTime.tryParse((json['visit_date'] ?? '').toString()),
+        tags: ((json['tags'] as List?) ?? const [])
+            .map((item) => item.toString())
+            .toList(),
+        mediaUrls: ((json['media_urls'] as List?) ?? const [])
+            .map((item) => item.toString())
+            .where((item) => item.isNotEmpty)
+            .toList(),
+        reviewStatus: json['review_status']?.toString(),
+        itineraryStatus: json['itinerary_status']?.toString(),
+        placeReviews: ((json['place_reviews'] as List?) ?? const [])
+            .whereType<Map>()
+            .map(
+              (item) =>
+                  ReviewedPlaceItem.fromJson(Map<String, dynamic>.from(item)),
+            )
+            .toList(),
+      );
+}
+
+class ReviewedPlaceItem {
+  final String title;
+  final String? imageUrl;
+  final double rating;
+  final String? content;
+  final DateTime? visitDate;
+  final List<String> tags;
+  final List<String> mediaUrls;
+  final DateTime? reviewedAt;
+
+  const ReviewedPlaceItem({
+    required this.title,
+    required this.imageUrl,
+    required this.rating,
+    required this.content,
+    required this.visitDate,
+    required this.tags,
+    required this.mediaUrls,
+    required this.reviewedAt,
+  });
+
+  factory ReviewedPlaceItem.fromJson(Map<String, dynamic> json) =>
+      ReviewedPlaceItem(
+        title: (json['place_name'] ?? 'Địa điểm').toString(),
+        imageUrl: json['place_image_url']?.toString(),
+        rating: (json['rating'] as num?)?.toDouble() ?? 0,
+        content: json['content']?.toString(),
+        visitDate: DateTime.tryParse((json['visit_date'] ?? '').toString()),
+        tags: ((json['tags'] as List?) ?? const [])
+            .map((item) => item.toString())
+            .toList(),
+        mediaUrls: ((json['media_urls'] as List?) ?? const [])
+            .map((item) => item.toString())
+            .where((item) => item.isNotEmpty)
+            .toList(),
+        reviewedAt: DateTime.tryParse((json['reviewed_at'] ?? '').toString()),
+      );
+}
+
+class ReviewCatalog {
+  final List<ReviewCatalogItem> pending;
+  final List<ReviewCatalogItem> reviewed;
+  const ReviewCatalog({required this.pending, required this.reviewed});
+}
+
 abstract class ReviewDataSource {
+  Future<ReviewCatalog> getReviewCatalog();
   Future<ItineraryReviewModel> getItineraryForReview(String itineraryId);
   Future<ItineraryReviewPopupData> getPopupData(String itineraryId);
   Future<void> dismissPopup(String itineraryId);
@@ -51,8 +184,27 @@ class RemoteReviewDataSource implements ReviewDataSource {
 
   RemoteReviewDataSource(this._client);
 
-  String _requireTouristId() {
-    throw UnimplementedError('Use AuthUtils.requireCurrentUserId() instead');
+  @override
+  Future<ReviewCatalog> getReviewCatalog() async {
+    final touristId = await AuthUtils.requireCurrentUserId();
+    final response = await _client.dio.get(
+      '/reviews',
+      queryParameters: {'tourist_id': touristId, 'status': 'all'},
+      options: _client.forceRefreshOptions,
+    );
+    final data = Map<String, dynamic>.from(response.data as Map);
+    List<ReviewCatalogItem> parse(String key) =>
+        ((data[key] as List?) ?? const [])
+            .whereType<Map>()
+            .map(
+              (item) =>
+                  ReviewCatalogItem.fromJson(Map<String, dynamic>.from(item)),
+            )
+            .toList();
+    return ReviewCatalog(
+      pending: parse('pending'),
+      reviewed: parse('reviewed'),
+    );
   }
 
   int _parseDayLabel(String label) {
@@ -84,7 +236,8 @@ class RemoteReviewDataSource implements ReviewDataSource {
 
     final data = response.data as Map<String, dynamic>;
     final itinerary =
-        (data['itinerary'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
+        (data['itinerary'] as Map<String, dynamic>?) ??
+        const <String, dynamic>{};
     final places = (data['places'] as List?) ?? const [];
     return ItineraryReviewModel(
       id: (itinerary['id'] ?? itineraryId).toString(),
@@ -117,15 +270,13 @@ class RemoteReviewDataSource implements ReviewDataSource {
     final touristId = await AuthUtils.requireCurrentUserId();
     final response = await _client.dio.get(
       '/itinerary-reviews/popup',
-      queryParameters: {
-        'tourist_id': touristId,
-        'itinerary_id': itineraryId,
-      },
+      queryParameters: {'tourist_id': touristId, 'itinerary_id': itineraryId},
     );
 
     final data = response.data as Map<String, dynamic>;
     final itinerary =
-        (data['itinerary'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
+        (data['itinerary'] as Map<String, dynamic>?) ??
+        const <String, dynamic>{};
 
     return ItineraryReviewPopupData(
       showPopup: data['show_popup'] == true,
@@ -140,10 +291,7 @@ class RemoteReviewDataSource implements ReviewDataSource {
     final touristId = await AuthUtils.requireCurrentUserId();
     await _client.dio.post(
       '/itinerary-reviews/popup/dismiss',
-      data: {
-        'tourist_id': touristId,
-        'itinerary_id': itineraryId,
-      },
+      data: {'tourist_id': touristId, 'itinerary_id': itineraryId},
     );
   }
 
@@ -160,8 +308,12 @@ class RemoteReviewDataSource implements ReviewDataSource {
 
     // Để pass qua @IsUUID('4') của NestJS trong chế độ Demo
     final isDemo = AppConfig.kUseMockData;
-    final validItineraryId = isDemo ? '11111111-1111-4111-a111-111111111111' : itineraryId;
-    final validTouristId = isDemo ? '22222222-2222-4222-a222-222222222222' : touristId;
+    final validItineraryId = isDemo
+        ? '11111111-1111-4111-a111-111111111111'
+        : itineraryId;
+    final validTouristId = isDemo
+        ? '22222222-2222-4222-a222-222222222222'
+        : touristId;
 
     await _client.dio.post(
       '/itinerary-reviews/$validItineraryId/submit',
@@ -175,7 +327,9 @@ class RemoteReviewDataSource implements ReviewDataSource {
           'place_reviews': placeReviews
               .map(
                 (item) => {
-                  'itinerary_detail_id': isDemo ? '33333333-3333-4333-a333-333333333333' : item.itineraryDetailId,
+                  'itinerary_detail_id': isDemo
+                      ? '33333333-3333-4333-a333-333333333333'
+                      : item.itineraryDetailId,
                   'rating': item.rating,
                   if (item.content != null && item.content!.trim().isNotEmpty)
                     'content': item.content,
