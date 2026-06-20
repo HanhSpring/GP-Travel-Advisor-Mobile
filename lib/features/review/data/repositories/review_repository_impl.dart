@@ -67,12 +67,14 @@ class ReviewRepositoryImpl implements ReviewRepository {
     required String localPath,
     required String contentType,
     required int contentLength,
+    void Function(int sent, int total)? onSendProgress,
   }) {
     return dataSource.uploadReviewMediaToR2(
       presignedUrl: presignedUrl,
       file: File(localPath),
       contentType: contentType,
       contentLength: contentLength,
+      onSendProgress: onSendProgress,
     );
   }
 }

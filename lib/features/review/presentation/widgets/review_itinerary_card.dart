@@ -169,7 +169,7 @@ class ReviewItineraryCard extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           Text(
-            'ĐÁNH GIÁ CHUNG',
+            'ĐÁNH GIÁ LỊCH TRÌNH',
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w600,
