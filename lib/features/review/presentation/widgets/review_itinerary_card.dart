@@ -5,6 +5,7 @@ import 'star_rating_input.dart';
 
 import 'package:travel_advisor_mobile/core/theme/app_colors.dart';
 import 'package:travel_advisor_mobile/core/widgets/net_image.dart';
+import 'package:travel_advisor_mobile/features/review/presentation/constants/review_tags.dart';
 import 'package:travel_advisor_mobile/features/review/domain/entities/itinerary_review_entity.dart';
 import 'package:travel_advisor_mobile/features/review/domain/entities/review_media_item.dart';
 
@@ -16,6 +17,8 @@ class ReviewItineraryCard extends StatelessWidget {
   final ValueChanged<bool> onApplyToAllChanged;
   final String generalComment;
   final ValueChanged<String> onGeneralCommentChanged;
+  final List<String> selectedTags;
+  final ValueChanged<String> onTagToggled;
   final List<ReviewMediaItem> mediaItems;
   final VoidCallback onAddImages;
   final VoidCallback onAddVideo;
@@ -32,6 +35,8 @@ class ReviewItineraryCard extends StatelessWidget {
     required this.onApplyToAllChanged,
     required this.generalComment,
     required this.onGeneralCommentChanged,
+    required this.selectedTags,
+    required this.onTagToggled,
     required this.mediaItems,
     required this.onAddImages,
     required this.onAddVideo,
@@ -42,6 +47,13 @@ class ReviewItineraryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final displayStatus = switch (itinerary.status.toLowerCase()) {
+      'completed' => 'HOÀN THÀNH',
+      'ongoing' => 'ĐANG DIỄN RA',
+      'upcoming' => 'SẮP DIỄN RA',
+      final v when v.isNotEmpty => v.toUpperCase(),
+      _ => itinerary.status,
+    };
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -94,7 +106,7 @@ class ReviewItineraryCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          itinerary.status,
+                          displayStatus,
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 9,
@@ -208,6 +220,52 @@ class ReviewItineraryCard extends StatelessWidget {
               ),
             ),
           ),
+          if (!isReadOnly || selectedTags.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            Text(
+              isReadOnly ? 'Từ khóa đánh giá' : 'Gợi ý nhanh',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1C1C1E),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: (isReadOnly ? selectedTags : kTravelReviewTags).map((
+                tag,
+              ) {
+                final isSelected = selectedTags.contains(tag);
+                return GestureDetector(
+                  onTap: isReadOnly ? null : () => onTagToggled(tag),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppColors.blobLight
+                          : const Color(0xFFF0FDF4).withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      tag,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isSelected
+                            ? AppColors.primary
+                            : const Color(0xFF0D9488),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
           const SizedBox(height: 20),
           ReviewMediaList(
             mediaItems: mediaItems,

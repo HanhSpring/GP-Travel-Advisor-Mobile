@@ -28,7 +28,9 @@ class SubmittedPlaceReview {
   final String? placeImageUrl;
   final double? rating;
   final String? content;
+  final List<String> tags;
   final List<String> mediaUrls;
+  final DateTime? reviewedAt;
 
   const SubmittedPlaceReview({
     required this.itineraryDetailId,
@@ -37,30 +39,40 @@ class SubmittedPlaceReview {
     this.placeImageUrl,
     this.rating,
     this.content,
+    this.tags = const [],
     this.mediaUrls = const [],
+    this.reviewedAt,
   });
 }
 
 class SubmittedReviewData {
   final String itineraryId;
   final String itineraryTitle;
+  final String? destination;
+  final String? itineraryStatus;
   final String? coverImage;
   final String startDate;
   final String endDate;
   final double? overallRating;
   final String? overallContent;
+  final List<String> overallTags;
   final List<String> overallMediaUrls;
+  final DateTime? overallReviewedAt;
   final List<SubmittedPlaceReview> places;
 
   const SubmittedReviewData({
     required this.itineraryId,
     required this.itineraryTitle,
+    this.destination,
+    this.itineraryStatus,
     this.coverImage,
     required this.startDate,
     required this.endDate,
     this.overallRating,
     this.overallContent,
+    this.overallTags = const [],
     this.overallMediaUrls = const [],
+    this.overallReviewedAt,
     required this.places,
   });
 }
@@ -291,6 +303,7 @@ abstract class ReviewDataSource {
     required String itineraryId,
     double? overallRating,
     String? overallContent,
+    List<String> overallTags = const [],
     bool applyAllPlaces = false,
     List<SubmitPlaceReviewInput> placeReviews = const [],
     List<SubmitReviewMediaInput> media = const [],
@@ -400,42 +413,48 @@ class RemoteReviewDataSource implements ReviewDataSource {
   Future<SubmittedReviewData> getSubmittedReview(String itineraryId) async {
     final touristId = await AuthUtils.requireCurrentUserId();
     final response = await _client.dio.get(
-      '/itinerary-reviews/$itineraryId/submitted-review',
+      '/itinerary-reviews/$itineraryId/review-detail',
       queryParameters: {'tourist_id': touristId},
     );
     final data = response.data as Map<String, dynamic>;
-    final itinerary =
-        (data['itinerary'] as Map<String, dynamic>?) ?? const {};
-    final overall =
-        (data['overall'] as Map<String, dynamic>?) ?? const {};
+    final itinerary = (data['itinerary'] as Map<String, dynamic>?) ?? const {};
+    final overall = (data['overall'] as Map<String, dynamic>?) ?? const {};
     final rawPlaces = (data['places'] as List?) ?? const [];
 
     return SubmittedReviewData(
       itineraryId: (itinerary['id'] ?? itineraryId).toString(),
-      itineraryTitle:
-          (itinerary['title'] ?? 'Lịch trình của bạn').toString(),
+      itineraryTitle: (itinerary['title'] ?? 'Lịch trình của bạn').toString(),
+      destination: itinerary['destination']?.toString(),
+      itineraryStatus: itinerary['status']?.toString(),
       coverImage: itinerary['cover_image']?.toString(),
       startDate: (itinerary['start_date'] ?? '').toString(),
       endDate: (itinerary['end_date'] ?? '').toString(),
       overallRating: (overall['rating'] as num?)?.toDouble(),
       overallContent: overall['content']?.toString(),
-      overallMediaUrls: (overall['media_urls'] as List?)
-              ?.map((e) => e.toString())
-              .toList() ??
+      overallTags: ((overall['tags'] as List?) ?? const [])
+          .map((e) => e.toString())
+          .toList(),
+      overallMediaUrls:
+          (overall['media_urls'] as List?)?.map((e) => e.toString()).toList() ??
           const [],
+      overallReviewedAt: DateTime.tryParse(
+        (overall['reviewed_at'] ?? '').toString(),
+      ),
       places: rawPlaces.whereType<Map<String, dynamic>>().map((p) {
         return SubmittedPlaceReview(
-          itineraryDetailId:
-              (p['itinerary_detail_id'] ?? '').toString(),
+          itineraryDetailId: (p['itinerary_detail_id'] ?? '').toString(),
           dayLabel: (p['day_label'] ?? 'DAY').toString(),
           placeName: (p['place_name'] ?? 'Địa điểm').toString(),
           placeImageUrl: p['place_image_url']?.toString(),
           rating: (p['rating'] as num?)?.toDouble(),
           content: p['content']?.toString(),
-          mediaUrls: (p['media_urls'] as List?)
-                  ?.map((e) => e.toString())
-                  .toList() ??
+          tags: ((p['tags'] as List?) ?? const [])
+              .map((e) => e.toString())
+              .toList(),
+          mediaUrls:
+              (p['media_urls'] as List?)?.map((e) => e.toString()).toList() ??
               const [],
+          reviewedAt: DateTime.tryParse((p['reviewed_at'] ?? '').toString()),
         );
       }).toList(),
     );
@@ -447,6 +466,7 @@ class RemoteReviewDataSource implements ReviewDataSource {
     final response = await _client.dio.get(
       '/itinerary-reviews/$itineraryId/summary',
       queryParameters: {'tourist_id': touristId},
+      options: _client.forceRefreshOptions,
     );
     final data = response.data as Map<String, dynamic>;
     return ItineraryReviewSummary(
@@ -491,6 +511,7 @@ class RemoteReviewDataSource implements ReviewDataSource {
     required String itineraryId,
     double? overallRating,
     String? overallContent,
+    List<String> overallTags = const [],
     bool applyAllPlaces = false,
     List<SubmitPlaceReviewInput> placeReviews = const [],
     List<SubmitReviewMediaInput> media = const [],
@@ -513,6 +534,7 @@ class RemoteReviewDataSource implements ReviewDataSource {
         if (overallRating != null) 'overall_rating': overallRating.round(),
         if (overallContent != null && overallContent.trim().isNotEmpty)
           'overall_content': overallContent,
+        if (overallTags.isNotEmpty) 'tags': overallTags,
         'apply_all_places': applyAllPlaces,
         if (placeReviews.isNotEmpty)
           'place_reviews': placeReviews
@@ -628,4 +650,3 @@ class RemoteReviewDataSource implements ReviewDataSource {
     );
   }
 }
-
