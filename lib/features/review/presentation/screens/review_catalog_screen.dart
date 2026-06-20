@@ -58,20 +58,9 @@ Future<void> openReviewedItineraryReview(
 ) async {
   final messenger = ScaffoldMessenger.maybeOf(context);
   try {
-    final catalog = await sl<ReviewRepository>().getReviewCatalog();
-    ReviewCatalogItem? target;
-    for (final item in catalog.reviewed) {
-      if (item.isItinerary && item.itineraryId == itineraryId) {
-        target = item;
-        break;
-      }
-    }
-
-    if (target == null) {
-      throw StateError('Khong tim thay danh gia lich trinh da gui.');
-    }
+    final data = await sl<ReviewRepository>().getSubmittedReview(itineraryId);
     if (!context.mounted) return;
-    await openReviewItem(context, target);
+    await openReviewItem(context, reviewCatalogItemFromSubmittedReview(data));
   } catch (e) {
     if (!context.mounted) return;
     messenger?.showSnackBar(
@@ -87,22 +76,23 @@ Future<void> openReviewedPlaceReview(
 }) async {
   final messenger = ScaffoldMessenger.maybeOf(context);
   try {
-    final catalog = await sl<ReviewRepository>().getReviewCatalog();
-    ReviewCatalogItem? target;
-    for (final item in catalog.reviewed) {
-      if (!item.isItinerary &&
-          item.itineraryId == itineraryId &&
-          item.itineraryDetailId == itineraryDetailId) {
-        target = item;
+    final data = await sl<ReviewRepository>().getSubmittedReview(itineraryId);
+    SubmittedPlaceReview? place;
+    for (final item in data.places) {
+      if (item.itineraryDetailId == itineraryDetailId) {
+        place = item;
         break;
       }
     }
 
-    if (target == null) {
+    if (place == null) {
       throw StateError('Khong tim thay danh gia dia diem da gui.');
     }
     if (!context.mounted) return;
-    await openReviewItem(context, target);
+    await openReviewItem(
+      context,
+      reviewCatalogItemFromSubmittedPlace(data, place),
+    );
   } catch (e) {
     if (!context.mounted) return;
     messenger?.showSnackBar(
@@ -110,6 +100,83 @@ Future<void> openReviewedPlaceReview(
     );
   }
 }
+
+ReviewCatalogItem reviewCatalogItemFromSubmittedReview(
+  SubmittedReviewData data,
+) {
+  return ReviewCatalogItem(
+    kind: 'itinerary',
+    status: 'reviewed',
+    reviewId: null,
+    itineraryId: data.itineraryId,
+    itineraryDetailId: null,
+    placeId: null,
+    title: data.itineraryTitle,
+    imageUrl: data.coverImage,
+    rating: data.overallRating,
+    content: data.overallContent,
+    reviewedAt: data.overallReviewedAt,
+    itineraryTitle: data.itineraryTitle,
+    destination: data.destination,
+    startDate: _parseDate(data.startDate),
+    endDate: _parseDate(data.endDate),
+    visitDate: null,
+    tags: data.overallTags,
+    mediaUrls: data.overallMediaUrls,
+    reviewStatus: null,
+    itineraryStatus: data.itineraryStatus,
+    placeReviews: data.places
+        .where((place) => place.rating != null)
+        .map((place) => reviewedPlaceItemFromSubmittedPlace(place))
+        .toList(),
+  );
+}
+
+ReviewCatalogItem reviewCatalogItemFromSubmittedPlace(
+  SubmittedReviewData data,
+  SubmittedPlaceReview place,
+) {
+  return ReviewCatalogItem(
+    kind: 'place',
+    status: 'reviewed',
+    reviewId: null,
+    itineraryId: data.itineraryId,
+    itineraryDetailId: place.itineraryDetailId,
+    placeId: null,
+    title: place.placeName,
+    imageUrl: place.placeImageUrl,
+    rating: place.rating,
+    content: place.content,
+    reviewedAt: place.reviewedAt,
+    itineraryTitle: data.itineraryTitle,
+    destination: data.destination,
+    startDate: _parseDate(data.startDate),
+    endDate: _parseDate(data.endDate),
+    visitDate: null,
+    tags: place.tags,
+    mediaUrls: place.mediaUrls,
+    reviewStatus: null,
+    itineraryStatus: data.itineraryStatus,
+    placeReviews: const [],
+  );
+}
+
+ReviewedPlaceItem reviewedPlaceItemFromSubmittedPlace(
+  SubmittedPlaceReview place,
+) {
+  return ReviewedPlaceItem(
+    title: place.placeName,
+    imageUrl: place.placeImageUrl,
+    rating: place.rating ?? 0,
+    content: place.content,
+    visitDate: null,
+    tags: place.tags,
+    mediaUrls: place.mediaUrls,
+    reviewedAt: place.reviewedAt,
+  );
+}
+
+DateTime? _parseDate(String value) => DateTime.tryParse(value);
 
 class ReviewCatalogScreen extends StatefulWidget {
   final int initialTab;
@@ -375,6 +442,10 @@ class _ItineraryReviewDetail extends StatelessWidget {
       final value when value != null && value.isNotEmpty => value.toUpperCase(),
       _ => 'HOÀN THÀNH',
     };
+    final destination = item.destination?.trim();
+    final subtitle = destination?.isNotEmpty == true
+        ? '$destination • $range'
+        : range;
     String? reviewCover;
     for (final url in item.mediaUrls) {
       if (!_isVideoUrl(url)) {
@@ -425,7 +496,7 @@ class _ItineraryReviewDetail extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '${item.destination ?? ''} • $range',
+                      subtitle,
                       style: const TextStyle(color: Colors.white70),
                     ),
                   ],
@@ -580,8 +651,12 @@ class _PlaceReviewDetail extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: const Color(0xFFF9FAFB),
+            color: Colors.white,
             borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: const Color(0xFFE5E7EB),
+              width: 1.0,
+            ),
           ),
           child: Row(
             children: [
@@ -668,8 +743,12 @@ class _ReviewContent extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFFF9FAFB),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: const Color(0xFFE5E7EB),
+            width: 1.0,
+          ),
         ),
         child: Text(
           content?.trim().isNotEmpty == true
@@ -965,8 +1044,12 @@ class ReviewedPlaceScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFF9FAFB),
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: const Color(0xFFE5E7EB),
+                  width: 1.0,
+                ),
               ),
               child: Row(
                 children: [

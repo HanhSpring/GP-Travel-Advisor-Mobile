@@ -158,11 +158,13 @@ class ReviewCubit extends Cubit<ReviewState> {
           );
         }).toList(),
       );
-      emit(ReviewLoaded(
-        itinerary: itinerary,
-        generalRating: 4.0,
-        generalComment: 'Chuyến đi rất tuyệt!',
-      ));
+      emit(
+        ReviewLoaded(
+          itinerary: itinerary,
+          generalRating: 4.0,
+          generalComment: 'Chuyến đi rất tuyệt!',
+        ),
+      );
       return;
     }
 
@@ -180,6 +182,7 @@ class ReviewCubit extends Cubit<ReviewState> {
               isVisited: true,
               rating: p.rating,
               reviewText: p.content,
+              reviewTags: p.tags,
             );
           })
           .toList();
@@ -196,10 +199,12 @@ class ReviewCubit extends Cubit<ReviewState> {
       final itineraryMedia = data.overallMediaUrls
           .asMap()
           .entries
-          .map((e) => ReviewMediaItem.fromRemoteUrl(
-                remoteUrl: e.value,
-                sortOrder: e.key,
-              ))
+          .map(
+            (e) => ReviewMediaItem.fromRemoteUrl(
+              remoteUrl: e.value,
+              sortOrder: e.key,
+            ),
+          )
           .toList();
 
       final locationMedia = <String, List<ReviewMediaItem>>{};
@@ -208,21 +213,26 @@ class ReviewCubit extends Cubit<ReviewState> {
           locationMedia[place.itineraryDetailId] = place.mediaUrls
               .asMap()
               .entries
-              .map((e) => ReviewMediaItem.fromRemoteUrl(
-                    remoteUrl: e.value,
-                    sortOrder: e.key,
-                  ))
+              .map(
+                (e) => ReviewMediaItem.fromRemoteUrl(
+                  remoteUrl: e.value,
+                  sortOrder: e.key,
+                ),
+              )
               .toList();
         }
       }
 
-      emit(ReviewLoaded(
-        itinerary: itinerary,
-        generalRating: data.overallRating ?? 0.0,
-        generalComment: data.overallContent ?? '',
-        itineraryMedia: itineraryMedia,
-        locationMediaByDetailId: locationMedia,
-      ));
+      emit(
+        ReviewLoaded(
+          itinerary: itinerary,
+          generalRating: data.overallRating ?? 0.0,
+          generalComment: data.overallContent ?? '',
+          generalTags: data.overallTags,
+          itineraryMedia: itineraryMedia,
+          locationMediaByDetailId: locationMedia,
+        ),
+      );
     } catch (e) {
       emit(ReviewError(e.toString()));
     }
@@ -243,6 +253,7 @@ class ReviewCubit extends Cubit<ReviewState> {
         return iso;
       }
     }
+
     if (startDate.isEmpty) return fmt(endDate);
     if (endDate.isEmpty) return fmt(startDate);
     return '${fmt(startDate)} - ${fmt(endDate)}';
@@ -331,6 +342,19 @@ class ReviewCubit extends Cubit<ReviewState> {
   void setGeneralComment(String comment) {
     if (state is ReviewLoaded) {
       emit((state as ReviewLoaded).copyWith(generalComment: comment));
+    }
+  }
+
+  void toggleGeneralTag(String tag) {
+    if (state is ReviewLoaded) {
+      final currentState = state as ReviewLoaded;
+      final tags = List<String>.from(currentState.generalTags);
+      if (tags.contains(tag)) {
+        tags.remove(tag);
+      } else {
+        tags.add(tag);
+      }
+      emit(currentState.copyWith(generalTags: List<String>.unmodifiable(tags)));
     }
   }
 
@@ -855,6 +879,7 @@ class ReviewCubit extends Cubit<ReviewState> {
             ? currentState.generalRating
             : null,
         overallContent: currentState.generalComment,
+        overallTags: currentState.generalTags,
         applyAllPlaces: currentState.applyToAllLocations,
         placeReviews: placeReviews,
         media: itineraryMedia,

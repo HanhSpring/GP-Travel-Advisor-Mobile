@@ -131,7 +131,7 @@ class _DrawerContent extends StatelessWidget {
             // Lịch trình
             const _PillHeader(
               icon: Icons.calendar_today_outlined,
-              label: 'LỊCH TRÌNH & ĐỊA ĐIỂM',
+              label: 'LỊCH TRÌNH & ĐỊA\u00A0ĐIỂM',
             ),
             const _SubHeader(label: 'Sắp đến'),
             ...itineraryItems.map(
@@ -146,7 +146,7 @@ class _DrawerContent extends StatelessWidget {
             // Đánh giá
             const _PillHeader(
               icon: Icons.star_border_rounded,
-              label: 'ĐÁNH GIÁ LỊCH TRÌNH & ĐỊA ĐIỂM',
+              label: 'ĐÁNH GIÁ LỊCH TRÌNH & ĐỊA\u00A0ĐIỂM',
             ),
             const _SubHeader(label: 'Đã đánh giá'),
             if (ratedItems.isEmpty)
@@ -309,12 +309,17 @@ class _PillHeader extends StatelessWidget {
         children: [
           Icon(icon, color: AppColors.primary, size: 20),
           const SizedBox(width: 12),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primary,
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
+                height: 1.2,
+              ),
             ),
           ),
         ],
