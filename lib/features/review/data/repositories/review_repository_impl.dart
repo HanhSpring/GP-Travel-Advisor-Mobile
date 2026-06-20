@@ -18,6 +18,11 @@ class ReviewRepositoryImpl implements ReviewRepository {
   }
 
   @override
+  Future<ItineraryReviewSummary> getReviewSummary(String itineraryId) {
+    return dataSource.getReviewSummary(itineraryId);
+  }
+
+  @override
   Future<ItineraryReviewPopupData> getPopupData(String itineraryId) {
     return dataSource.getPopupData(itineraryId);
   }
