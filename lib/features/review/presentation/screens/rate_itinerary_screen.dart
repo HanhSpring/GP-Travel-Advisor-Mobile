@@ -30,12 +30,19 @@ class RateItineraryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => sl<ReviewCubit>()
-        ..loadReviewData(
-          itineraryId,
-          initialRating: initialRating,
-          initialComment: initialComment,
-        ),
+      create: (_) {
+        final cubit = sl<ReviewCubit>();
+        if (isReadOnly) {
+          cubit.loadSubmittedReview(itineraryId);
+        } else {
+          cubit.loadReviewData(
+            itineraryId,
+            initialRating: initialRating,
+            initialComment: initialComment,
+          );
+        }
+        return cubit;
+      },
       child: _RateItineraryView(
         itineraryId: itineraryId,
         isReadOnly: isReadOnly,
@@ -107,6 +114,7 @@ class _RateItineraryView extends StatelessWidget {
                         applyToAll: state.applyToAllLocations,
                         generalComment: state.generalComment,
                         mediaItems: state.itineraryMedia,
+                        isReadOnly: isReadOnly,
                         onRatingChanged: isReadOnly
                             ? (_) {}
                             : (rating) {

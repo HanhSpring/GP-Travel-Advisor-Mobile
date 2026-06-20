@@ -145,6 +145,109 @@ class ReviewCubit extends Cubit<ReviewState> {
     );
   }
 
+  Future<void> loadSubmittedReview(String itineraryId) async {
+    emit(ReviewLoading());
+
+    if (kDemoMode) {
+      await Future.delayed(const Duration(milliseconds: 400));
+      final itinerary = _generateDemoData().copyWith(
+        locations: _generateDemoData().locations.map((loc) {
+          return loc.copyWith(
+            rating: 4.0,
+            reviewText: 'Địa điểm rất tuyệt vời!',
+          );
+        }).toList(),
+      );
+      emit(ReviewLoaded(
+        itinerary: itinerary,
+        generalRating: 4.0,
+        generalComment: 'Chuyến đi rất tuyệt!',
+      ));
+      return;
+    }
+
+    try {
+      final data = await reviewRepository.getSubmittedReview(itineraryId);
+
+      final locations = data.places
+          .where((p) => p.itineraryDetailId.isNotEmpty)
+          .map((p) {
+            return LocationReviewEntity(
+              id: p.itineraryDetailId,
+              name: p.placeName,
+              imageUrl: p.placeImageUrl ?? '',
+              day: _parseDayNumber(p.dayLabel),
+              isVisited: true,
+              rating: p.rating,
+              reviewText: p.content,
+            );
+          })
+          .toList();
+
+      final itinerary = ItineraryReviewEntity(
+        id: data.itineraryId,
+        title: data.itineraryTitle,
+        imageUrl: data.coverImage ?? '',
+        dateRange: _formatDateRange(data.startDate, data.endDate),
+        status: 'COMPLETED',
+        locations: locations,
+      );
+
+      final itineraryMedia = data.overallMediaUrls
+          .asMap()
+          .entries
+          .map((e) => ReviewMediaItem.fromRemoteUrl(
+                remoteUrl: e.value,
+                sortOrder: e.key,
+              ))
+          .toList();
+
+      final locationMedia = <String, List<ReviewMediaItem>>{};
+      for (final place in data.places) {
+        if (place.mediaUrls.isNotEmpty) {
+          locationMedia[place.itineraryDetailId] = place.mediaUrls
+              .asMap()
+              .entries
+              .map((e) => ReviewMediaItem.fromRemoteUrl(
+                    remoteUrl: e.value,
+                    sortOrder: e.key,
+                  ))
+              .toList();
+        }
+      }
+
+      emit(ReviewLoaded(
+        itinerary: itinerary,
+        generalRating: data.overallRating ?? 0.0,
+        generalComment: data.overallContent ?? '',
+        itineraryMedia: itineraryMedia,
+        locationMediaByDetailId: locationMedia,
+      ));
+    } catch (e) {
+      emit(ReviewError(e.toString()));
+    }
+  }
+
+  int _parseDayNumber(String label) {
+    final match = RegExp(r'(\d+)').firstMatch(label.toUpperCase());
+    return int.tryParse(match?.group(1) ?? '') ?? 1;
+  }
+
+  String _formatDateRange(String startDate, String endDate) {
+    if (startDate.isEmpty && endDate.isEmpty) return '';
+    String fmt(String iso) {
+      try {
+        final dt = DateTime.parse(iso);
+        return '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
+      } catch (_) {
+        return iso;
+      }
+    }
+    if (startDate.isEmpty) return fmt(endDate);
+    if (endDate.isEmpty) return fmt(startDate);
+    return '${fmt(startDate)} - ${fmt(endDate)}';
+  }
+
   void filterByDay(int day) {
     if (state is ReviewLoaded) {
       emit((state as ReviewLoaded).copyWith(selectedDay: day));

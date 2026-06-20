@@ -228,7 +228,15 @@ class _LocationMediaThumb extends StatelessWidget {
             height: 52,
             color: const Color(0xFFF3F4F6),
             child: item.type == ReviewMediaType.image
-                ? Image.file(File(item.localPath), fit: BoxFit.cover)
+                ? (item.remoteUrl != null
+                    ? Image.network(item.remoteUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stack) => const Icon(
+                          Icons.broken_image_outlined,
+                          size: 24,
+                          color: Color(0xFF94A3B8),
+                        ))
+                    : Image.file(File(item.localPath), fit: BoxFit.cover))
                 : const ColoredBox(
                     color: Color(0xFF111827),
                     child: Center(
