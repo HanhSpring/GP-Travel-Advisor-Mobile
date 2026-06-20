@@ -3,6 +3,7 @@ import 'package:travel_advisor_mobile/features/review/data/datasources/review_da
 
 abstract class ReviewRepository {
   Future<ItineraryReviewEntity> getItineraryForReview(String itineraryId);
+  Future<SubmittedReviewData> getSubmittedReview(String itineraryId);
   Future<ItineraryReviewSummary> getReviewSummary(String itineraryId);
   Future<ItineraryReviewPopupData> getPopupData(String itineraryId);
   Future<void> dismissPopup(String itineraryId);
