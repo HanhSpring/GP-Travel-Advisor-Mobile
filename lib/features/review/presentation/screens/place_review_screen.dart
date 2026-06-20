@@ -304,6 +304,7 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
                           },
                     size: 32,
                     mainAxisAlignment: MainAxisAlignment.center,
+                    enabled: !widget.isReadOnly,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -364,72 +365,80 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
                         },
                   imageSize: 80,
                 ),
-                const SizedBox(height: 24),
-                Text(
-                  'Gợi ý nhanh',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _quickTags.map((tag) {
-                    final isSelected = _selectedTags.contains(tag);
-                    return GestureDetector(
-                      onTap: widget.isReadOnly
-                          ? () {}
-                          : () {
-                              setState(() {
-                                if (isSelected) {
-                                  _selectedTags.remove(tag);
-                                } else {
-                                  _selectedTags.add(tag);
-                                }
-                              });
-                            },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? AppColors.blobLight
-                              : const Color(0xFFF0FDF4).withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          tag,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isSelected
-                                ? AppColors.primary
-                                : const Color(0xFF0D9488),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    const Icon(Icons.public, size: 14, color: Colors.grey),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Đánh giá của bạn sẽ được hiển thị công khai',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey.shade600,
-                      ),
+                if (!widget.isReadOnly || _selectedTags.isNotEmpty) ...[
+                  const SizedBox(height: 24),
+                  Text(
+                    widget.isReadOnly ? 'Từ khóa đánh giá' : 'Gợi ý nhanh',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: (widget.isReadOnly ? _selectedTags : _quickTags)
+                        .map((tag) {
+                          final isSelected = _selectedTags.contains(tag);
+                          return GestureDetector(
+                            onTap: widget.isReadOnly
+                                ? null
+                                : () {
+                                    setState(() {
+                                      if (isSelected) {
+                                        _selectedTags.remove(tag);
+                                      } else {
+                                        _selectedTags.add(tag);
+                                      }
+                                    });
+                                  },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? AppColors.blobLight
+                                    : const Color(
+                                        0xFFF0FDF4,
+                                      ).withValues(alpha: 0.5),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                tag,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: isSelected
+                                      ? AppColors.primary
+                                      : const Color(0xFF0D9488),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          );
+                        })
+                        .toList(),
+                  ),
+                ],
+                if (!widget.isReadOnly) ...[
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      const Icon(Icons.public, size: 14, color: Colors.grey),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Đánh giá của bạn sẽ được hiển thị công khai',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 32),
                 if (!widget.isReadOnly)
                   ElevatedButton(
