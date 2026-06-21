@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:travel_advisor_mobile/core/config/app_config.dart';
+import 'package:travel_advisor_mobile/core/di/injection_container.dart';
 
 import 'itinerary_detail_screen.dart';
 import 'package:travel_advisor_mobile/features/itinerary/tracking/data/models/tracking_models.dart';
@@ -15,9 +16,12 @@ import 'package:travel_advisor_mobile/features/itinerary/domain/entities/itinera
 import 'package:travel_advisor_mobile/features/itinerary/domain/entities/itinerary_activity_entity.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/cubit/itinerary_cubit.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/cubit/itinerary_state.dart';
-import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/itinerary_review_dialog.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/short_itinerary_item.dart';
+
+// ✅ Gộp thành công các import từ cả hai nhánh
 import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/public_visibility_switch.dart';
+import 'package:travel_advisor_mobile/features/review/presentation/widgets/itinerary_rating_popup.dart';
+import 'package:travel_advisor_mobile/features/saved/data/datasources/favorite_remote_datasource.dart';
 
 /// Chế độ thiết kế: true dùng dữ liệu mẫu, false dùng API.
 const bool _useMockData = AppConfig.kUseMockData;
@@ -84,7 +88,7 @@ class _ItinerarySummaryView extends StatelessWidget {
             body: Center(child: CircularProgressIndicator()),
           );
         }
-        if (state is! ItineraryLoaded) {
+        if (state is !ItineraryLoaded) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
@@ -105,7 +109,7 @@ class _ItinerarySummaryView extends StatelessWidget {
     final costSnapshot = _buildCostSnapshot(itin, trackingState);
     final totalVisitCount = costSnapshot.totalVisitCount;
     final visitedVisitCount = costSnapshot.visitedCount;
-    final canReview = _canReviewItinerary(itin, now, visitedVisitCount);
+    final canReview = _canReviewItinerary(itin, now);
 
     return Scaffold(
       backgroundColor: const Color(0xFFFBFDFF),
@@ -157,25 +161,91 @@ class _ItinerarySummaryView extends StatelessWidget {
         ),
         centerTitle: true,
         actions: [
-          SizedBox(
-            width: 72,
-            child: canReview
-                ? Padding(
-                    padding: const EdgeInsets.only(right: 16),
-                    child: _summaryCircleButton(Icons.star_outline_rounded, () {
-                      showDialog(
-                        context: context,
-                        builder: (_) => ItineraryReviewDialog(
-                          itineraryId: itin.id,
-                          itineraryTitle: itin.title,
-                          totalLocations: totalVisitCount,
-                          visitedLocations: visitedVisitCount,
-                        ),
-                      );
-                    }),
-                  )
-                : const SizedBox.shrink(),
+          // Nút Sửa Tên Lịch Trình
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.9),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(1, 2),
+                ),
+              ],
+            ),
+            child: IconButton(
+              icon: const Icon(
+                Icons.edit_rounded,
+                color: Color(0xFF2563EB),
+                size: 20,
+              ),
+              onPressed: () => _showEditTitleDialog(context, itin),
+            ),
           ),
+          // Nút Yêu thích (Chỉ hiện khi công khai)
+          if (itin.isPublic)
+            Container(
+              margin: EdgeInsets.only(right: canReview ? 8 : 16),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.9),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 8,
+                    offset: const Offset(1, 2),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                icon: Icon(
+                  itin.isFavorite
+                      ? Icons.favorite_rounded
+                      : Icons.favorite_border_rounded,
+                  color: itin.isFavorite
+                      ? const Color(0xFFEF4444)
+                      : const Color(0xFF2563EB),
+                  size: 22,
+                ),
+                onPressed: () => _toggleFavorite(context, itin),
+              ),
+            ),
+          // Nút Đánh giá (Chỉ hiện khi thỏa điều kiện canReview)
+          if (canReview)
+            Container(
+              margin: const EdgeInsets.only(right: 16),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.9),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 8,
+                    offset: const Offset(1, 2),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                icon: const Icon(
+                  Icons.stars_rounded,
+                  color: Color(0xFF10B981),
+                  size: 24,
+                ),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (_) => ItineraryRatingPopup(
+                      itineraryId: itin.id,
+                      itineraryTitle: itin.title,
+                      totalLocations: totalVisitCount,
+                      visitedLocations: visitedVisitCount,
+                    ),
+                  );
+                },
+              ),
+            ),
         ],
       ),
       body: Stack(
@@ -186,7 +256,6 @@ class _ItinerarySummaryView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header với Glassmorphism Image Card
                 _buildDestinationHeader(
                   context,
                   itin,
@@ -194,7 +263,6 @@ class _ItinerarySummaryView extends StatelessWidget {
                   visitedVisitCount,
                   totalVisitCount,
                 ),
-
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
@@ -261,15 +329,13 @@ class _ItinerarySummaryView extends StatelessWidget {
                         const SizedBox(height: 36),
                         _buildNotesSection(itin.notes),
                       ],
-
-                      const SizedBox(height: 120), // Spacing for bottom button
+                      const SizedBox(height: 120),
                     ],
                   ),
                 ),
               ],
             ),
           ),
-          // Nút xem chi tiết ở dưới cùng (Floating effect)
           Positioned(
             bottom: 16,
             left: 20,
@@ -279,6 +345,52 @@ class _ItinerarySummaryView extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _toggleFavorite(
+    BuildContext context,
+    ItineraryDetailEntity itin,
+  ) async {
+    if (!itin.isPublic) {
+      return;
+    }
+
+    final cubit = context.read<ItineraryCubit>();
+    final messenger = ScaffoldMessenger.of(context);
+    final nextFavorite = !itin.isFavorite;
+
+    cubit.setSelectedItineraryFavorite(nextFavorite);
+
+    try {
+      await sl<FavoriteRemoteDataSource>().setItineraryFavorite(
+        itin.id,
+        nextFavorite,
+      );
+      if (!context.mounted) return;
+      messenger.clearSnackBars();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            nextFavorite
+                ? 'Đã lưu vào danh mục yêu thích'
+                : 'Đã bỏ khỏi danh mục yêu thích',
+          ),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (_) {
+      cubit.setSelectedItineraryFavorite(itin.isFavorite);
+      if (!context.mounted) return;
+      messenger.clearSnackBars();
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Chưa thể cập nhật yêu thích, vui lòng thử lại'),
+          duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   Future<void> _confirmVisibilityChange(
@@ -450,7 +562,7 @@ class _ItinerarySummaryView extends StatelessWidget {
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w800,
-                                    color: Colors.white.withValues(alpha: 0.94),
+                                    color: Colors.white.withValues(alpha: 0.944),
                                     height: 1.25,
                                   ),
                                   maxLines: 2,
@@ -551,36 +663,22 @@ class _ItinerarySummaryView extends StatelessWidget {
     return '$left - $right, ${end.year}';
   }
 
-  bool _canReviewItinerary(
-    ItineraryDetailEntity itin,
-    DateTime now,
-    int visitedCount,
-  ) {
-    return itin.status.toUpperCase() == 'COMPLETED';
-  }
-
-  Widget _summaryCircleButton(IconData icon, VoidCallback onTap) {
-    return Material(
-      color: Colors.black.withAlpha(120),
-      shape: const CircleBorder(),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: SizedBox(
-          width: 36,
-          height: 36,
-          child: Icon(icon, size: 18, color: Colors.white),
-        ),
-      ),
-    );
+  // ✅ Giữ logic tính toán điều kiện đánh giá linh hoạt, an toàn hơn từ cả 2 nhánh
+  bool _canReviewItinerary(ItineraryDetailEntity itin, DateTime now) {
+    final today = DateUtils.dateOnly(now);
+    final endDate = DateUtils.dateOnly(itin.endDate);
+    final status = itin.status.toUpperCase();
+    
+    final matchesStatus = status == 'COMPLETED';
+    final timePassed = !today.isBefore(endDate) && (status == 'ONGOING' || itin.trackingActive);
+    
+    return matchesStatus || timePassed;
   }
 
   void _showEditTitleDialog(BuildContext context, ItineraryDetailEntity itin) {
     final TextEditingController controller = TextEditingController(
       text: itin.title,
     );
-    // Capture cubit và scaffoldMessenger trước khi showDialog,
-    // vì context bên trong builder của dialog không thuộc subtree của BlocProvider.
     final cubit = context.read<ItineraryCubit>();
     final messenger = ScaffoldMessenger.of(context);
 
@@ -846,7 +944,7 @@ class _ItinerarySummaryView extends StatelessWidget {
   }) {
     final estimatedLabel = estimatedCost > 0
         ? '${formatter.format(estimatedCost)} ${itin.currency}'
-        : '\u0110ang c\u1eadp nh\u1eadt';
+        : 'Đang cập nhật';
     final spentLabel = spentCost > 0
         ? '${formatter.format(spentCost)} ${itin.currency}'
         : '0 ${itin.currency}';
@@ -869,7 +967,7 @@ class _ItinerarySummaryView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Chi ph\u00ed chuy\u1ebfn \u0111i',
+            'Chi phí chuyến đi',
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w800,
@@ -878,8 +976,7 @@ class _ItinerarySummaryView extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           _BudgetMetric(
-            label:
-                'Chi ph\u00ed \u01b0\u1edbc t\u00ednh to\u00e0n l\u1ecbch tr\u00ecnh',
+            label: 'Chi phí ước tính toàn lịch trình',
             value: estimatedLabel,
             icon: Icons.receipt_long_rounded,
             color: const Color(0xFF10B981),
@@ -892,11 +989,11 @@ class _ItinerarySummaryView extends StatelessWidget {
                 Expanded(
                   child: _BudgetMetric(
                     label: itin.durationDays > 0
-                        ? 'L\u01b0u tr\u00fa (${formatter.format(itin.hotelCost / itin.durationDays)} ${itin.currency}/ng\u00e0y)'
-                        : 'L\u01b0u tr\u00fa',
+                        ? 'Lưu trú (${formatter.format(itin.hotelCost / itin.durationDays)} ${itin.currency}/ngày)'
+                        : 'Lưu trú',
                     value: itin.hotelCost > 0
                         ? '${formatter.format(itin.hotelCost)} ${itin.currency}'
-                        : '\u0110ang c\u1eadp nh\u1eadt',
+                        : 'Đang cập nhật',
                     icon: Icons.hotel_rounded,
                     color: const Color(0xFF0F766E),
                   ),
@@ -904,10 +1001,10 @@ class _ItinerarySummaryView extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _BudgetMetric(
-                    label: 'X\u0103ng xe/t\u1ef1 t\u00fac',
+                    label: 'Xăng xe/tự túc',
                     value: itin.transportCost > 0
                         ? '${formatter.format(itin.transportCost)} ${itin.currency}'
-                        : '\u0110ang c\u1eadp nh\u1eadt',
+                        : 'Đang cập nhật',
                     icon: Icons.two_wheeler_rounded,
                     color: const Color(0xFF2563EB),
                   ),
@@ -917,7 +1014,7 @@ class _ItinerarySummaryView extends StatelessWidget {
             if (itin.rideHailingTransportCost > 0) ...[
               const SizedBox(height: 12),
               _BudgetMetric(
-                label: 'Be/Grab tham kh\u1ea3o',
+                label: 'Be/Grab tham khảo',
                 value:
                     '${formatter.format(itin.rideHailingTransportCost)} ${itin.currency}',
                 icon: Icons.local_taxi_rounded,
@@ -932,7 +1029,7 @@ class _ItinerarySummaryView extends StatelessWidget {
               children: [
                 const Expanded(
                   child: Text(
-                    'Chi ph\u00ed \u0111\u00e3 chi',
+                    'Chi phí đã chi',
                     style: TextStyle(
                       fontSize: 13,
                       color: Color(0xFF475569),
@@ -990,7 +1087,7 @@ class _ItinerarySummaryView extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              '${costSnapshot.visitedCount}/${costSnapshot.totalVisitCount} \u0111\u1ecba \u0111i\u1ec3m \u0111\u00e3 ghi nh\u1eadn chi ph\u00ed',
+              '${costSnapshot.visitedCount}/${costSnapshot.totalVisitCount} địa điểm đã ghi nhận chi phí',
               style: const TextStyle(
                 fontSize: 12,
                 color: Color(0xFF64748B),
@@ -1016,7 +1113,7 @@ class _ItinerarySummaryView extends StatelessWidget {
                   SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Ch\u01b0a c\u00f3 d\u1eef li\u1ec7u chi ph\u00ed \u01b0\u1edbc t\u00ednh cho l\u1ecbch tr\u00ecnh n\u00e0y',
+                      'Chưa có dữ liệu chi phí ước tính cho lịch trình này',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -1139,7 +1236,6 @@ class _ItinerarySummaryView extends StatelessWidget {
 
   Widget _buildActionBtn(BuildContext context, ItineraryDetailEntity itin) {
     final now = DateTime.now();
-    // Logic xét trạng thái dựa trên thời gian thực
     final bool isFuture = now.isBefore(itin.startDate);
 
     String btnText = 'XEM CHI TIẾT LỊCH TRÌNH';
@@ -1274,7 +1370,6 @@ class _ItinerarySummaryView extends StatelessWidget {
   Widget _buildCulinarySection(ItineraryDetailEntity itin) {
     final formatter = NumberFormat('#,###', 'vi_VN');
 
-    // Tính tổng tất cả món ăn
     double grandTotal = 0;
     for (var restaurant in itin.visitedRestaurants) {
       for (var dish in restaurant.dishes) {
@@ -1301,7 +1396,6 @@ class _ItinerarySummaryView extends StatelessWidget {
           ...itin.visitedRestaurants.map((food) {
             return _CulinaryExpandableItem(food: food);
           }),
-          // Dòng tổng cộng chung
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -1338,8 +1432,8 @@ class _ItinerarySummaryView extends StatelessWidget {
       title: 'Kỳ nghỉ hè Phú Quốc 2024',
       destination: 'Phú Quốc',
       startDate: now.subtract(const Duration(days: 5)),
-      endDate: now.subtract(const Duration(days: 1)), // Kết thúc ngày hôm qua
-      status: 'COMPLETED', // Để kiểm tra trạng thái đánh giá
+      endDate: now.subtract(const Duration(days: 1)),
+      status: 'COMPLETED',
       durationDays: 4,
       activitiesCount: 12,
       hotelsCount: 1,
@@ -1518,10 +1612,10 @@ class _ItinerarySummaryView extends StatelessWidget {
     final visitedActivities = visits.where(isVisited).toList();
     final fallbackVisitedCount =
         !hasTrackingPlaces &&
-            visitedActivities.isEmpty &&
-            itin.visitedLocations > 0
-        ? itin.visitedLocations.clamp(0, visits.length).toInt()
-        : visitedActivities.length;
+                visitedActivities.isEmpty &&
+                itin.visitedLocations > 0
+            ? itin.visitedLocations.clamp(0, visits.length).toInt()
+            : visitedActivities.length;
     final activityEstimatedCost = visits.fold<double>(
       0,
       (sum, activity) => sum + activity.price + activity.transportCost,
@@ -1560,9 +1654,7 @@ class _ItinerarySummaryView extends StatelessWidget {
   }
 
   double _dayActivityCost(ItineraryDayEntity day) {
-    return _visitActivities(
-      day,
-    ).fold<double>(
+    return _visitActivities(day).fold<double>(
       0,
       (sum, activity) => sum + activity.price + activity.transportCost,
     );

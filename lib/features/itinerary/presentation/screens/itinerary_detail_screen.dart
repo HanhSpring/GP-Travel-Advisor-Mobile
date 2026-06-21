@@ -25,15 +25,19 @@ import 'package:travel_advisor_mobile/features/itinerary/domain/entities/itinera
 import 'package:travel_advisor_mobile/features/itinerary/presentation/cubit/itinerary_cubit.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/cubit/itinerary_state.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/day_selector_chip.dart';
-import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/itinerary_review_dialog.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/timeline_activity_card.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/public_visibility_switch.dart';
 import 'package:travel_advisor_mobile/features/place/presentation/cubit/place_detail_cubit.dart';
 import 'package:travel_advisor_mobile/features/place/presentation/screens/place_detail_screen.dart';
+
+// ✅ Gộp thành công các import từ cả hai nhánh
 import 'package:travel_advisor_mobile/features/review/domain/entities/location_review_entity.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_cubit.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_state.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/screens/place_review_screen.dart';
+import 'package:travel_advisor_mobile/features/review/presentation/widgets/itinerary_rating_popup.dart';
+import 'package:travel_advisor_mobile/features/saved/data/datasources/favorite_remote_datasource.dart';
+
 import '../widgets/itinerary_map_view.dart';
 import '../widgets/replace_place_sheet.dart';
 import '../widgets/add_place_sheet.dart';
@@ -148,7 +152,6 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
       } catch (_) {}
     }
 
-    // Lấy ngày tham quan để validate opening hours đúng thứ trong tuần
     DateTime? visitDate;
     if ((context.read<ItineraryCubit>().state as ItineraryLoaded?)
             ?.selectedItinerary !=
@@ -192,7 +195,6 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
   void _scrollToActivity(String activityId) {
     setState(() => _highlightedActivityId = activityId);
 
-    // Tìm activity để lấy tọa độ và zoom nhẹ
     final itin = (context.read<ItineraryCubit>().state as ItineraryLoaded)
         .selectedItinerary;
     final activity = itin?.days
@@ -209,7 +211,6 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
           zoom: 15,
         ),
       );
-      // Mapbox v0.4.4 doesn't have showMarkerInfoWindow, we'd need a custom popup
     }
 
     final key = _activityKeys[activityId];
@@ -221,7 +222,6 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
       );
     }
 
-    // Reset highlight after 2 seconds
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
         setState(() => _highlightedActivityId = null);
@@ -279,8 +279,9 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
   }
 
   void _navigateToPlaceDetail(ItineraryActivityEntity activity) {
-    final placeId = activity.placeId;
-    if (placeId == null || placeId.isEmpty) {
+    // ✅ Ưu tiên chọn check dữ liệu an toàn từ nhánh fix
+    final placeId = activity.placeId ?? activity.id;
+    if (placeId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Không tìm thấy thông tin địa điểm')),
       );
@@ -292,7 +293,10 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
       MaterialPageRoute(
         builder: (_) => BlocProvider(
           create: (_) => sl<PlaceDetailCubit>(),
-          child: PlaceDetailScreen(placeId: placeId, showRelatedPlaces: false),
+          child: PlaceDetailScreen(
+            placeId: placeId, 
+            showRelatedPlaces: false,
+          ),
         ),
       ),
     );
@@ -303,6 +307,54 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
       context,
       MaterialPageRoute(builder: (_) => ActivityEditScreen(activity: activity)),
     );
+  }
+
+  Future<void> _toggleItineraryFavorite() async {
+    final state = context.read<ItineraryCubit>().state;
+    if (state is! ItineraryLoaded || state.selectedItinerary == null) {
+      return;
+    }
+
+    final itinerary = state.selectedItinerary!;
+    if (!itinerary.isPublic) {
+      return;
+    }
+
+    final nextFavorite = !itinerary.isFavorite;
+    context.read<ItineraryCubit>().setSelectedItineraryFavorite(nextFavorite);
+
+    try {
+      await sl<FavoriteRemoteDataSource>().setItineraryFavorite(
+        itinerary.id,
+        nextFavorite,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            nextFavorite
+                ? 'Đã lưu vào danh mục yêu thích'
+                : 'Đã bỏ khỏi danh mục yêu thích',
+          ),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      context.read<ItineraryCubit>().setSelectedItineraryFavorite(
+        itinerary.isFavorite,
+      );
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Chưa thể cập nhật yêu thích, vui lòng thử lại'),
+          duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   void _onEditTime(
@@ -338,8 +390,6 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
       final newTime =
           '${pickedTime.hour.toString().padLeft(2, '0')}:${pickedTime.minute.toString().padLeft(2, '0')}';
       final currentTime = isStart ? activity.startTime : activity.endTime;
-
-      // ── Validation: kiểm tra tính hợp lệ trước khi cho phép thay đổi ──────
       final newMin = pickedTime.hour * 60 + pickedTime.minute;
 
       int toMinutes(String t) {
@@ -382,14 +432,13 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
       }
 
       if (isStart) {
-        // Đang chỉnh giờ ĐẾN → phải trước giờ RỜI hiện tại
         final endMin = toMinutes(activity.endTime);
         if (newMin >= endMin) {
           await showTimeError(
             'Giờ đến ($newTime) phải trước giờ rời (${activity.endTime}) của cùng địa điểm.\n\n'
             'Vui lòng chọn lại thời gian.',
           );
-          return; // Không áp dụng thay đổi
+          return;
         }
         if (endMin - newMin > 4 * 60) {
           await showTimeError(
@@ -399,14 +448,13 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
           return;
         }
       } else {
-        // Đang chỉnh giờ RỜI → phải sau giờ ĐẾN hiện tại
         final startMin = toMinutes(activity.startTime);
         if (newMin <= startMin) {
           await showTimeError(
             'Giờ rời ($newTime) phải sau giờ đến (${activity.startTime}) của cùng địa điểm.\n\n'
             'Vui lòng chọn lại thời gian.',
           );
-          return; // Không áp dụng thay đổi
+          return;
         }
         if (newMin - startMin > 4 * 60) {
           await showTimeError(
@@ -416,7 +464,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
           return;
         }
       }
-      // ── Validate giờ mở/đóng cửa của địa điểm ─────────────────────────────────
+
       if (activity.openHourCompressed != null) {
         final visitDate = _visitDateForDay(_selectedDay);
         if (visitDate != null) {
@@ -447,17 +495,14 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
           }
         }
       }
-      // ── Kết thúc validation ──────────────────────────────────────────────────
 
       if (newTime != currentTime) {
         final oldMin = int.parse(parts[0]) * 60 + int.parse(parts[1]);
         final deltaMin = newMin - oldMin;
-
         final bool hasSubsequent = !(isLastInDay && !isStart);
 
         if (hasSubsequent) {
           final timeLabel = isStart ? 'thời gian đến' : 'thời gian rời';
-
           final bool? shouldAdjustSubsequent = await showDialog<bool>(
             context: context,
             builder: (context) => AlertDialog(
@@ -953,6 +998,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
             onEditTime: _onEditTime,
             onDirectionTap: _launchDirections,
             onShareTap: _showShareSheet,
+            onFavoriteTap: _toggleItineraryFavorite,
             onMarkerTap: (id) => _scrollToActivity(id),
             highlightedActivityId: _highlightedActivityId,
             isEditMode: _isEditMode,
@@ -996,7 +1042,6 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
         },
       ),
     ).then((_) {
-      // Đóng popup → dismiss để không hiện lại ngay
       if (ctx.mounted) {
         ctx.read<TrackingCubit>().dismissNearbyRestaurant();
       }
@@ -1058,7 +1103,7 @@ class _DayCostSummaryCard extends StatelessWidget {
             children: [
               const Expanded(
                 child: Text(
-                  'Chi ph\u00ed trong ng\u00e0y',
+                  'Chi phí trong ngày',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
@@ -1067,7 +1112,7 @@ class _DayCostSummaryCard extends StatelessWidget {
                 ),
               ),
               Text(
-                '$visitedCount/${visitActivities.length} \u0111\u00e3 \u0111i',
+                '$visitedCount/${visitActivities.length} đã đi',
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
@@ -1079,25 +1124,25 @@ class _DayCostSummaryCard extends StatelessWidget {
           const SizedBox(height: 12),
           _DayCostRow(
             icon: Icons.receipt_long_rounded,
-            label: 'T\u1ed5ng ng\u00e0y',
+            label: 'Tổng ngày',
             value: money(totalCost),
             color: const Color(0xFF10B981),
           ),
           _DayCostRow(
             icon: Icons.place_rounded,
-            label: '\u0110\u1ecba \u0111i\u1ec3m & \u0103n u\u1ed1ng',
+            label: 'Địa điểm & ăn uống',
             value: money(placeCost),
             color: const Color(0xFFF59E0B),
           ),
           _DayCostRow(
             icon: Icons.hotel_rounded,
-            label: 'L\u01b0u tr\u00fa',
+            label: 'Lưu trú',
             value: money(hotelCost),
             color: const Color(0xFF0F766E),
           ),
           _DayCostRow(
             icon: Icons.two_wheeler_rounded,
-            label: 'X\u0103ng xe/t\u1ef1 t\u00fac',
+            label: 'Xăng xe/tự túc',
             value: money(selfDriveCost),
             color: const Color(0xFF2563EB),
           ),
@@ -1274,7 +1319,7 @@ class _LazyMapPreview extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                         horizontal: 18,
                         vertical: 12,
-                      ),
+                    ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
@@ -1362,9 +1407,9 @@ class _ItineraryDetailView extends StatelessWidget {
   final Function(ItineraryActivityEntity) onDeleteActivity;
   final Function(ItineraryActivityEntity) onRateActivity;
   final Function(ItineraryActivityEntity, bool, bool) onEditTime;
-  final Function(ItineraryActivityEntity, ItineraryActivityEntity)
-  onDirectionTap;
+  final Function(ItineraryActivityEntity, ItineraryActivityEntity) onDirectionTap;
   final VoidCallback onShareTap;
+  final VoidCallback onFavoriteTap;
   final Function(String) onMarkerTap;
   final String? highlightedActivityId;
   final bool isEditMode;
@@ -1392,6 +1437,7 @@ class _ItineraryDetailView extends StatelessWidget {
     required this.onEditTime,
     required this.onDirectionTap,
     required this.onShareTap,
+    required this.onFavoriteTap,
     required this.onMarkerTap,
     this.highlightedActivityId,
     required this.isEditMode,
@@ -1430,7 +1476,7 @@ class _ItineraryDetailView extends StatelessWidget {
                     ElevatedButton(
                       onPressed: () =>
                           context.read<ItineraryCubit>().loadData(),
-                      child: Text('Thử lại'),
+                      child: const Text('Thử lại'),
                     ),
                   ],
                 ),
@@ -1447,7 +1493,6 @@ class _ItineraryDetailView extends StatelessWidget {
 
             return Stack(
               children: [
-                // ✅ MAP CHIẾM TOÀN MÀN HÌNH (full-screen, tương tác hoàn toàn)
                 Positioned.fill(
                   child: isMapLoaded
                       ? ItineraryMapView(
@@ -1463,11 +1508,10 @@ class _ItineraryDetailView extends StatelessWidget {
                         ),
                 ),
 
-                // ✅ BOTTOM SHEET KÉO LÊN/XUỐNG (DraggableScrollableSheet)
                 DraggableScrollableSheet(
-                  initialChildSize: 0.45, // Mở 45% màn hình ban đầu
-                  minChildSize: 0.12, // Thu nhỏ tối đa → gần như chỉ thấy map
-                  maxChildSize: 0.85, // Mở rộng tối đa → che gần hết map
+                  initialChildSize: 0.45,
+                  minChildSize: 0.12,
+                  maxChildSize: 0.85,
                   snap: true,
                   snapSizes: const [0.12, 0.45, 0.85],
                   builder: (context, sheetScrollController) {
@@ -1487,7 +1531,6 @@ class _ItineraryDetailView extends StatelessWidget {
                       ),
                       child: Column(
                         children: [
-                          // Thanh kéo (drag handle)
                           Padding(
                             padding: const EdgeInsets.only(top: 12, bottom: 8),
                             child: Container(
@@ -1499,7 +1542,6 @@ class _ItineraryDetailView extends StatelessWidget {
                               ),
                             ),
                           ),
-                          // Nội dung cuộn được
                           Expanded(
                             child: ListView(
                               controller: sheetScrollController,
@@ -1520,7 +1562,7 @@ class _ItineraryDetailView extends StatelessWidget {
                   },
                 ),
 
-                // ✅ FLOATING BUTTONS (Back, Share, Rate) ở trên cùng
+                // ✅ GỘP FLOATING BUTTONS: Kết hợp PublicVisibilitySwitch cùng Favorite/Review đầy đủ
                 Positioned(
                   top: MediaQuery.of(context).padding.top + AppSizes.s12,
                   left: AppSizes.s20,
@@ -1562,7 +1604,7 @@ class _ItineraryDetailView extends StatelessWidget {
                                   () {
                                     showDialog(
                                       context: context,
-                                      builder: (_) => ItineraryReviewDialog(
+                                      builder: (_) => ItineraryRatingPopup(
                                         itineraryId: itin.id,
                                         itineraryTitle: itin.title,
                                         totalLocations: itin.totalLocations,
@@ -1581,6 +1623,18 @@ class _ItineraryDetailView extends StatelessWidget {
                                 active: isEditMode,
                               ),
                               if (!isEditMode) ...[
+                                if (itin.isPublic) ...[
+                                  const SizedBox(width: AppSizes.s12),
+                                  _floatingCircleButton(
+                                    itin.isFavorite
+                                        ? Icons.favorite
+                                        : Icons.favorite_border,
+                                    onFavoriteTap,
+                                    iconColor: itin.isFavorite
+                                        ? Colors.redAccent
+                                        : Colors.white,
+                                  ),
+                                ],
                                 const SizedBox(width: AppSizes.s12),
                                 _floatingCircleButton(
                                   Icons.share_outlined,
@@ -1777,8 +1831,6 @@ class _ItineraryDetailView extends StatelessWidget {
                 .read<ItineraryCubit>()
                 .toggleItineraryStatus(itin.id, false),
           ),
-          // Dùng Builder để đọc TrackingCubit (được provide ở ItineraryDetailScreen)
-          // và truyền trackingStatus cho từng TimelineActivityCard.
           Builder(
             builder: (context) {
               final tracking = context.watch<TrackingCubit>().state;
@@ -1797,14 +1849,13 @@ class _ItineraryDetailView extends StatelessWidget {
                   final nextTransport = nextActivity == null
                       ? null
                       : (activities[index].transportInfo?.isNotEmpty == true
-                            ? activities[index].transportInfo
-                            : _estimateTransit(
-                                activity.latitude,
-                                activity.longitude,
-                                nextActivity.latitude,
-                                nextActivity.longitude,
-                              ));
-                  // Lấy trạng thái tracking theo itineraryDetailId (= activity.id)
+                          ? activities[index].transportInfo
+                          : _estimateTransit(
+                              activity.latitude,
+                              activity.longitude,
+                              nextActivity.latitude,
+                              nextActivity.longitude,
+                            ));
                   final TrackingPlaceStatus? trackingStatus = tracking.isActive
                       ? tracking.byDetailId(activity.id)
                       : null;
@@ -1893,7 +1944,6 @@ class _ItineraryDetailView extends StatelessWidget {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}';
   }
 
-  // Ước tính thời gian di chuyển từ tọa độ (Haversine + tốc độ 25 km/h)
   static String _estimateTransit(
     double? lat1,
     double? lng1,
