@@ -624,7 +624,7 @@ class _ItinerarySummaryView extends StatelessWidget {
     final endDate = DateUtils.dateOnly(itin.endDate);
     final status = itin.status.toUpperCase();
     final hasStarted =
-        status == 'ONGOING' || status == 'COMPLETED' || itin.trackingActive;
+        status == 'ONGOING' || status == 'COMPLETED' || status == 'UNCOMPLETED' || itin.trackingActive;
     return !today.isBefore(endDate) && hasStarted;
   }
 
