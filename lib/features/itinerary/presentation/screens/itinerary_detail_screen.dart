@@ -30,6 +30,7 @@ import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/ti
 import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/public_visibility_switch.dart';
 import 'package:travel_advisor_mobile/features/place/presentation/cubit/place_detail_cubit.dart';
 import 'package:travel_advisor_mobile/features/place/presentation/screens/place_detail_screen.dart';
+import 'package:travel_advisor_mobile/features/review/domain/entities/location_review_entity.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_cubit.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_state.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/screens/place_review_screen.dart';
@@ -559,8 +560,8 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
       if (!mounted) return;
 
       final state = reviewCubit.state;
-      if (state is! ReviewLoaded ||
-          !state.itinerary.locations.any((loc) => loc.id == activity.id)) {
+      final isVisited = activity.status == ActivityStatus.daDi;
+      if (state is! ReviewLoaded || !isVisited) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Chỉ có thể đánh giá địa điểm đã đi'),
@@ -568,6 +569,18 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
           ),
         );
         return;
+      }
+
+      if (!state.itinerary.locations.any((loc) => loc.id == activity.id)) {
+        reviewCubit.ensureLocationAvailable(
+          LocationReviewEntity(
+            id: activity.id,
+            name: activity.title,
+            imageUrl: activity.imageUrl,
+            day: _selectedDay,
+            isVisited: true,
+          ),
+        );
       }
 
       final submitted = await Navigator.push<bool>(
@@ -1648,13 +1661,7 @@ class _ItineraryDetailView extends StatelessWidget {
   }
 
   bool _canReviewItinerary(ItineraryDetailEntity itin) {
-    final today = DateUtils.dateOnly(DateTime.now());
-    final endDate = DateUtils.dateOnly(itin.endDate);
-    final status = itin.status.toUpperCase();
-    final hasStarted =
-        status == 'ONGOING' || status == 'COMPLETED' || itin.trackingActive;
-
-    return today.isAfter(endDate) && hasStarted && itin.visitedLocations > 0;
+    return itin.status.toUpperCase() == 'COMPLETED';
   }
 
   Widget _buildContentCard(
@@ -1813,7 +1820,11 @@ class _ItineraryDetailView extends StatelessWidget {
                     onEditTap: () => onEditActivity(activity),
                     onReplaceTap: () => onReplaceActivity(activity),
                     onDeleteTap: () => onDeleteActivity(activity),
-                    onRateTap: () => onRateActivity(activity),
+                    onRateTap: () => onRateActivity(
+                      trackingStatus?.status == VisitStatus.visited
+                          ? activity.copyWith(status: ActivityStatus.daDi)
+                          : activity,
+                    ),
                     onCardTap: () => onActivityTap(activity),
                     onCardLongPress: () => onActivityLongPress(activity),
                     onViewDetailTap: () => onActivityLongPress(activity),

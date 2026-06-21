@@ -24,18 +24,22 @@ class ReviewCubit extends Cubit<ReviewState> {
 
   Future<void> loadReviewData(String itineraryId) async {
     emit(ReviewLoading());
-    
+
     if (kDemoMode) {
       await Future.delayed(const Duration(milliseconds: 500));
       final itinerary = _generateDemoData();
-      final generalRating = DemoReviewStore.itineraryOverallRatings[itineraryId] ?? 0.0;
-      final generalComment = DemoReviewStore.itineraryOverallComments[itineraryId] ?? '';
-      
-      emit(ReviewLoaded(
-        itinerary: itinerary,
-        generalRating: generalRating,
-        generalComment: generalComment,
-      ));
+      final generalRating =
+          DemoReviewStore.itineraryOverallRatings[itineraryId] ?? 0.0;
+      final generalComment =
+          DemoReviewStore.itineraryOverallComments[itineraryId] ?? '';
+
+      emit(
+        ReviewLoaded(
+          itinerary: itinerary,
+          generalRating: generalRating,
+          generalComment: generalComment,
+        ),
+      );
       return;
     }
 
@@ -49,7 +53,13 @@ class ReviewCubit extends Cubit<ReviewState> {
 
   ItineraryReviewEntity _generateDemoData() {
     // Generate data that matches ItineraryCubit's mock structure
-    final List<String> day1Ids = ['mock_1_1', 'mock_1_2', 'mock_1_3', 'mock_1_4', 'mock_1_5'];
+    final List<String> day1Ids = [
+      'mock_1_1',
+      'mock_1_2',
+      'mock_1_3',
+      'mock_1_4',
+      'mock_1_5',
+    ];
     final List<String> day2Ids = ['mock_2_1', 'mock_2_2', 'mock_2_3'];
     final List<String> day3Ids = ['mock_3_1', 'mock_3_2'];
     final allIds = [...day1Ids, ...day2Ids, ...day3Ids];
@@ -58,13 +68,21 @@ class ReviewCubit extends Cubit<ReviewState> {
       final locId = entry.value;
       final index = entry.key;
       final storedRating = DemoReviewStore.getLocationRating(locId);
-      final storedComment = DemoReviewStore.userComments[locId];
-      
+
       return LocationReviewEntity(
         id: locId,
-        name: index == 0 ? 'Dinh Độc Lập' : index == 1 ? 'Nhà thờ Đức Bà' : 'Địa điểm ${index + 1}',
-        imageUrl: 'https://images.unsplash.com/photo-1559506825-f933e38714eb?w=100&q=80',
-        day: index < 5 ? 1 : index < 8 ? 2 : 3,
+        name: index == 0
+            ? 'Dinh Độc Lập'
+            : index == 1
+            ? 'Nhà thờ Đức Bà'
+            : 'Địa điểm ${index + 1}',
+        imageUrl:
+            'https://images.unsplash.com/photo-1559506825-f933e38714eb?w=100&q=80',
+        day: index < 5
+            ? 1
+            : index < 8
+            ? 2
+            : 3,
         isVisited: true,
         rating: storedRating, // Priority to user rating
       );
@@ -73,7 +91,8 @@ class ReviewCubit extends Cubit<ReviewState> {
     return ItineraryReviewEntity(
       id: 'mock_ongoing',
       title: 'Phú Quốc Hè 2024',
-      imageUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800',
+      imageUrl:
+          'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800',
       dateRange: '15/06 - 18/06/2024',
       status: 'PLANNING',
       locations: locations,
@@ -90,18 +109,17 @@ class ReviewCubit extends Cubit<ReviewState> {
     if (state is ReviewLoaded) {
       final currentState = state as ReviewLoaded;
       var newItinerary = currentState.itinerary;
-      
+
       if (currentState.applyToAllLocations) {
         final newLocations = newItinerary.locations.map((loc) {
           return loc.copyWith(rating: rating);
         }).toList();
         newItinerary = newItinerary.copyWith(locations: newLocations);
       }
-      
-      emit(currentState.copyWith(
-        generalRating: rating,
-        itinerary: newItinerary,
-      ));
+
+      emit(
+        currentState.copyWith(generalRating: rating, itinerary: newItinerary),
+      );
     }
   }
 
@@ -114,7 +132,7 @@ class ReviewCubit extends Cubit<ReviewState> {
   void toggleApplyToAll(bool value) {
     if (state is ReviewLoaded) {
       final currentState = state as ReviewLoaded;
-      
+
       var newItinerary = currentState.itinerary;
       if (value) {
         final newLocations = newItinerary.locations.map((loc) {
@@ -122,18 +140,20 @@ class ReviewCubit extends Cubit<ReviewState> {
         }).toList();
         newItinerary = newItinerary.copyWith(locations: newLocations);
       }
-      
-      emit(currentState.copyWith(
-        applyToAllLocations: value,
-        itinerary: newItinerary,
-      ));
+
+      emit(
+        currentState.copyWith(
+          applyToAllLocations: value,
+          itinerary: newItinerary,
+        ),
+      );
     }
   }
 
   void setLocationRating(String locationId, double rating) {
     if (state is ReviewLoaded) {
       final currentState = state as ReviewLoaded;
-      
+
       // Persist to DemoStore immediately for sync with other screens
       if (kDemoMode) {
         DemoReviewStore.saveLocationRating(locationId, rating);
@@ -145,13 +165,17 @@ class ReviewCubit extends Cubit<ReviewState> {
         }
         return loc;
       }).toList();
-      
-      final newItinerary = currentState.itinerary.copyWith(locations: newLocations);
-      
-      emit(currentState.copyWith(
-        itinerary: newItinerary,
-        applyToAllLocations: false,
-      ));
+
+      final newItinerary = currentState.itinerary.copyWith(
+        locations: newLocations,
+      );
+
+      emit(
+        currentState.copyWith(
+          itinerary: newItinerary,
+          applyToAllLocations: false,
+        ),
+      );
     }
   }
 
@@ -176,20 +200,39 @@ class ReviewCubit extends Cubit<ReviewState> {
         return loc;
       }).toList();
 
-      final newItinerary = currentState.itinerary.copyWith(locations: newLocations);
+      final newItinerary = currentState.itinerary.copyWith(
+        locations: newLocations,
+      );
 
-      emit(currentState.copyWith(
-        itinerary: newItinerary,
-        applyToAllLocations: false,
-      ));
+      emit(
+        currentState.copyWith(
+          itinerary: newItinerary,
+          applyToAllLocations: false,
+        ),
+      );
     }
+  }
+
+  void ensureLocationAvailable(LocationReviewEntity location) {
+    if (state is! ReviewLoaded) return;
+
+    final currentState = state as ReviewLoaded;
+    final exists = currentState.itinerary.locations.any(
+      (loc) => loc.id == location.id,
+    );
+    if (exists) return;
+
+    final newItinerary = currentState.itinerary.copyWith(
+      locations: [...currentState.itinerary.locations, location],
+    );
+    emit(currentState.copyWith(itinerary: newItinerary));
   }
 
   Future<void> addMedia() async {
     if (state is ReviewLoaded) {
       final picker = ImagePicker();
       final pickedFiles = await picker.pickMultiImage();
-      
+
       if (pickedFiles.isNotEmpty) {
         final currentState = state as ReviewLoaded;
         final newMedia = List<String>.from(currentState.mediaPaths);
@@ -225,17 +268,21 @@ class ReviewCubit extends Cubit<ReviewState> {
     try {
       if (kDemoMode) {
         await Future.delayed(const Duration(seconds: 1));
-        
+
         // Save to DemoStore for persistence across screens
         DemoReviewStore.saveItineraryReview(
-          itineraryId, 
-          currentState.generalRating, 
-          comment: currentState.generalComment
+          itineraryId,
+          currentState.generalRating,
+          comment: currentState.generalComment,
         );
-        
+
         for (var loc in currentState.itinerary.locations) {
           if (loc.rating != null) {
-            DemoReviewStore.saveLocationRating(loc.id, loc.rating!, comment: loc.reviewText);
+            DemoReviewStore.saveLocationRating(
+              loc.id,
+              loc.rating!,
+              comment: loc.reviewText,
+            );
           }
         }
 
@@ -258,8 +305,9 @@ class ReviewCubit extends Cubit<ReviewState> {
 
       await reviewRepository.submitItineraryReview(
         itineraryId: itineraryId,
-        overallRating:
-            currentState.generalRating > 0 ? currentState.generalRating : null,
+        overallRating: currentState.generalRating > 0
+            ? currentState.generalRating
+            : null,
         overallContent: currentState.generalComment,
         applyAllPlaces: currentState.applyToAllLocations,
         placeReviews: placeReviews,

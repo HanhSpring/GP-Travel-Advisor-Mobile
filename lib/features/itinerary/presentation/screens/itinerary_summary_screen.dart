@@ -556,12 +556,7 @@ class _ItinerarySummaryView extends StatelessWidget {
     DateTime now,
     int visitedCount,
   ) {
-    final today = DateUtils.dateOnly(now);
-    final endDate = DateUtils.dateOnly(itin.endDate);
-    final status = itin.status.toUpperCase();
-    final hasStarted =
-        status == 'ONGOING' || status == 'COMPLETED' || itin.trackingActive;
-    return today.isAfter(endDate) && hasStarted && visitedCount > 0;
+    return itin.status.toUpperCase() == 'COMPLETED';
   }
 
   Widget _summaryCircleButton(IconData icon, VoidCallback onTap) {
