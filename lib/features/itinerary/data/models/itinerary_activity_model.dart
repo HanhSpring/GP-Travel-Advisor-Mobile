@@ -60,6 +60,7 @@ class ItineraryActivityModel {
   factory ItineraryActivityModel.fromJson(Map<String, dynamic> json) {
     return ItineraryActivityModel(
       id: json['id'] ?? '',
+      placeId: json['placeId']?.toString() ?? json['place_id']?.toString(),
       title: json['title'] ?? json['placeName'] ?? '',
       startTime: json['start_time'] ?? json['startTime'] ?? '',
       endTime: json['end_time'] ?? json['endTime'] ?? '',
