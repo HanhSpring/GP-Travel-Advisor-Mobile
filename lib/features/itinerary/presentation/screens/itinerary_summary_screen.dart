@@ -1524,14 +1524,14 @@ class _ItinerarySummaryView extends StatelessWidget {
         : visitedActivities.length;
     final activityEstimatedCost = visits.fold<double>(
       0,
-      (sum, activity) => sum + activity.price,
+      (sum, activity) => sum + activity.price + activity.transportCost,
     );
     final estimatedCost = itin.estimatedBudget > 0
         ? itin.estimatedBudget
         : activityEstimatedCost;
     final spentCost = visitedActivities.fold<double>(
       0,
-      (sum, activity) => sum + activity.price,
+      (sum, activity) => sum + activity.price + activity.transportCost,
     );
     final apiVisitedCount = visits.isNotEmpty
         ? itin.visitedLocations.clamp(0, visits.length).toInt()
@@ -1562,7 +1562,10 @@ class _ItinerarySummaryView extends StatelessWidget {
   double _dayActivityCost(ItineraryDayEntity day) {
     return _visitActivities(
       day,
-    ).fold<double>(0, (sum, activity) => sum + activity.price);
+    ).fold<double>(
+      0,
+      (sum, activity) => sum + activity.price + activity.transportCost,
+    );
   }
 }
 
