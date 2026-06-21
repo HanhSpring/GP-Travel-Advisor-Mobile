@@ -31,6 +31,7 @@ import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/pu
 import 'package:travel_advisor_mobile/features/place/presentation/cubit/place_detail_cubit.dart';
 import 'package:travel_advisor_mobile/features/place/presentation/screens/place_detail_screen.dart';
 import 'package:travel_advisor_mobile/features/saved/data/datasources/favorite_remote_datasource.dart';
+import 'package:travel_advisor_mobile/features/review/domain/entities/location_review_entity.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_cubit.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_state.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/screens/place_review_screen.dart';
@@ -611,17 +612,29 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
       if (!mounted) return;
 
       final state = reviewCubit.state;
-      if (state is! ReviewLoaded ||
-          !state.itinerary.locations.any((loc) => loc.id == activity.id)) {
+      if (state is! ReviewLoaded) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('ChÃ¡Â»â€° cÃƒÂ³ thÃ¡Â»Æ’ Ã„â€˜ÃƒÂ¡nh giÃƒÂ¡ Ã„â€˜Ã¡Â»â€¹a Ã„â€˜iÃ¡Â»Æ’m Ã„â€˜ÃƒÂ£ Ã„â€˜i'),
+            content: Text('Khong the mo du lieu danh gia'),
             behavior: SnackBarBehavior.floating,
           ),
         );
         return;
       }
 
+      if (!state.itinerary.locations.any((loc) => loc.id == activity.id)) {
+        reviewCubit.ensureLocationAvailable(
+          LocationReviewEntity(
+            id: activity.id,
+            placeId: activity.placeId,
+            name: activity.title,
+            imageUrl: activity.imageUrl,
+            day: _selectedDay,
+            isVisited: true,
+            rating: activity.rating,
+          ),
+        );
+      }
       final submitted = await Navigator.push<bool>(
         context,
         MaterialPageRoute(
@@ -1707,13 +1720,7 @@ class _ItineraryDetailView extends StatelessWidget {
   }
 
   bool _canReviewItinerary(ItineraryDetailEntity itin) {
-    final today = DateUtils.dateOnly(DateTime.now());
-    final endDate = DateUtils.dateOnly(itin.endDate);
-    final status = itin.status.toUpperCase();
-    final hasStarted =
-        status == 'ONGOING' || status == 'COMPLETED' || itin.trackingActive;
-
-    return today.isAfter(endDate) && hasStarted && itin.visitedLocations > 0;
+    return itin.status.toUpperCase() == 'COMPLETED';
   }
 
   Widget _buildContentCard(

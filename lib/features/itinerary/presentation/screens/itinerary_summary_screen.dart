@@ -53,7 +53,10 @@ class _ItinerarySummaryScreenState extends State<ItinerarySummaryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return _ItinerarySummaryView(itineraryId: widget.itineraryId);
+    return BlocProvider<TrackingCubit>(
+      create: (_) => sl<TrackingCubit>(),
+      child: _ItinerarySummaryView(itineraryId: widget.itineraryId),
+    );
   }
 }
 
@@ -666,12 +669,7 @@ class _ItinerarySummaryView extends StatelessWidget {
     ItineraryDetailEntity itin,
     DateTime now,
   ) {
-    final today = DateUtils.dateOnly(now);
-    final endDate = DateUtils.dateOnly(itin.endDate);
-    final status = itin.status.toUpperCase();
-    final hasStarted =
-        status == 'ONGOING' || status == 'COMPLETED' || itin.trackingActive;
-    return !today.isBefore(endDate) && hasStarted;
+    return itin.status.toUpperCase() == 'COMPLETED';
   }
 
   void _showEditTitleDialog(BuildContext context, ItineraryDetailEntity itin) {
