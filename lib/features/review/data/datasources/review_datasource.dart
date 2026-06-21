@@ -158,6 +158,8 @@ class ReviewMediaPresignedUrl {
       expiresInSeconds: (json['expires_in_seconds'] as num?)?.toInt() ?? 0,
     );
   }
+}
+
 class ReviewCatalogItem {
   final String kind;
   final String status;
@@ -348,6 +350,7 @@ class RemoteReviewDataSource implements ReviewDataSource {
       reviewed: parse('reviewed'),
     );
   }
+
   int _parseDayLabel(String label) {
     final normalized = label.toUpperCase().trim();
     final match = RegExp(r'(\d+)').firstMatch(normalized);
@@ -574,6 +577,7 @@ class RemoteReviewDataSource implements ReviewDataSource {
       },
     );
   }
+
   @override
   Future<List<ReviewMediaPresignedUrl>> createReviewPresignedUrls({
     required String scope,

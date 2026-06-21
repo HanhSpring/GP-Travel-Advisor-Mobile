@@ -24,6 +24,7 @@ class RateItineraryScreen extends StatelessWidget {
   const RateItineraryScreen({
     super.key,
     required this.itineraryId,
+    this.isReadOnly = false,
     this.initialRating = 0.0,
     this.initialComment = '',
     this.popExtraOnSubmit = true,
@@ -94,10 +95,6 @@ class _RateItineraryView extends StatelessWidget {
             return Center(child: Text(state.message));
           }
           if (state is ReviewLoaded) {
-            if (isReadOnly) {
-              return ReadOnlyItineraryReviewBody(state: state);
-            }
-
             final visitedLocations = state.itinerary.locations
                 .where((location) => location.isVisited)
                 .toList();

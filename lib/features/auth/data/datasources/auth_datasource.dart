@@ -367,9 +367,6 @@ class RemoteAuthDataSource implements AuthDataSource {
             .join('\n');
       }
     }
-<<<<<<< HEAD
-=======
-
     if (e.type == DioExceptionType.connectionError ||
         e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout ||
@@ -377,8 +374,6 @@ class RemoteAuthDataSource implements AuthDataSource {
       return 'Không thể kết nối đến máy chủ ${e.requestOptions.baseUrl}. '
           'Vui lòng kiểm tra backend và thử lại.';
     }
-
->>>>>>> 844feb0 (fix: sidebar for more information and review notifications)
     return fallback;
   }
 }
