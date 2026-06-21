@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:image_picker/image_picker.dart';
 
+import 'package:travel_advisor_mobile/core/di/injection_container.dart';
+import 'package:travel_advisor_mobile/core/services/activity_service.dart';
 import 'package:travel_advisor_mobile/core/theme/app_colors.dart';
 import 'package:travel_advisor_mobile/core/widgets/net_image.dart';
+import 'package:travel_advisor_mobile/features/review/domain/entities/review_media_item.dart';
+import 'package:travel_advisor_mobile/features/review/presentation/constants/review_tags.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_cubit.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_state.dart';
+import 'package:travel_advisor_mobile/features/review/presentation/utils/review_media_picker.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/widgets/review_media_list.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/widgets/star_rating_input.dart';
 
@@ -15,12 +19,16 @@ class PlaceReviewScreen extends StatefulWidget {
   final ReviewCubit reviewCubit;
 
   final bool isReadOnly;
+  final bool submitOnSave;
+  final String? itineraryId;
 
   const PlaceReviewScreen({
     super.key,
     required this.locationId,
     required this.reviewCubit,
     this.isReadOnly = false,
+    this.submitOnSave = false,
+    this.itineraryId,
   });
 
   @override
@@ -30,16 +38,8 @@ class PlaceReviewScreen extends StatefulWidget {
 class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
   late double _rating;
   late TextEditingController _reviewController;
-  late List<String> _mediaPaths;
+  late List<ReviewMediaItem> _mediaItems;
   late List<String> _selectedTags;
-
-  final List<String> _quickTags = [
-    'Sạch sẽ',
-    'Phù hợp gia đình',
-    'Đông vui',
-    'Đáng tiền',
-    'Check-in đẹp',
-  ];
 
   @override
   void initState() {
@@ -51,12 +51,14 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
       );
       _rating = loc.rating ?? 0.0;
       _reviewController = TextEditingController(text: loc.reviewText ?? '');
-      _mediaPaths = List<String>.from(loc.mediaPaths ?? []);
+      _mediaItems = List<ReviewMediaItem>.from(
+        state.locationMediaByDetailId[widget.locationId] ?? const [],
+      );
       _selectedTags = List<String>.from(loc.reviewTags ?? []);
     } else {
       _rating = 0.0;
       _reviewController = TextEditingController();
-      _mediaPaths = [];
+      _mediaItems = [];
       _selectedTags = [];
     }
   }
@@ -76,24 +78,105 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
     return '';
   }
 
-  Future<void> _pickMedia() async {
-    final picker = ImagePicker();
-    final pickedFiles = await picker.pickMultiImage();
-    if (pickedFiles.isNotEmpty) {
+  Future<void> _pickImages() async {
+    final pickedMedia = await ReviewMediaPicker.pickImages(
+      startSortOrder: _mediaItems.length,
+    );
+    if (pickedMedia.isNotEmpty) {
       setState(() {
-        _mediaPaths.addAll(pickedFiles.map((f) => f.path));
+        _mediaItems.addAll(pickedMedia);
       });
     }
   }
 
-  void _submit() {
+  Future<void> _pickVideo() async {
+    String? preparingVideoId;
+    try {
+      final pickedVideo = await ReviewMediaPicker.pickVideo(
+        sortOrder: _mediaItems.length,
+        onPreparingVideo: (item) {
+          preparingVideoId = item.id;
+          if (!mounted) {
+            return;
+          }
+          setState(() {
+            final existingIndex = _mediaItems.indexWhere(
+              (mediaItem) => mediaItem.id == item.id,
+            );
+            if (existingIndex >= 0) {
+              _mediaItems[existingIndex] = item;
+            } else {
+              _mediaItems.add(item);
+            }
+          });
+        },
+      );
+
+      if (pickedVideo != null) {
+        setState(() {
+          final existingIndex = _mediaItems.indexWhere(
+            (item) => item.id == pickedVideo.id,
+          );
+          if (existingIndex >= 0) {
+            _mediaItems[existingIndex] = pickedVideo;
+          } else {
+            _mediaItems.add(pickedVideo);
+          }
+        });
+      }
+    } on ReviewMediaSelectionException catch (error) {
+      if (preparingVideoId != null && mounted) {
+        setState(() {
+          _mediaItems.removeWhere((item) => item.id == preparingVideoId);
+        });
+      }
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  Future<void> _submit() async {
+    // Lấy placeId thực sự của POI trước khi cập nhật state
+    String? placeId;
+    final cubitState = widget.reviewCubit.state;
+    if (cubitState is ReviewLoaded) {
+      final idx = cubitState.itinerary.locations.indexWhere(
+        (l) => l.id == widget.locationId,
+      );
+      if (idx != -1) {
+        final location = cubitState.itinerary.locations[idx];
+        try {
+          placeId = (location as dynamic).placeId as String?;
+        } catch (_) {
+          placeId = null;
+        }
+      }
+    }
     widget.reviewCubit.updateLocationReviewDetails(
       locationId: widget.locationId,
       rating: _rating,
       reviewText: _reviewController.text,
       reviewTags: _selectedTags,
-      mediaPaths: _mediaPaths,
+      mediaItems: _mediaItems,
     );
+    if (placeId != null && placeId.isNotEmpty) {
+      final activityService = sl<ActivityService>();
+      if (_rating > 0) {
+        activityService.trackRating(placeId);
+      }
+      if (_reviewController.text.trim().isNotEmpty) {
+        activityService.trackReview(placeId);
+      }
+    }
+
+    if (widget.submitOnSave && widget.itineraryId != null) {
+      await widget.reviewCubit.submitReview(widget.itineraryId!);
+    }
+    if (!mounted) return;
     Navigator.pop(context, true);
   }
 
@@ -122,7 +205,7 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
               onPressed: () => Navigator.pop(context),
             ),
             title: Text(
-              'Viết đánh giá',
+              widget.isReadOnly ? 'Chi tiết đánh giá' : 'Viết đánh giá',
               style: TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 16,
@@ -228,6 +311,7 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
                           },
                     size: 32,
                     mainAxisAlignment: MainAxisAlignment.center,
+                    enabled: !widget.isReadOnly,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -269,86 +353,100 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
                 ),
                 const SizedBox(height: 24),
                 ReviewMediaList(
-                  mediaPaths: _mediaPaths,
-                  onAddMedia: widget.isReadOnly ? () {} : _pickMedia,
+                  mediaItems: _mediaItems,
+                  onAddImages: widget.isReadOnly ? () {} : _pickImages,
+                  onAddVideo: widget.isReadOnly ? () {} : _pickVideo,
                   onRemoveMedia: widget.isReadOnly
                       ? (_) {}
-                      : (path) {
-                          setState(() => _mediaPaths.remove(path));
+                      : (mediaId) {
+                          setState(
+                            () => _mediaItems.removeWhere(
+                              (item) => item.id == mediaId,
+                            ),
+                          );
                         },
                   onClearAllMedia: widget.isReadOnly
                       ? () {}
                       : () {
-                          setState(() => _mediaPaths.clear());
+                          setState(() => _mediaItems.clear());
                         },
                   imageSize: 80,
                 ),
-                const SizedBox(height: 24),
-                Text(
-                  'Gợi ý nhanh',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _quickTags.map((tag) {
-                    final isSelected = _selectedTags.contains(tag);
-                    return GestureDetector(
-                      onTap: widget.isReadOnly
-                          ? () {}
-                          : () {
-                              setState(() {
-                                if (isSelected) {
-                                  _selectedTags.remove(tag);
-                                } else {
-                                  _selectedTags.add(tag);
-                                }
-                              });
-                            },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? AppColors.blobLight
-                              : const Color(0xFFF0FDF4).withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          tag,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isSelected
-                                ? AppColors.primary
-                                : const Color(0xFF0D9488),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    const Icon(Icons.public, size: 14, color: Colors.grey),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Đánh giá của bạn sẽ được hiển thị công khai',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey.shade600,
-                      ),
+                if (!widget.isReadOnly || _selectedTags.isNotEmpty) ...[
+                  const SizedBox(height: 24),
+                  Text(
+                    widget.isReadOnly ? 'Từ khóa đánh giá' : 'Gợi ý nhanh',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children:
+                        (widget.isReadOnly ? _selectedTags : kTravelReviewTags)
+                            .map((tag) {
+                              final isSelected = _selectedTags.contains(tag);
+                              return GestureDetector(
+                                onTap: widget.isReadOnly
+                                    ? null
+                                    : () {
+                                        setState(() {
+                                          if (isSelected) {
+                                            _selectedTags.remove(tag);
+                                          } else {
+                                            _selectedTags.add(tag);
+                                          }
+                                        });
+                                      },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? AppColors.blobLight
+                                        : const Color(
+                                            0xFFF0FDF4,
+                                          ).withValues(alpha: 0.5),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    tag,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: isSelected
+                                          ? AppColors.primary
+                                          : const Color(0xFF0D9488),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            })
+                            .toList(),
+                  ),
+                ],
+                if (!widget.isReadOnly) ...[
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      const Icon(Icons.public, size: 14, color: Colors.grey),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Đánh giá của bạn sẽ được hiển thị công khai',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 32),
                 if (!widget.isReadOnly)
                   ElevatedButton(

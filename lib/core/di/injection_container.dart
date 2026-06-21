@@ -4,6 +4,7 @@ import 'package:travel_advisor_mobile/features/city/data/datasources/city_dataso
 import 'package:travel_advisor_mobile/features/city/data/repositories/city_repository_impl.dart';
 import 'package:travel_advisor_mobile/features/city/domain/repositories/city_repository.dart';
 import 'package:travel_advisor_mobile/features/city/domain/usecases/search_cities_usecase.dart';
+import 'package:travel_advisor_mobile/core/services/activity_service.dart';
 import 'package:travel_advisor_mobile/features/survey/presentation/cubit/survey_cubit.dart';
 import 'package:travel_advisor_mobile/features/trip_planner/domain/usecases/create_itinerary_usecase.dart';
 import 'package:travel_advisor_mobile/features/trip_planner/presentation/cubit/trip_planner_cubit.dart';
@@ -59,6 +60,7 @@ import 'package:travel_advisor_mobile/features/review/domain/repositories/review
 import 'package:travel_advisor_mobile/features/review/domain/usecases/get_itinerary_for_review_usecase.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_cubit.dart';
 import 'package:travel_advisor_mobile/features/saved/data/datasources/collections_datasource.dart';
+import 'package:travel_advisor_mobile/features/saved/data/datasources/favorite_remote_datasource.dart';
 import 'package:travel_advisor_mobile/features/saved/data/repositories/saved_repository_impl.dart';
 import 'package:travel_advisor_mobile/features/saved/domain/repositories/saved_repository.dart';
 import 'package:travel_advisor_mobile/features/saved/domain/usecases/get_favorite_itineraries_usecase.dart';
@@ -69,7 +71,10 @@ import 'package:travel_advisor_mobile/features/search/data/repositories/search_r
 import 'package:travel_advisor_mobile/features/search/domain/repositories/search_repository.dart';
 import 'package:travel_advisor_mobile/features/search/domain/usecases/get_recent_searches.dart';
 import 'package:travel_advisor_mobile/features/search/domain/usecases/search_locations.dart';
+import 'package:travel_advisor_mobile/features/search/domain/usecases/search_all_usecase.dart';
+import 'package:travel_advisor_mobile/features/search/domain/usecases/search_by_type_usecase.dart';
 import 'package:travel_advisor_mobile/features/search/presentation/cubit/search_cubit.dart';
+import 'package:travel_advisor_mobile/features/search/presentation/cubit/search_all_cubit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:travel_advisor_mobile/features/search/data/datasources/search_local_datasource.dart';
 import 'package:travel_advisor_mobile/features/search/domain/usecases/save_recent_search.dart';
@@ -90,6 +95,9 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<LocationService>(() => LocationService());
   sl.registerFactory(() => LocationCubit(sl()));
 
+  // ── Activity Tracking ──────────────────────────────────────────────────────
+  sl.registerLazySingleton<ActivityService>(() => ActivityService(sl()));
+
   // ── Auth ───────────────────────────────────────────────────────────────────
   sl.registerLazySingleton<AuthDataSource>(() => RemoteAuthDataSource(sl()));
   sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(sl()));
@@ -101,6 +109,8 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton(() => UpdatePasswordUseCase(sl()));
   sl.registerLazySingleton(() => ChangePasswordUseCase(sl()));
   sl.registerLazySingleton(() => LoginWithGoogleUseCase(sl()));
+  sl.registerLazySingleton(() => CheckSessionUseCase(sl()));
+  sl.registerLazySingleton(() => LogoutUseCase(sl()));
 
   // Đăng ký Cubit
   sl.registerFactory(
@@ -111,6 +121,8 @@ Future<void> initDependencies() async {
       updatePasswordUseCase: sl(),
       changePasswordUseCase: sl(),
       loginWithGoogleUseCase: sl(),
+      checkSessionUseCase: sl(),
+      logoutUseCase: sl(),
     ),
   );
 
@@ -141,7 +153,17 @@ Future<void> initDependencies() async {
     () => NotificationRepositoryImpl(sl()),
   );
   sl.registerLazySingleton(() => GetNotificationsUseCase(sl()));
-  sl.registerFactory(() => NotificationCubit(getNotifications: sl()));
+  sl.registerLazySingleton(() => GetNotificationDetailUseCase(sl()));
+  sl.registerLazySingleton(() => MarkAllNotificationsAsReadUseCase(sl()));
+  sl.registerLazySingleton(() => MarkNotificationAsReadUseCase(sl()));
+  sl.registerFactory(
+    () => NotificationCubit(
+      getNotifications: sl(),
+      getNotificationDetail: sl(),
+      markAllAsRead: sl(),
+      markAsRead: sl(),
+    ),
+  );
 
   // ── Itinerary ──────────────────────────────────────────────────────────────
   sl.registerLazySingleton<ItineraryDataSource>(
@@ -251,7 +273,10 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton(() => GetRecentSearches(sl()));
   sl.registerLazySingleton(() => SearchLocations(sl()));
   sl.registerLazySingleton(() => SaveRecentSearch(sl()));
-  sl.registerFactory(() => SearchCubit(sl(), sl(), sl()));
+  sl.registerLazySingleton(() => SearchAllUseCase(sl()));
+  sl.registerLazySingleton(() => SearchByTypeUseCase(sl()));
+  sl.registerFactory(() => SearchCubit(sl(), sl(), sl(), sl()));
+  sl.registerFactory(() => SearchAllCubit(sl()));
 
   // ── City Detail ────────────────────────────────────────────────────────────
   sl.registerLazySingleton<CityDetailDataSource>(
@@ -273,11 +298,19 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<PlaceDataSource>(() => RemotePlaceDataSource(sl()));
   sl.registerLazySingleton<PlaceRepository>(() => PlaceRepositoryImpl(sl()));
   sl.registerLazySingleton(() => GetPlaceDetailUseCase(sl()));
-  sl.registerFactory(() => PlaceDetailCubit(getPlaceDetailUseCase: sl()));
+  sl.registerFactory(
+    () => PlaceDetailCubit(
+      getPlaceDetailUseCase: sl(),
+      favoriteRemoteDataSource: sl(),
+    ),
+  );
 
   // ── Saved ──────────────────────────────────────────────────────────────────
   sl.registerLazySingleton<CollectionsDataSource>(
     () => RemoteCollectionsDataSource(sl()),
+  );
+  sl.registerLazySingleton<FavoriteRemoteDataSource>(
+    () => FavoriteRemoteDataSource(sl()),
   );
   sl.registerLazySingleton<SavedRepository>(
     () => SavedRepositoryImpl(dataSource: sl()),
