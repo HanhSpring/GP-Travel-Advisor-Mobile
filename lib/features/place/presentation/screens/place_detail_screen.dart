@@ -1,7 +1,5 @@
 import 'dart:async';
 
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -9,7 +7,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:travel_advisor_mobile/core/di/injection_container.dart';
 import 'package:travel_advisor_mobile/core/services/activity_service.dart';
 import 'package:travel_advisor_mobile/core/theme/app_colors.dart';
-import 'package:travel_advisor_mobile/core/di/injection_container.dart';
 import 'package:travel_advisor_mobile/features/place/presentation/cubit/place_detail_cubit.dart';
 import 'package:travel_advisor_mobile/features/place/presentation/cubit/place_detail_state.dart';
 import 'package:travel_advisor_mobile/features/saved/data/datasources/favorite_remote_datasource.dart';
@@ -27,7 +24,6 @@ class PlaceDetailScreen extends StatefulWidget {
   final bool showRelatedPlaces;
 
   const PlaceDetailScreen({
-    super.key,
     super.key,
     required this.placeId,
     this.showRelatedPlaces = true,
@@ -65,12 +61,6 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<PlaceDetailCubit>().loadPlaceDetail(widget.placeId);
     });
-  }
-
-  @override
-  void dispose() {
-    _dwellTimer?.cancel();
-    super.dispose();
   }
 
   void _startDwellTimer() {
@@ -127,6 +117,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
   @override
   void dispose() {
     _favoriteSubscription?.cancel();
+    _dwellTimer?.cancel();
     super.dispose();
   }
 
@@ -142,7 +133,6 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
         },
         builder: (context, state) {
           if (state is PlaceDetailLoading) {
-            return const Center(child: CircularProgressIndicator());
             return const Center(child: CircularProgressIndicator());
           }
 
@@ -183,12 +173,6 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                         : 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=800&q=80',
                     isFavorite: place.isFavorite,
                     onBack: () => Navigator.pop(context),
-                    onFavorite: () async {
-                      final result = await context
-                          .read<PlaceDetailCubit>()
-                          .toggleFavorite();
-                      if (!context.mounted) return;
-                      if (result == true) {
                     onFavorite: () {
                       final wasFavorite = place.isFavorite;
                       context.read<PlaceDetailCubit>().toggleFavorite();

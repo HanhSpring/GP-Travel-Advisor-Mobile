@@ -6,7 +6,6 @@ import 'package:dio/dio.dart';
 import 'place_review_screen.dart';
 
 import 'package:travel_advisor_mobile/core/di/injection_container.dart';
-import 'package:travel_advisor_mobile/core/services/activity_service.dart';
 import 'package:travel_advisor_mobile/core/theme/app_colors.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_cubit.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_state.dart';
@@ -69,20 +68,11 @@ class _RateItineraryView extends StatelessWidget {
             fontWeight: FontWeight.bold,
             color: Color(0xFF1C1C1E),
           ),
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1C1C1E),
-          ),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new,
-            color: Color(0xFF1C1C1E),
-            size: 20,
-          ),
           icon: const Icon(
             Icons.arrow_back_ios_new,
             color: Color(0xFF1C1C1E),
@@ -121,43 +111,6 @@ class _RateItineraryView extends StatelessWidget {
                         rating: state.generalRating,
                         applyToAll: state.applyToAllLocations,
                         generalComment: state.generalComment,
-                        mediaPaths: state.mediaPaths,
-                        onRatingChanged: isReadOnly
-                            ? (_) {}
-                            : (rating) {
-                                context.read<ReviewCubit>().setGeneralRating(
-                                  rating,
-                                );
-                              },
-                        onApplyToAllChanged: isReadOnly
-                            ? (_) {}
-                            : (value) {
-                                context.read<ReviewCubit>().toggleApplyToAll(
-                                  value,
-                                );
-                              },
-                        onGeneralCommentChanged: isReadOnly
-                            ? (_) {}
-                            : (value) {
-                                context.read<ReviewCubit>().setGeneralComment(
-                                  value,
-                                );
-                              },
-                        onAddMedia: isReadOnly
-                            ? () {}
-                            : () {
-                                context.read<ReviewCubit>().addMedia();
-                              },
-                        onRemoveMedia: isReadOnly
-                            ? (_) {}
-                            : (path) {
-                                context.read<ReviewCubit>().removeMedia(path);
-                              },
-                        onClearAllMedia: isReadOnly
-                            ? () {}
-                            : () {
-                                context.read<ReviewCubit>().clearAllMedia();
-                              },
                         selectedTags: state.generalTags,
                         mediaItems: state.itineraryMedia,
                         onRatingChanged: (rating) {
@@ -214,23 +167,13 @@ class _RateItineraryView extends StatelessWidget {
                                 horizontal: 8,
                                 vertical: 4,
                               ),
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
                               decoration: BoxDecoration(
-                                color: AppColors.blobLight.withValues(
-                                  
-                                  alpha: 0.3,
-                                ,
-                                ),
+                                color: AppColors.blobLight.withValues(alpha: 0.3),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
                                 '${visitedLocations.length}  địa điểm',
                                 style: const TextStyle(
-                                  fontSize: 10,
-                                  color: Color(0xFF6B7280),
-                                ),
                                   fontSize: 10,
                                   color: Color(0xFF6B7280),
                                 ),
@@ -317,56 +260,6 @@ class _RateItineraryView extends StatelessWidget {
                                 await context.read<ReviewCubit>().submitReview(
                                   itineraryId,
                                 );
-                                if (!context.mounted) return;
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Cảm ơn bạn đã đánh giá!'),
-                                    backgroundColor: Color(0xFF22C55E),
-                                  ),
-                                );
-                                if (context.mounted) {
-                                  Navigator.of(context).pop();
-                                  if (popExtraOnSubmit &&
-                                      Navigator.of(context).canPop()) {
-                                    Navigator.of(context).pop();
-                                  }
-                                }
-                              } catch (e) {
-                                if (!context.mounted) return;
-
-                                String errorMessage =
-                                    'Lỗi hệ thống, vui lòng thử lại sau.';
-                                if (e is DioException) {
-                                  if (e.response != null &&
-                                      e.response?.data != null) {
-                                    if (e.response?.data is Map) {
-                                      final msg = e.response!.data['message'];
-                                      if (msg is List) {
-                                        errorMessage = msg.join(', ');
-                                      } else {
-                                        errorMessage =
-                                            msg?.toString() ?? e.toString();
-                                      }
-                                    } else {
-                                      errorMessage =
-                                          e.response?.data.toString() ??
-                                          e.toString();
-                                    }
-                                  } else {
-                                    errorMessage = e.message ?? e.toString();
-                                  }
-                                } else {
-                                  errorMessage = e.toString();
-                                }
-                      onPressed: isReadOnly
-                          ? () => Navigator.pop(context)
-                          : state.isSubmitting
-                          ? null
-                          : () async {
-                              try {
-                                await context.read<ReviewCubit>().submitReview(
-                                  itineraryId,
-                                );
                                 if (!context.mounted) {
                                   return;
                                 }
@@ -444,7 +337,6 @@ class _RateItineraryView extends StatelessWidget {
                     ),
                   ),
                 ),
-                ),
               ],
             );
           }
@@ -463,17 +355,11 @@ class _RateItineraryView extends StatelessWidget {
       _buildFilterChip(context, 'TẤT CẢ', 0, state.selectedDay),
       ...days.map(
         (day) => _buildFilterChip(context, 'NGÀY $day', day, state.selectedDay),
-        (day) => _buildFilterChip(context, 'NGÀY $day', day, state.selectedDay),
       ),
     ];
   }
 
   Widget _buildFilterChip(
-    BuildContext context,
-    String label,
-    int day,
-    int selectedDay,
-  ) {
     BuildContext context,
     String label,
     int day,
@@ -486,9 +372,6 @@ class _RateItineraryView extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 4),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.primary
-              : AppColors.blobLight.withValues(alpha: 0.3),
           color: isSelected
               ? AppColors.primary
               : AppColors.blobLight.withValues(alpha: 0.3),

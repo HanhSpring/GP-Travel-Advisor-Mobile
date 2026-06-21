@@ -1100,6 +1100,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
             onEditTime: _onEditTime,
             onDirectionTap: _launchDirections,
             onShareTap: _showShareSheet,
+            onFavoriteTap: _toggleItineraryFavorite,
             onMarkerTap: (id) => _scrollToActivity(id),
             highlightedActivityId: _highlightedActivityId,
             isEditMode: _isEditMode,

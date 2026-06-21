@@ -394,9 +394,6 @@ class RemoteReviewDataSource implements ReviewDataSource {
       status: ((itinerary['status'] ?? 'completed').toString()).toUpperCase(),
       locations: places
           .whereType<Map<String, dynamic>>()
-          .where(
-            (item) => item['is_visited'] == true || item['isVisited'] == true,
-          )
           .map(
             (item) => LocationReviewModel(
               id: (item['itinerary_detail_id'] ?? '').toString(),

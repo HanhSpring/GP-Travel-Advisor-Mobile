@@ -106,7 +106,7 @@ class _ItinerarySummaryView extends StatelessWidget {
     final costSnapshot = _buildCostSnapshot(itin, trackingState);
     final totalVisitCount = costSnapshot.totalVisitCount;
     final visitedVisitCount = costSnapshot.visitedCount;
-    final canReview = _canReviewItinerary(itin, now, visitedVisitCount);
+    final canReview = _canReviewItinerary(itin, now);
 
     return Scaffold(
       backgroundColor: const Color(0xFFFBFDFF),
@@ -239,24 +239,7 @@ class _ItinerarySummaryView extends StatelessWidget {
               ),
             ),
         ],
-        actions: canReview
-            ? [
-                Padding(
-                  padding: const EdgeInsets.only(right: 16),
-                  child: _summaryCircleButton(Icons.star_outline_rounded, () {
-                    showDialog(
-                      context: context,
-                      builder: (_) => ItineraryReviewDialog(
-                        itineraryId: itin.id,
-                        itineraryTitle: itin.title,
-                        totalLocations: totalVisitCount,
-                        visitedLocations: visitedVisitCount,
-                      ),
-                    );
-                  }),
-                ),
-              ]
-            : null,
+
       ),
       body: Stack(
         children: [
@@ -636,30 +619,13 @@ class _ItinerarySummaryView extends StatelessWidget {
   bool _canReviewItinerary(
     ItineraryDetailEntity itin,
     DateTime now,
-    int visitedCount,
   ) {
     final today = DateUtils.dateOnly(now);
     final endDate = DateUtils.dateOnly(itin.endDate);
     final status = itin.status.toUpperCase();
     final hasStarted =
         status == 'ONGOING' || status == 'COMPLETED' || itin.trackingActive;
-    return today.isAfter(endDate) && hasStarted && visitedCount > 0;
-  }
-
-  Widget _summaryCircleButton(IconData icon, VoidCallback onTap) {
-    return Material(
-      color: Colors.black.withAlpha(120),
-      shape: const CircleBorder(),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: SizedBox(
-          width: 36,
-          height: 36,
-          child: Icon(icon, size: 18, color: Colors.white),
-        ),
-      ),
-    );
+    return !today.isBefore(endDate) && hasStarted;
   }
 
   void _showEditTitleDialog(BuildContext context, ItineraryDetailEntity itin) {
