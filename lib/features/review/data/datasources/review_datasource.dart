@@ -394,12 +394,16 @@ class RemoteReviewDataSource implements ReviewDataSource {
       status: ((itinerary['status'] ?? 'completed').toString()).toUpperCase(),
       locations: places
           .whereType<Map<String, dynamic>>()
+          .where(
+            (item) => item['is_visited'] == true || item['isVisited'] == true,
+          )
           .map(
             (item) => LocationReviewModel(
               id: (item['itinerary_detail_id'] ?? '').toString(),
               name: (item['place_name'] ?? 'Địa điểm').toString(),
               imageUrl: (item['place_image_url'] ?? '').toString(),
               day: _parseDayLabel((item['day_label'] ?? '').toString()),
+              placeId: item['place_id']?.toString(),
               rating: (item['rating'] as num?)?.toDouble(),
               reviewText: item['content']?.toString(),
             ),
@@ -650,3 +654,4 @@ class RemoteReviewDataSource implements ReviewDataSource {
     );
   }
 }
+

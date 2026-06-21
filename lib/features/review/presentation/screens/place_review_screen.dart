@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:travel_advisor_mobile/core/di/injection_container.dart';
+import 'package:travel_advisor_mobile/core/services/activity_service.dart';
 import 'package:travel_advisor_mobile/core/theme/app_colors.dart';
 import 'package:travel_advisor_mobile/core/widgets/net_image.dart';
 import 'package:travel_advisor_mobile/features/review/domain/entities/review_media_item.dart';
@@ -134,6 +136,15 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
   }
 
   void _submit() {
+    // Lấy placeId thực sự của POI trước khi cập nhật state
+    String? placeId;
+    final cubitState = widget.reviewCubit.state;
+    if (cubitState is ReviewLoaded) {
+      final idx = cubitState.itinerary.locations
+          .indexWhere((l) => l.id == widget.locationId);
+      if (idx != -1) placeId = cubitState.itinerary.locations[idx].placeId;
+    }
+
     widget.reviewCubit.updateLocationReviewDetails(
       locationId: widget.locationId,
       rating: _rating,
@@ -141,6 +152,17 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
       reviewTags: _selectedTags,
       mediaItems: _mediaItems,
     );
+
+    if (placeId != null && placeId.isNotEmpty) {
+      final activityService = sl<ActivityService>();
+      if (_rating > 0) {
+        activityService.trackRating(placeId);
+      }
+      if (_reviewController.text.trim().isNotEmpty) {
+        activityService.trackReview(placeId);
+      }
+    }
+
     Navigator.pop(context);
   }
 
