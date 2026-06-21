@@ -46,7 +46,9 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
     super.initState();
     final state = widget.reviewCubit.state;
     if (state is ReviewLoaded) {
-      final loc = state.itinerary.locations.firstWhere((l) => l.id == widget.locationId);
+      final loc = state.itinerary.locations.firstWhere(
+        (l) => l.id == widget.locationId,
+      );
       _rating = loc.rating ?? 0.0;
       _reviewController = TextEditingController(text: loc.reviewText ?? '');
       _mediaPaths = List<String>.from(loc.mediaPaths ?? []);
@@ -92,7 +94,7 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
       reviewTags: _selectedTags,
       mediaPaths: _mediaPaths,
     );
-    Navigator.pop(context);
+    Navigator.pop(context, true);
   }
 
   @override
@@ -102,7 +104,9 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
       builder: (context, state) {
         if (state is! ReviewLoaded) return const Scaffold();
 
-        final location = state.itinerary.locations.firstWhere((l) => l.id == widget.locationId);
+        final location = state.itinerary.locations.firstWhere(
+          (l) => l.id == widget.locationId,
+        );
 
         return Scaffold(
           backgroundColor: Colors.white,
@@ -110,7 +114,11 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
             backgroundColor: Colors.white,
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.textPrimary, size: 20),
+              icon: const Icon(
+                Icons.arrow_back_ios_new,
+                color: AppColors.textPrimary,
+                size: 20,
+              ),
               onPressed: () => Navigator.pop(context),
             ),
             title: Text(
@@ -177,7 +185,11 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
                             const SizedBox(height: 4),
                             const Row(
                               children: [
-                                Icon(Icons.location_on, size: 12, color: AppColors.textSecondary),
+                                Icon(
+                                  Icons.location_on,
+                                  size: 12,
+                                  color: AppColors.textSecondary,
+                                ),
                                 SizedBox(width: 4),
                                 Text(
                                   'TP. HCM',
@@ -209,9 +221,11 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
                 Center(
                   child: StarRatingInput(
                     rating: _rating,
-                    onRatingChanged: widget.isReadOnly ? (_) {} : (val) {
-                      setState(() => _rating = val);
-                    },
+                    onRatingChanged: widget.isReadOnly
+                        ? (_) {}
+                        : (val) {
+                            setState(() => _rating = val);
+                          },
                     size: 32,
                     mainAxisAlignment: MainAxisAlignment.center,
                   ),
@@ -257,12 +271,16 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
                 ReviewMediaList(
                   mediaPaths: _mediaPaths,
                   onAddMedia: widget.isReadOnly ? () {} : _pickMedia,
-                  onRemoveMedia: widget.isReadOnly ? (_) {} : (path) {
-                    setState(() => _mediaPaths.remove(path));
-                  },
-                  onClearAllMedia: widget.isReadOnly ? () {} : () {
-                    setState(() => _mediaPaths.clear());
-                  },
+                  onRemoveMedia: widget.isReadOnly
+                      ? (_) {}
+                      : (path) {
+                          setState(() => _mediaPaths.remove(path));
+                        },
+                  onClearAllMedia: widget.isReadOnly
+                      ? () {}
+                      : () {
+                          setState(() => _mediaPaths.clear());
+                        },
                   imageSize: 80,
                 ),
                 const SizedBox(height: 24),
@@ -281,26 +299,35 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
                   children: _quickTags.map((tag) {
                     final isSelected = _selectedTags.contains(tag);
                     return GestureDetector(
-                      onTap: widget.isReadOnly ? () {} : () {
-                        setState(() {
-                          if (isSelected) {
-                            _selectedTags.remove(tag);
-                          } else {
-                            _selectedTags.add(tag);
-                          }
-                        });
-                      },
+                      onTap: widget.isReadOnly
+                          ? () {}
+                          : () {
+                              setState(() {
+                                if (isSelected) {
+                                  _selectedTags.remove(tag);
+                                } else {
+                                  _selectedTags.add(tag);
+                                }
+                              });
+                            },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
-                          color: isSelected ? AppColors.blobLight : const Color(0xFFF0FDF4).withValues(alpha: 0.5),
+                          color: isSelected
+                              ? AppColors.blobLight
+                              : const Color(0xFFF0FDF4).withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
                           tag,
                           style: TextStyle(
                             fontSize: 12,
-                            color: isSelected ? AppColors.primary : const Color(0xFF0D9488),
+                            color: isSelected
+                                ? AppColors.primary
+                                : const Color(0xFF0D9488),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -315,7 +342,10 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
                     const SizedBox(width: 8),
                     Text(
                       'Đánh giá của bạn sẽ được hiển thị công khai',
-                      style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey.shade600,
+                      ),
                     ),
                   ],
                 ),
