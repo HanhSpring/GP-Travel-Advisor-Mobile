@@ -1107,7 +1107,6 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
             onEditModeTap: _onEditModeTap,
             onDiscardTap: _onDiscardChanges,
           ),
-          ),
         ),
       ),
     );
