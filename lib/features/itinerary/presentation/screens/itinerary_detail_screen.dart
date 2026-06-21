@@ -1078,15 +1078,14 @@ class _DayCostSummaryCard extends StatelessWidget {
       0,
       (sum, activity) => sum + activity.price,
     );
-    final selfDriveCost = (day.dayBudget - hotelCost - placeCost)
-        .clamp(0, double.infinity)
-        .toDouble();
+    final selfDriveCost = day.activities.fold<double>(
+      0,
+      (sum, activity) => sum + activity.transportCost,
+    );
     final visitedCount = visitActivities
         .where((activity) => activity.status == ActivityStatus.daDi)
         .length;
-    final totalCost = day.dayBudget > 0
-        ? day.dayBudget
-        : placeCost + hotelCost + selfDriveCost;
+    final totalCost = placeCost + hotelCost + selfDriveCost;
 
     String money(double value) => '${formatter.format(value)} ${day.currency}';
 
