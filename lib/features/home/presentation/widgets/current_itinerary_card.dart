@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
+import 'package:travel_advisor_mobile/core/di/injection_container.dart';
 import 'package:travel_advisor_mobile/core/theme/app_colors.dart';
 import 'package:travel_advisor_mobile/features/itinerary/domain/entities/itinerary_entity.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/cubit/itinerary_cubit.dart';
@@ -20,14 +21,20 @@ class CurrentItineraryCard extends StatelessWidget {
     this.item,
     this.isStarted = false,
     this.onToggle,
-  });  @override
+  });
+
+  @override
   Widget build(BuildContext context) {
     if (item == null) {
       return const SizedBox.shrink(); // Hide if no current itinerary
     }
 
-    final fmtMonth = DateFormat('MMM', 'vi_VN').format(item!.startDate ?? DateTime.now()).toUpperCase();
-    final fmtDay = '${item!.startDate?.day ?? ''} \u2013 ${item!.endDate?.day ?? ''}';
+    final fmtMonth = DateFormat(
+      'MMM',
+      'vi_VN',
+    ).format(item!.startDate ?? DateTime.now()).toUpperCase();
+    final fmtDay =
+        '${item!.startDate?.day ?? ''} \u2013 ${item!.endDate?.day ?? ''}';
 
     final cubit = context.read<ItineraryCubit>();
     final trackingCubit = context.read<TrackingCubit>();
@@ -41,6 +48,8 @@ class CurrentItineraryCard extends StatelessWidget {
                 BlocProvider.value(value: cubit),
                 BlocProvider.value(value: trackingCubit),
               ],
+            builder: (_) => BlocProvider<ItineraryCubit>(
+              create: (_) => sl<ItineraryCubit>()..loadData(),
               child: ItinerarySummaryScreen(itineraryId: item!.id),
             ),
           ),
@@ -57,7 +66,7 @@ class CurrentItineraryCard extends StatelessWidget {
               color: Colors.black.withValues(alpha: 0.03),
               blurRadius: 10,
               offset: const Offset(0, 4),
-            )
+            ),
           ],
         ),
         child: Row(
@@ -75,11 +84,19 @@ class CurrentItineraryCard extends StatelessWidget {
                 children: [
                   Text(
                     fmtMonth,
-                    style: const TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: AppColors.primary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   Text(
                     fmtDay,
-                    style: const TextStyle(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.w900),
+                    style: const TextStyle(
+                      color: AppColors.primary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ],
               ),
@@ -94,7 +111,10 @@ class CurrentItineraryCard extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: isStarted
                                 ? const Color(0xFFFFEDED)
@@ -136,25 +156,49 @@ class CurrentItineraryCard extends StatelessWidget {
                                 ? 'HOÀN THÀNH'
                                 : 'ĐANG DIỄN RA'),
                     style: const TextStyle(color: AppColors.primary, fontSize: 9, fontWeight: FontWeight.w800),
+                    item!.status == ItineraryStatus.upcoming
+                        ? 'SẮP DIỄN RA'
+                        : (item!.status == ItineraryStatus.completed
+                              ? 'HOÀN THÀNH'
+                              : 'ĐANG DIỄN RA'),
+                    style: const TextStyle(
+                      color: AppColors.primary,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     item!.title,
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E)),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1C1C1E),
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
                   Row(
-                    children: [                      
-                      const Icon(Icons.people_outline, size: 12, color: Colors.grey),
+                    children: [
+                      const Icon(
+                        Icons.people_outline,
+                        size: 12,
+                        color: Colors.grey,
+                      ),
                       const SizedBox(width: 4),
-                      Text('${item!.durationDays} ngày', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                      Text(
+                        '${item!.durationDays} ngày',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey,
+                        ),
+                      ),
                     ],
                   ),
                 ],
               ),
-            )
+            ),
           ],
         ),
       ),
