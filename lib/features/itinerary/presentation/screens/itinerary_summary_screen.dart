@@ -21,7 +21,7 @@ import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/sh
 import 'package:travel_advisor_mobile/features/saved/data/datasources/favorite_remote_datasource.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/public_visibility_switch.dart';
 
-/// Cháº¿ Ä‘á»™ thiáº¿t káº¿: true dÃ¹ng dá»¯ liá»‡u máº«u, false dÃ¹ng API.
+/// Chế độ thiết kế: true dùng dữ liệu mẫu, false dùng API.
 const bool _useMockData = AppConfig.kUseMockData;
 
 class ItinerarySummaryScreen extends StatefulWidget {
@@ -150,7 +150,7 @@ class _ItinerarySummaryView extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               color: Colors.white.withValues(alpha: 0.5),
               child: const Text(
-                'TÃ³m táº¯t lá»‹ch trÃ¬nh',
+                'Tóm tắt lịch trình',
                 style: TextStyle(
                   color: Color(0xFF1C1C1E),
                   fontSize: 16,
@@ -254,7 +254,7 @@ class _ItinerarySummaryView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header vá»›i Glassmorphism Image Card
+                // Header với Glassmorphism Image Card
                 _buildDestinationHeader(
                   context,
                   itin,
@@ -281,7 +281,7 @@ class _ItinerarySummaryView extends StatelessWidget {
                           ),
                           const SizedBox(width: 12),
                           const Text(
-                            'Tá»•ng quan chuyáº¿n Ä‘i',
+                            'Tổng quan chuyến đi',
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w800,
@@ -296,7 +296,7 @@ class _ItinerarySummaryView extends StatelessWidget {
 
                       if (itin.visitedRestaurants.isNotEmpty) ...[
                         const SizedBox(height: 36),
-                        const SectionHeader(title: 'MÃ³n Äƒn Ä‘Ã£ Ä‘áº·t'),
+                        const SectionHeader(title: 'Món ăn đã đặt'),
                         const SizedBox(height: 12),
                         _buildCulinarySection(itin),
                       ],
@@ -305,7 +305,7 @@ class _ItinerarySummaryView extends StatelessWidget {
                       _buildBudgetSection(itin, costSnapshot),
 
                       const SizedBox(height: 36),
-                      const SectionHeader(title: 'Tá»•ng quan theo ngÃ y'),
+                      const SectionHeader(title: 'Tổng quan theo ngày'),
                       const SizedBox(height: 12),
                       ...itin.days
                           .take(3)
@@ -337,7 +337,7 @@ class _ItinerarySummaryView extends StatelessWidget {
               ],
             ),
           ),
-          // NÃºt xem chi tiáº¿t á»Ÿ dÆ°á»›i cÃ¹ng (Floating effect)
+          // Nút xem chi tiết ở dưới cùng (Floating effect)
           Positioned(
             bottom: 16,
             left: 20,
@@ -374,8 +374,8 @@ class _ItinerarySummaryView extends StatelessWidget {
         SnackBar(
           content: Text(
             nextFavorite
-                ? 'ÄÃ£ lÆ°u vÃ o danh má»¥c yÃªu thÃ­ch'
-                : 'ÄÃ£ bá» khá»i danh má»¥c yÃªu thÃ­ch',
+                ? 'Đã lưu vào danh mục yêu thích'
+                : 'Đã bỏ khỏi danh mục yêu thích',
           ),
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
@@ -387,7 +387,7 @@ class _ItinerarySummaryView extends StatelessWidget {
       messenger.clearSnackBars();
       messenger.showSnackBar(
         const SnackBar(
-          content: Text('ChÆ°a thá»ƒ cáº­p nháº­t yÃªu thÃ­ch, vui lÃ²ng thá»­ láº¡i'),
+          content: Text('Chưa thể cập nhật yêu thích, vui lòng thử lại'),
           duration: Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
         ),
@@ -406,21 +406,21 @@ class _ItinerarySummaryView extends StatelessWidget {
       builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         title: Text(
-          nextValue ? 'CÃ´ng khai lá»‹ch trÃ¬nh?' : 'Chuyá»ƒn vá» riÃªng tÆ°?',
+          nextValue ? 'Công khai lịch trình?' : 'Chuyển về riêng tư?',
         ),
         content: Text(
           nextValue
-              ? 'Lá»‹ch trÃ¬nh sáº½ hiá»ƒn thá»‹ trong khu vá»±c khÃ¡m phÃ¡ cÃ´ng khai.'
-              : 'NgÆ°á»i khÃ¡c sáº½ khÃ´ng cÃ²n tháº¥y lá»‹ch trÃ¬nh nÃ y trong khu vá»±c cÃ´ng khai.',
+              ? 'Lịch trình sẽ hiển thị trong khu vực khám phá công khai.'
+              : 'Người khác sẽ không còn thấy lịch trình này trong khu vực công khai.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Há»§y'),
+            child: const Text('Hủy'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('XÃ¡c nháº­n'),
+            child: const Text('Xác nhận'),
           ),
         ],
       ),
@@ -434,8 +434,8 @@ class _ItinerarySummaryView extends StatelessWidget {
         SnackBar(
           content: Text(
             nextValue
-                ? 'ÄÃ£ cÃ´ng khai lá»‹ch trÃ¬nh'
-                : 'ÄÃ£ chuyá»ƒn lá»‹ch trÃ¬nh vá» riÃªng tÆ°',
+                ? 'Đã công khai lịch trình'
+                : 'Đã chuyển lịch trình về riêng tư',
           ),
           behavior: SnackBarBehavior.floating,
         ),
@@ -444,7 +444,7 @@ class _ItinerarySummaryView extends StatelessWidget {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('KhÃ´ng thá»ƒ cáº­p nháº­t tráº¡ng thÃ¡i cÃ´ng khai'),
+          content: Text('Không thể cập nhật trạng thái công khai'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -518,7 +518,7 @@ class _ItinerarySummaryView extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              'ÄIá»‚M Äáº¾N',
+                              'ĐIỂM ĐẾN',
                               style: TextStyle(
                                 fontSize: 11,
                                 color: Colors.white.withValues(alpha: 0.72),
@@ -560,7 +560,7 @@ class _ItinerarySummaryView extends StatelessWidget {
                             children: [
                               Expanded(
                                 child: Text(
-                                  '${itin.title} â€¢ ${_formatCompactDateRange(itin.startDate, itin.endDate)}',
+                                  '${itin.title} • ${_formatCompactDateRange(itin.startDate, itin.endDate)}',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w800,
@@ -599,7 +599,7 @@ class _ItinerarySummaryView extends StatelessWidget {
                         children: [
                           _summaryInfoPill(
                             Icons.route_rounded,
-                            'Lá»‹ch trÃ¬nh â€¢ $visitedVisitCount/$totalVisitCount Ä‘á»‹a Ä‘iá»ƒm',
+                            'Lịch trình • $visitedVisitCount/$totalVisitCount địa điểm',
                           ),
                           _summaryInfoPill(
                             Icons.calendar_month_rounded,
@@ -608,7 +608,7 @@ class _ItinerarySummaryView extends StatelessWidget {
                           if ((itin.tripIntent ?? '').trim().isNotEmpty)
                             _summaryInfoPill(
                               Icons.local_offer_outlined,
-                              'Chá»§ Ä‘á»: ${itin.tripIntent!.trim()}',
+                              'Chủ đề: ${itin.tripIntent!.trim()}',
                             ),
                         ],
                       ),
@@ -654,7 +654,7 @@ class _ItinerarySummaryView extends StatelessWidget {
   }
 
   String _formatCompactDateRange(DateTime start, DateTime end) {
-    return '${start.day}â€“${end.day}/${end.month}';
+    return '${start.day}–${end.day}/${end.month}';
   }
 
   String _formatFullDateRange(DateTime start, DateTime end) {
@@ -676,8 +676,8 @@ class _ItinerarySummaryView extends StatelessWidget {
     final TextEditingController controller = TextEditingController(
       text: itin.title,
     );
-    // Capture cubit vÃ  scaffoldMessenger trÆ°á»›c khi showDialog,
-    // vÃ¬ context bÃªn trong builder cá»§a dialog khÃ´ng thuá»™c subtree cá»§a BlocProvider.
+    // Capture cubit và scaffoldMessenger trước khi showDialog,
+    // vì context bên trong builder của dialog không thuộc subtree của BlocProvider.
     final cubit = context.read<ItineraryCubit>();
     final messenger = ScaffoldMessenger.of(context);
 
@@ -686,13 +686,13 @@ class _ItinerarySummaryView extends StatelessWidget {
       builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text(
-          'Chá»‰nh sá»­a tÃªn lá»‹ch trÃ¬nh',
+          'Chỉnh sửa tên lịch trình',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         content: TextField(
           controller: controller,
           decoration: InputDecoration(
-            hintText: 'Nháº­p tÃªn lá»‹ch trÃ¬nh má»›i...',
+            hintText: 'Nhập tên lịch trình mới...',
             filled: true,
             fillColor: Colors.grey.shade100,
             border: OutlineInputBorder(
@@ -705,7 +705,7 @@ class _ItinerarySummaryView extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: Text('Há»§y', style: TextStyle(color: Colors.grey.shade600)),
+            child: Text('Hủy', style: TextStyle(color: Colors.grey.shade600)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -715,7 +715,7 @@ class _ItinerarySummaryView extends StatelessWidget {
                 cubit.updateItineraryTitle(itin.id, newTitle);
                 messenger.showSnackBar(
                   const SnackBar(
-                    content: Text('Äang cáº­p nháº­t tÃªn lá»‹ch trÃ¬nh...'),
+                    content: Text('Đang cập nhật tên lịch trình...'),
                     behavior: SnackBarBehavior.floating,
                     duration: Duration(seconds: 1),
                   ),
@@ -728,7 +728,7 @@ class _ItinerarySummaryView extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text('LÆ°u', style: TextStyle(color: Colors.white)),
+            child: const Text('Lưu', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -789,7 +789,7 @@ class _ItinerarySummaryView extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               const Text(
-                'KhÃ´ng thá»ƒ táº£i lá»‹ch trÃ¬nh',
+                'Không thể tải lịch trình',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
@@ -798,7 +798,7 @@ class _ItinerarySummaryView extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               const Text(
-                'ÄÃ£ xáº£y ra lá»—i khi táº£i chi tiáº¿t lá»‹ch trÃ¬nh.\nVui lÃ²ng kiá»ƒm tra káº¿t ná»‘i máº¡ng vÃ  thá»­ láº¡i.',
+                'Đã xảy ra lỗi khi tải chi tiết lịch trình.\nVui lòng kiểm tra kết nối mạng và thử lại.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
@@ -816,7 +816,7 @@ class _ItinerarySummaryView extends StatelessWidget {
                       .ensureItinerarySelected(itineraryId),
                   icon: const Icon(Icons.refresh_rounded, size: 20),
                   label: const Text(
-                    'Thá»­ láº¡i',
+                    'Thử lại',
                     style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
                   ),
                   style: ElevatedButton.styleFrom(
@@ -843,7 +843,7 @@ class _ItinerarySummaryView extends StatelessWidget {
                     ),
                   ),
                   child: const Text(
-                    'Quay láº¡i',
+                    'Quay lại',
                     style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -865,8 +865,8 @@ class _ItinerarySummaryView extends StatelessWidget {
           children: [
             Expanded(
               child: _StatCardV2(
-                label: 'Thá»i gian',
-                value: '${itin.durationDays} ngÃ y',
+                label: 'Thời gian',
+                value: '${itin.durationDays} ngày',
                 icon: Icons.calendar_today_rounded,
                 color: const Color(0xFF3B82F6),
               ),
@@ -874,8 +874,8 @@ class _ItinerarySummaryView extends StatelessWidget {
             const SizedBox(width: 16),
             Expanded(
               child: _StatCardV2(
-                label: 'Hoáº¡t Ä‘á»™ng',
-                value: '$visitCount Ä‘iá»ƒm',
+                label: 'Hoạt động',
+                value: '$visitCount điểm',
                 icon: Icons.explore_rounded,
                 color: const Color(0xFFF59E0B),
               ),
@@ -887,8 +887,8 @@ class _ItinerarySummaryView extends StatelessWidget {
           children: [
             Expanded(
               child: _StatCardV2(
-                label: 'Chá»— á»Ÿ',
-                value: hotelCount > 0 ? '$hotelCount khÃ¡ch sáº¡n' : 'ChÆ°a chá»n',
+                label: 'Chỗ ở',
+                value: hotelCount > 0 ? '$hotelCount khách sạn' : 'Chưa chọn',
                 icon: Icons.hotel_rounded,
                 color: const Color(0xFFEC4899),
               ),
@@ -896,10 +896,10 @@ class _ItinerarySummaryView extends StatelessWidget {
             const SizedBox(width: 16),
             Expanded(
               child: _StatCardV2(
-                label: 'Be/Grab/tá»± tÃºc',
+                label: 'Be/Grab/tự túc',
                 value: itin.transportTurns > 0
-                    ? '${itin.transportTurns} cháº·ng'
-                    : 'Theo lá»™ trÃ¬nh',
+                    ? '${itin.transportTurns} chặng'
+                    : 'Theo lộ trình',
                 icon: Icons.directions_car_filled_rounded,
                 color: const Color(0xFF10B981),
               ),
@@ -1154,7 +1154,7 @@ class _ItinerarySummaryView extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Text(
-              'Xem táº¥t cáº£ ${itin.days.length} ngÃ y',
+              'Xem tất cả ${itin.days.length} ngày',
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
@@ -1195,7 +1195,7 @@ class _ItinerarySummaryView extends StatelessWidget {
                 ),
                 const SizedBox(height: 18),
                 const Text(
-                  'Táº¥t cáº£ ngÃ y trong lá»‹ch trÃ¬nh',
+                  'Tất cả ngày trong lịch trình',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w900,
@@ -1236,16 +1236,16 @@ class _ItinerarySummaryView extends StatelessWidget {
 
   Widget _buildActionBtn(BuildContext context, ItineraryDetailEntity itin) {
     final now = DateTime.now();
-    // Logic xÃ©t tráº¡ng thÃ¡i dá»±a trÃªn thá»i gian thá»±c
+    // Logic xét trạng thái dựa trên thời gian thực
     final bool isFuture = now.isBefore(itin.startDate);
 
-    String btnText = 'XEM CHI TIáº¾T Lá»ŠCH TRÃŒNH';
+    String btnText = 'XEM CHI TIẾT LỊCH TRÌNH';
     Color btnColor = const Color(0xFF1E3A8A);
     IconData btnIcon = Icons.arrow_forward;
     void onPressed() => _navigateToDetail(context, itin);
 
     if (isFuture) {
-      btnText = 'Báº®T Äáº¦U Lá»ŠCH TRÃŒNH';
+      btnText = 'BẮT ĐẦU LỊCH TRÌNH';
       btnIcon = Icons.play_circle_outline_rounded;
     }
 
@@ -1317,7 +1317,7 @@ class _ItinerarySummaryView extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               const Text(
-                'Ghi chÃº cho chuyáº¿n Ä‘i',
+                'Ghi chú cho chuyến đi',
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w800,
@@ -1371,7 +1371,7 @@ class _ItinerarySummaryView extends StatelessWidget {
   Widget _buildCulinarySection(ItineraryDetailEntity itin) {
     final formatter = NumberFormat('#,###', 'vi_VN');
 
-    // TÃ­nh tá»•ng táº¥t cáº£ mÃ³n Äƒn
+    // Tính tổng tất cả món ăn
     double grandTotal = 0;
     for (var restaurant in itin.visitedRestaurants) {
       for (var dish in restaurant.dishes) {
@@ -1398,14 +1398,14 @@ class _ItinerarySummaryView extends StatelessWidget {
           ...itin.visitedRestaurants.map((food) {
             return _CulinaryExpandableItem(food: food);
           }),
-          // DÃ²ng tá»•ng cá»™ng chung
+          // Dòng tổng cộng chung
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Tá»•ng cá»™ng chi phÃ­',
+                  'Tổng cộng chi phí',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
@@ -1413,7 +1413,7 @@ class _ItinerarySummaryView extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${formatter.format(grandTotal)} VNÄ',
+                  '${formatter.format(grandTotal)} VNĐ',
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w900,
@@ -1432,18 +1432,18 @@ class _ItinerarySummaryView extends StatelessWidget {
     final now = DateTime.now();
     return ItineraryDetailEntity(
       id: 'mock_123',
-      title: 'Ká»³ nghá»‰ hÃ¨ PhÃº Quá»‘c 2024',
-      destination: 'PhÃº Quá»‘c',
+      title: 'Kỳ nghỉ hè Phú Quốc 2024',
+      destination: 'Phú Quốc',
       startDate: now.subtract(const Duration(days: 5)),
-      endDate: now.subtract(const Duration(days: 1)), // Káº¿t thÃºc ngÃ y hÃ´m qua
-      status: 'COMPLETED', // Äá»ƒ kiá»ƒm tra tráº¡ng thÃ¡i Ä‘Ã¡nh giÃ¡
+      endDate: now.subtract(const Duration(days: 1)), // Kết thúc ngày hôm qua
+      status: 'COMPLETED', // Để kiểm tra trạng thái đánh giá
       durationDays: 4,
       activitiesCount: 12,
       hotelsCount: 1,
       transportTurns: 6,
       estimatedBudget: 8500000,
       spentBudget: 1200000,
-      currency: 'VNÄ',
+      currency: 'VNĐ',
       days: [
         ItineraryDayEntity(
           dayNumber: 1,
@@ -1454,11 +1454,11 @@ class _ItinerarySummaryView extends StatelessWidget {
           activities: [
             const ItineraryActivityEntity(
               id: 'a1',
-              title: 'Check-in VinWonders PhÃº Quá»‘c',
+              title: 'Check-in VinWonders Phú Quốc',
               startTime: '09:00',
               endTime: '12:00',
               locationName: 'VinWonders',
-              address: 'GÃ nh Dáº§u, PhÃº Quá»‘c',
+              address: 'Gành Dầu, Phú Quốc',
               imageUrl: '',
             ),
           ],
@@ -1472,38 +1472,38 @@ class _ItinerarySummaryView extends StatelessWidget {
           activities: [
             const ItineraryActivityEntity(
               id: 'a2',
-              title: 'Láº·n ngáº¯m san hÃ´ HÃ²n MÃ³ng Tay',
+              title: 'Lặn ngắm san hô Hòn Móng Tay',
               startTime: '08:00',
               endTime: '11:00',
-              locationName: 'HÃ²n MÃ³ng Tay',
-              address: 'PhÃ­a Nam Äáº£o',
+              locationName: 'Hòn Móng Tay',
+              address: 'Phía Nam Đảo',
               imageUrl: '',
             ),
           ],
         ),
       ],
       notes: [
-        'Mang theo kem chá»‘ng náº¯ng vÃ  mÅ© rá»™ng vÃ nh.',
-        'Äá»«ng quÃªn mang báº±ng lÃ¡i xe Ä‘á»ƒ thuÃª xe mÃ¡y.',
-        'Äáº·t trÆ°á»›c vÃ© Buffet á»Ÿ VinWonders Ä‘á»ƒ Ä‘Æ°á»£c giÃ¡ tá»‘t.',
+        'Mang theo kem chống nắng và mũ rộng vành.',
+        'Đừng quên mang bằng lái xe để thuê xe máy.',
+        'Đặt trước vé Buffet ở VinWonders để được giá tốt.',
       ],
       visitedRestaurants: [
         const VisitedRestaurant(
-          name: 'BÃºn Quáº­y Kiáº¿n XÃ¢y',
+          name: 'Bún Quậy Kiến Xây',
           imageUrl:
               'https://images.unsplash.com/photo-1582878826629-29b7adcontent1?w=200&q=80',
           dishes: [
-            VisitedDish(name: 'TÃ´ Ä‘áº·c biá»‡t', price: 65000, quantity: 2),
-            VisitedDish(name: 'NÆ°á»›c mÃ­a', price: 10000, quantity: 2),
+            VisitedDish(name: 'Tô đặc biệt', price: 65000, quantity: 2),
+            VisitedDish(name: 'Nước mía', price: 10000, quantity: 2),
           ],
         ),
         const VisitedRestaurant(
-          name: 'Háº£i Sáº£n Xin ChÃ o',
+          name: 'Hải Sản Xin Chào',
           imageUrl:
               'https://images.unsplash.com/photo-1551733938-466a382CONTENT3?w=200&q=80',
           dishes: [
-            VisitedDish(name: 'TÃ´m hÃ¹m nÆ°á»›ng cá»‘t', price: 1200000, quantity: 1),
-            VisitedDish(name: 'NghÃªu háº¥p sáº£', price: 120000, quantity: 1),
+            VisitedDish(name: 'Tôm hùm nướng cốt', price: 1200000, quantity: 1),
+            VisitedDish(name: 'Nghêu hấp sả', price: 120000, quantity: 1),
           ],
         ),
       ],
@@ -1539,14 +1539,14 @@ class _ItinerarySummaryView extends StatelessWidget {
     final category = (activity.category ?? '').toLowerCase();
     final title = activity.title.toLowerCase();
     final isHotelLike =
-        category.contains('lÆ°u trÃº') ||
-        category.contains('khÃ¡ch sáº¡n') ||
+        category.contains('lưu trú') ||
+        category.contains('khách sạn') ||
         category.contains('accommodation') ||
         category.contains('hotel') ||
         category.contains('resort') ||
         category.contains('homestay') ||
         title.contains('hotel') ||
-        title.contains('khÃ¡ch sáº¡n') ||
+        title.contains('khách sạn') ||
         title.contains('resort') ||
         title.contains('homestay') ||
         title.contains('villa');
@@ -1562,11 +1562,11 @@ class _ItinerarySummaryView extends StatelessWidget {
 
   String _shortDayTitle(ItineraryDayEntity day) {
     final visitCount = _visitActivities(day).length;
-    if (visitCount == 0) return 'ChÆ°a cÃ³ Ä‘iá»ƒm tham quan';
+    if (visitCount == 0) return 'Chưa có điểm tham quan';
     final budget = day.dayBudget > 0 ? day.dayBudget : _dayActivityCost(day);
-    if (budget <= 0) return '$visitCount Ä‘iá»ƒm tham quan';
+    if (budget <= 0) return '$visitCount điểm tham quan';
     final formatter = NumberFormat('#,###', 'vi_VN');
-    return '$visitCount Ä‘iá»ƒm â€¢ ${formatter.format(budget)} ${day.currency}';
+    return '$visitCount điểm • ${formatter.format(budget)} ${day.currency}';
   }
 
   int _uniqueHotelCount(ItineraryDetailEntity itin) {
@@ -1874,7 +1874,7 @@ class _CulinaryExpandableItemState extends State<_CulinaryExpandableItem> {
                       Row(
                         children: [
                           Text(
-                            '${widget.food.dishes.length} mÃ³n',
+                            '${widget.food.dishes.length} món',
                             style: const TextStyle(
                               fontSize: 12,
                               color: Color(0xFF94A3B8),
@@ -1891,7 +1891,7 @@ class _CulinaryExpandableItemState extends State<_CulinaryExpandableItem> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            '${formatter.format(subTotal)} Ä‘',
+                            '${formatter.format(subTotal)} đ',
                             style: const TextStyle(
                               fontSize: 12,
                               color: Color(0xFF2563EB),
@@ -1937,7 +1937,7 @@ class _CulinaryExpandableItemState extends State<_CulinaryExpandableItem> {
                         ),
                       ),
                       Text(
-                        '${formatter.format(dish.price)} Ä‘ x ${dish.quantity}',
+                        '${formatter.format(dish.price)} đ x ${dish.quantity}',
                         style: const TextStyle(
                           fontSize: 13,
                           color: Color(0xFF64748B),

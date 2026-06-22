@@ -85,7 +85,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
 
   (String, String)? _parseOpenSlot(String raw, DateTime visitDate) {
     final matches = RegExp(
-      r'(\d{1,2}:\d{2})\s*[-Ã¢â‚¬â€œ]\s*(\d{1,2}:\d{2})',
+      r'(\d{1,2}:\d{2})\s*[-–]\s*(\d{1,2}:\d{2})',
     ).allMatches(raw).toList();
     if (matches.isEmpty) return null;
     final match = matches.first;
@@ -150,7 +150,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
       } catch (_) {}
     }
 
-    // LÃ¡ÂºÂ¥y ngÃƒÂ y tham quan Ã„â€˜Ã¡Â»Æ’ validate opening hours Ã„â€˜ÃƒÂºng thÃ¡Â»Â© trong tuÃ¡ÂºÂ§n
+    // Lấy ngày tham quan để validate opening hours đúng thứ trong tuần
     DateTime? visitDate;
     if ((context.read<ItineraryCubit>().state as ItineraryLoaded?)
             ?.selectedItinerary !=
@@ -194,7 +194,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
   void _scrollToActivity(String activityId) {
     setState(() => _highlightedActivityId = activityId);
 
-    // TÃƒÂ¬m activity Ã„â€˜Ã¡Â»Æ’ lÃ¡ÂºÂ¥y tÃ¡Â»Âa Ã„â€˜Ã¡Â»â„¢ vÃƒÂ  zoom nhÃ¡ÂºÂ¹
+    // Tìm activity để lấy tọa độ và zoom nhẹ
     final itin = (context.read<ItineraryCubit>().state as ItineraryLoaded)
         .selectedItinerary;
     final activity = itin?.days
@@ -255,7 +255,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
         to.longitude == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('KhÃƒÂ´ng cÃƒÂ³ tÃ¡Â»Âa Ã„â€˜Ã¡Â»â„¢ Ã„â€˜Ã¡Â»Æ’ chÃ¡Â»â€° Ã„â€˜Ã†Â°Ã¡Â»Âng')),
+          const SnackBar(content: Text('Không có tọa độ để chỉ đường')),
         );
       }
       return;
@@ -274,7 +274,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
       debugPrint('_launchDirections failed: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('KhÃƒÂ´ng thÃ¡Â»Æ’ mÃ¡Â»Å¸ Google Maps')),
+          const SnackBar(content: Text('Không thể mở Google Maps')),
         );
       }
     }
@@ -284,7 +284,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
     final placeId = activity.placeId ?? activity.id;
     if (placeId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('KhÃ´ng tÃ¬m tháº¥y thÃ´ng tin Ä‘á»‹a Ä‘iá»ƒm')),
+        const SnackBar(content: Text('Không tìm thấy thông tin địa điểm')),
       );
       return;
     }
@@ -335,8 +335,8 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
         SnackBar(
           content: Text(
             nextFavorite
-                ? 'Ã„ÂÃƒÂ£ lÃ†Â°u vÃƒÂ o danh mÃ¡Â»Â¥c yÃƒÂªu thÃƒÂ­ch'
-                : 'Ã„ÂÃƒÂ£ bÃ¡Â»Â khÃ¡Â»Âi danh mÃ¡Â»Â¥c yÃƒÂªu thÃƒÂ­ch',
+                ? 'Đã lưu vào danh mục yêu thích'
+                : 'Đã bỏ khỏi danh mục yêu thích',
           ),
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
@@ -350,7 +350,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
       ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('ChÃ†Â°a thÃ¡Â»Æ’ cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t yÃƒÂªu thÃƒÂ­ch, vui lÃƒÂ²ng thÃ¡Â»Â­ lÃ¡ÂºÂ¡i'),
+          content: Text('Chưa thể cập nhật yêu thích, vui lòng thử lại'),
           duration: Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
         ),
@@ -392,7 +392,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
           '${pickedTime.hour.toString().padLeft(2, '0')}:${pickedTime.minute.toString().padLeft(2, '0')}';
       final currentTime = isStart ? activity.startTime : activity.endTime;
 
-      // Ã¢â€â‚¬Ã¢â€â‚¬ Validation: kiÃ¡Â»Æ’m tra tÃƒÂ­nh hÃ¡Â»Â£p lÃ¡Â»â€¡ trÃ†Â°Ã¡Â»â€ºc khi cho phÃƒÂ©p thay Ã„â€˜Ã¡Â»â€¢i Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+      // ── Validation: kiểm tra tính hợp lệ trước khi cho phép thay đổi ──────
       final newMin = pickedTime.hour * 60 + pickedTime.minute;
 
       int toMinutes(String t) {
@@ -411,7 +411,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
               children: [
                 const Icon(Icons.error_outline, color: Color(0xFFEF4444)),
                 const SizedBox(width: 8),
-                const Expanded(child: Text('ThÃ¡Â»Âi gian khÃƒÂ´ng hÃ¡Â»Â£p lÃ¡Â»â€¡')),
+                const Expanded(child: Text('Thời gian không hợp lệ')),
               ],
             ),
             content: Text(message),
@@ -425,7 +425,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
                   ),
                 ),
                 child: const Text(
-                  'Ã„ÂÃƒÂ£ hiÃ¡Â»Æ’u',
+                  'Đã hiểu',
                   style: TextStyle(color: Colors.white),
                 ),
               ),
@@ -435,41 +435,41 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
       }
 
       if (isStart) {
-        // Ã„Âang chÃ¡Â»â€°nh giÃ¡Â»Â Ã„ÂÃ¡ÂºÂ¾N Ã¢â€ â€™ phÃ¡ÂºÂ£i trÃ†Â°Ã¡Â»â€ºc giÃ¡Â»Â RÃ¡Â»Å“I hiÃ¡Â»â€¡n tÃ¡ÂºÂ¡i
+        // Đang chỉnh giờ ĐẾN → phải trước giờ RỜI hiện tại
         final endMin = toMinutes(activity.endTime);
         if (newMin >= endMin) {
           await showTimeError(
-            'GiÃ¡Â»Â Ã„â€˜Ã¡ÂºÂ¿n ($newTime) phÃ¡ÂºÂ£i trÃ†Â°Ã¡Â»â€ºc giÃ¡Â»Â rÃ¡Â»Âi (${activity.endTime}) cÃ¡Â»Â§a cÃƒÂ¹ng Ã„â€˜Ã¡Â»â€¹a Ã„â€˜iÃ¡Â»Æ’m.\n\n'
-            'Vui lÃƒÂ²ng chÃ¡Â»Ân lÃ¡ÂºÂ¡i thÃ¡Â»Âi gian.',
+            'Giờ đến ($newTime) phải trước giờ rời (${activity.endTime}) của cùng địa điểm.\n\n'
+            'Vui lòng chọn lại thời gian.',
           );
-          return; // KhÃƒÂ´ng ÃƒÂ¡p dÃ¡Â»Â¥ng thay Ã„â€˜Ã¡Â»â€¢i
+          return; // Không áp dụng thay đổi
         }
         if (endMin - newMin > 4 * 60) {
           await showTimeError(
-            'KhoÃ¡ÂºÂ£ng thÃ¡Â»Âi gian tham quan quÃƒÂ¡ dÃƒÂ i (hÃ†Â¡n 4 tiÃ¡ÂºÂ¿ng).\n\n'
-            'Vui lÃƒÂ²ng chÃ¡Â»Ân giÃ¡Â»Â Ã„â€˜Ã¡ÂºÂ¿n hÃ¡Â»Â£p lÃƒÂ½ hÃ†Â¡n.',
+            'Khoảng thời gian tham quan quá dài (hơn 4 tiếng).\n\n'
+            'Vui lòng chọn giờ đến hợp lý hơn.',
           );
           return;
         }
       } else {
-        // Ã„Âang chÃ¡Â»â€°nh giÃ¡Â»Â RÃ¡Â»Å“I Ã¢â€ â€™ phÃ¡ÂºÂ£i sau giÃ¡Â»Â Ã„ÂÃ¡ÂºÂ¾N hiÃ¡Â»â€¡n tÃ¡ÂºÂ¡i
+        // Đang chỉnh giờ RỜI → phải sau giờ ĐẾN hiện tại
         final startMin = toMinutes(activity.startTime);
         if (newMin <= startMin) {
           await showTimeError(
-            'GiÃ¡Â»Â rÃ¡Â»Âi ($newTime) phÃ¡ÂºÂ£i sau giÃ¡Â»Â Ã„â€˜Ã¡ÂºÂ¿n (${activity.startTime}) cÃ¡Â»Â§a cÃƒÂ¹ng Ã„â€˜Ã¡Â»â€¹a Ã„â€˜iÃ¡Â»Æ’m.\n\n'
-            'Vui lÃƒÂ²ng chÃ¡Â»Ân lÃ¡ÂºÂ¡i thÃ¡Â»Âi gian.',
+            'Giờ rời ($newTime) phải sau giờ đến (${activity.startTime}) của cùng địa điểm.\n\n'
+            'Vui lòng chọn lại thời gian.',
           );
-          return; // KhÃƒÂ´ng ÃƒÂ¡p dÃ¡Â»Â¥ng thay Ã„â€˜Ã¡Â»â€¢i
+          return; // Không áp dụng thay đổi
         }
         if (newMin - startMin > 4 * 60) {
           await showTimeError(
-            'KhoÃ¡ÂºÂ£ng thÃ¡Â»Âi gian tham quan quÃƒÂ¡ dÃƒÂ i (hÃ†Â¡n 4 tiÃ¡ÂºÂ¿ng).\n\n'
-            'Vui lÃƒÂ²ng chÃ¡Â»Ân giÃ¡Â»Â rÃ¡Â»Âi hÃ¡Â»Â£p lÃƒÂ½ hÃ†Â¡n.',
+            'Khoảng thời gian tham quan quá dài (hơn 4 tiếng).\n\n'
+            'Vui lòng chọn giờ rời hợp lý hơn.',
           );
           return;
         }
       }
-      // Ã¢â€â‚¬Ã¢â€â‚¬ Validate giÃ¡Â»Â mÃ¡Â»Å¸/Ã„â€˜ÃƒÂ³ng cÃ¡Â»Â­a cÃ¡Â»Â§a Ã„â€˜Ã¡Â»â€¹a Ã„â€˜iÃ¡Â»Æ’m Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+      // ── Validate giờ mở/đóng cửa của địa điểm ─────────────────────────────────
       if (activity.openHourCompressed != null) {
         final visitDate = _visitDateForDay(_selectedDay);
         if (visitDate != null) {
@@ -482,25 +482,25 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
 
             final openMin = toM(slot.$1);
             final closeMin = toM(slot.$2);
-            final label = isStart ? 'Ã„â€˜Ã¡ÂºÂ¿n' : 'rÃ¡Â»Âi';
+            final label = isStart ? 'đến' : 'rời';
             if (newMin < openMin) {
               await showTimeError(
-                '${activity.title} chÃ†Â°a mÃ¡Â»Å¸ cÃ¡Â»Â­a lÃƒÂºc $newTime.\n\n'
-                'Ã„ÂÃ¡Â»â€¹a Ã„â€˜iÃ¡Â»Æ’m mÃ¡Â»Å¸ cÃ¡Â»Â­a tÃ¡Â»Â« ${slot.$1} Ã¢â‚¬â€œ ${slot.$2}. Vui lÃƒÂ²ng chÃ¡Â»Ân giÃ¡Â»Â $label sau ${slot.$1}.',
+                '${activity.title} chưa mở cửa lúc $newTime.\n\n'
+                'Địa điểm mở cửa từ ${slot.$1} – ${slot.$2}. Vui lòng chọn giờ $label sau ${slot.$1}.',
               );
               return;
             }
             if (newMin > closeMin) {
               await showTimeError(
-                '${activity.title} Ã„â€˜ÃƒÂ£ Ã„â€˜ÃƒÂ³ng cÃ¡Â»Â­a lÃƒÂºc ${slot.$2}.\n\n'
-                'GiÃ¡Â»Â $label $newTime vÃ†Â°Ã¡Â»Â£t quÃƒÂ¡ giÃ¡Â»Â Ã„â€˜ÃƒÂ³ng cÃ¡Â»Â­a. Vui lÃƒÂ²ng chÃ¡Â»Ân trÃ†Â°Ã¡Â»â€ºc ${slot.$2}.',
+                '${activity.title} đã đóng cửa lúc ${slot.$2}.\n\n'
+                'Giờ $label $newTime vượt quá giờ đóng cửa. Vui lòng chọn trước ${slot.$2}.',
               );
               return;
             }
           }
         }
       }
-      // Ã¢â€â‚¬Ã¢â€â‚¬ KÃ¡ÂºÂ¿t thÃƒÂºc validation Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+      // ── Kết thúc validation ──────────────────────────────────────────────────
 
       if (newTime != currentTime) {
         final oldMin = int.parse(parts[0]) * 60 + int.parse(parts[1]);
@@ -509,7 +509,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
         final bool hasSubsequent = !(isLastInDay && !isStart);
 
         if (hasSubsequent) {
-          final timeLabel = isStart ? 'thÃ¡Â»Âi gian Ã„â€˜Ã¡ÂºÂ¿n' : 'thÃ¡Â»Âi gian rÃ¡Â»Âi';
+          final timeLabel = isStart ? 'thời gian đến' : 'thời gian rời';
 
           final bool? shouldAdjustSubsequent = await showDialog<bool>(
             context: context,
@@ -517,16 +517,16 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
-              title: const Text('TÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng Ã„â€˜iÃ¡Â»Âu chÃ¡Â»â€°nh thÃ¡Â»Âi gian?'),
+              title: const Text('Tự động điều chỉnh thời gian?'),
               content: Text(
-                'BÃ¡ÂºÂ¡n vÃ¡Â»Â«a thay Ã„â€˜Ã¡Â»â€¢i $timeLabel tÃ¡Â»Â« $currentTime sang $newTime (${deltaMin > 0 ? "+" : ""}$deltaMin phÃƒÂºt).\n\n'
-                'BÃ¡ÂºÂ¡n cÃƒÂ³ muÃ¡Â»â€˜n tÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng Ã„â€˜iÃ¡Â»Âu chÃ¡Â»â€°nh (tÃ¡Â»â€¹nh tiÃ¡ÂºÂ¿n) cÃƒÂ¡c Ã„â€˜Ã¡Â»â€¹a Ã„â€˜iÃ¡Â»Æ’m phÃƒÂ­a sau khÃƒÂ´ng?',
+                'Bạn vừa thay đổi $timeLabel từ $currentTime sang $newTime (${deltaMin > 0 ? "+" : ""}$deltaMin phút).\n\n'
+                'Bạn có muốn tự động điều chỉnh (tịnh tiến) các địa điểm phía sau không?',
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context, false),
                   child: const Text(
-                    'KhÃƒÂ´ng',
+                    'Không',
                     style: TextStyle(
                       color: Colors.grey,
                       fontWeight: FontWeight.bold,
@@ -542,7 +542,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
                     ),
                   ),
                   child: const Text(
-                    'CÃƒÂ³',
+                    'Có',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -620,7 +620,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
       if (state is! ReviewLoaded) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Khong the mo du lieu danh gia'),
+            content: Text('Không thể mở dữ liệu đánh giá'),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -656,7 +656,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
         setState(() {});
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Ã„ÂÃƒÂ£ lÃ†Â°u Ã„â€˜ÃƒÂ¡nh giÃƒÂ¡ Ã„â€˜Ã¡Â»â€¹a Ã„â€˜iÃ¡Â»Æ’m'),
+            content: Text('Đã lưu đánh giá địa điểm'),
             backgroundColor: Color(0xFF10B981),
             behavior: SnackBarBehavior.floating,
           ),
@@ -666,7 +666,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('KhÃƒÂ´ng thÃ¡Â»Æ’ mÃ¡Â»Å¸ giao diÃ¡Â»â€¡n Ã„â€˜ÃƒÂ¡nh giÃƒÂ¡'),
+          content: Text('Không thể mở giao diện đánh giá'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -682,9 +682,9 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('XÃƒÂ³a Ã„â€˜Ã¡Â»â€¹a Ã„â€˜iÃ¡Â»Æ’m'),
+        title: const Text('Xóa địa điểm'),
         content: Text(
-          'BÃ¡ÂºÂ¡n cÃƒÂ³ chÃ¡ÂºÂ¯c chÃ¡ÂºÂ¯n muÃ¡Â»â€˜n xÃƒÂ³a "${activity.title}" khÃ¡Â»Âi lÃ¡Â»â€¹ch trÃƒÂ¬nh khÃƒÂ´ng?',
+          'Bạn có chắc chắn muốn xóa "${activity.title}" khỏi lịch trình không?',
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.r16),
@@ -693,7 +693,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
             child: const Text(
-              'HÃ¡Â»Â§y',
+              'Hủy',
               style: TextStyle(color: AppColors.textSecondary),
             ),
           ),
@@ -703,14 +703,14 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
               context.read<ItineraryCubit>().deleteActivity(activity.id);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Ã„ÂÃƒÂ£ xÃƒÂ³a ${activity.title}'),
+                  content: Text('Đã xóa ${activity.title}'),
                   backgroundColor: AppColorsExt.error,
                   behavior: SnackBarBehavior.floating,
                 ),
               );
             },
             child: const Text(
-              'XÃƒÂ³a',
+              'Xóa',
               style: TextStyle(
                 color: AppColorsExt.error,
                 fontWeight: FontWeight.bold,
@@ -729,19 +729,19 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
     final users = <({String id, String name, String email, String avatar})>[
       (
         id: 'a',
-        name: 'NguyÃ¡Â»â€¦n VÃ„Æ’n A',
+        name: 'Nguyễn Văn A',
         email: 'anv@example.com',
         avatar: 'https://i.pravatar.cc/150?u=a',
       ),
       (
         id: 'b',
-        name: 'TrÃ¡ÂºÂ§n ThÃ¡Â»â€¹ B',
+        name: 'Trần Thị B',
         email: 'btt@example.com',
         avatar: 'https://i.pravatar.cc/150?u=b',
       ),
       (
         id: 'c',
-        name: 'LÃƒÂª VÃ„Æ’n C',
+        name: 'Lê Văn C',
         email: 'clv@example.com',
         avatar: 'https://i.pravatar.cc/150?u=c',
       ),
@@ -784,10 +784,10 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
                   ),
                 ),
                 const SizedBox(height: AppSizes.s24),
-                Text('Chia sÃ¡ÂºÂ» lÃ¡Â»â€¹ch trÃƒÂ¬nh', style: AppTextStyles.heading2),
+                Text('Chia sẻ lịch trình', style: AppTextStyles.heading2),
                 const SizedBox(height: AppSizes.s8),
                 Text(
-                  'MÃ¡Â»Âi bÃ¡ÂºÂ¡n bÃƒÂ¨ cÃƒÂ¹ng tham gia vÃƒÂ  chÃ¡Â»â€°nh sÃ¡Â»Â­a lÃ¡Â»â€¹ch trÃƒÂ¬nh chung cho chuyÃ¡ÂºÂ¿n Ã„â€˜i nÃƒÂ y.',
+                  'Mời bạn bè cùng tham gia và chỉnh sửa lịch trình chung cho chuyến đi này.',
                   textAlign: TextAlign.center,
                   style: AppTextStyles.body.copyWith(
                     fontSize: 13,
@@ -800,7 +800,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
                   onChanged: (value) =>
                       setModalState(() => searchQuery = value),
                   decoration: InputDecoration(
-                    hintText: 'TÃƒÂ¬m kiÃ¡ÂºÂ¿m qua tÃƒÂªn hoÃ¡ÂºÂ·c email...',
+                    hintText: 'Tìm kiếm qua tên hoặc email...',
                     prefixIcon: const Icon(Icons.search, size: AppSizes.iconMd),
                     suffixIcon: searchQuery.isEmpty
                         ? null
@@ -827,7 +827,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
                   child: filteredUsers.isEmpty
                       ? Center(
                           child: Text(
-                            'KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y ngÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng phÃƒÂ¹ hÃ¡Â»Â£p',
+                            'Không tìm thấy người dùng phù hợp',
                             style: AppTextStyles.body.copyWith(
                               color: AppColors.textSecondary,
                             ),
@@ -907,7 +907,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
               padding: const EdgeInsets.symmetric(horizontal: AppSizes.s16),
             ),
             child: Text(
-              isInvited ? 'Ã„ÂÃƒÂ£ gÃ¡Â»Â­i' : 'GÃ¡Â»Â­i lÃ¡Â»Âi mÃ¡Â»Âi',
+              isInvited ? 'Đã gửi' : 'Gửi lời mời',
               style: AppTextStylesExt.bodySmall.copyWith(
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
@@ -933,7 +933,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
           vertical: AppSizes.s8,
         ),
         content: const Text(
-          'CÃƒÂ³ lÃ¡Â»â„¢ trÃƒÂ¬nh tÃ¡Â»â€˜i Ã†Â°u hÃ†Â¡n cho ngÃƒÂ y nÃƒÂ y. BÃ¡ÂºÂ¡n cÃƒÂ³ muÃ¡Â»â€˜n ÃƒÂ¡p dÃ¡Â»Â¥ng khÃƒÂ´ng?',
+          'Có lộ trình tối ưu hơn cho ngày này. Bạn có muốn áp dụng không?',
           style: TextStyle(fontSize: 13),
         ),
         actions: [
@@ -943,7 +943,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
               context.read<ItineraryCubit>().dismissReorderSuggestion();
             },
             child: const Text(
-              'GiÃ¡Â»Â¯ nguyÃƒÂªn',
+              'Giữ nguyên',
               style: TextStyle(color: AppColors.textSecondary),
             ),
           ),
@@ -953,7 +953,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
               context.read<ItineraryCubit>().applySuggestedReorder();
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: const Text('Ã„ÂÃƒÂ£ ÃƒÂ¡p dÃ¡Â»Â¥ng lÃ¡Â»â„¢ trÃƒÂ¬nh tÃ¡Â»â€˜i Ã†Â°u!'),
+                  content: const Text('Đã áp dụng lộ trình tối ưu!'),
                   backgroundColor: AppColorsExt.success,
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(
@@ -963,7 +963,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
               );
             },
             child: Text(
-              'SÃ¡ÂºÂ¯p xÃ¡ÂºÂ¿p lÃ¡ÂºÂ¡i',
+              'Sắp xếp lại',
               style: TextStyle(
                 color: AppColors.primary,
                 fontWeight: FontWeight.bold,
@@ -1027,16 +1027,16 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
   }
 
   void _showFoodProximityPopup(BuildContext ctx, TrackingState state) {
-    final name = state.nearbyRestaurantName ?? 'QuÃƒÂ¡n Ã„Æ’n gÃ¡ÂºÂ§n Ã„â€˜ÃƒÂ¢y';
+    final name = state.nearbyRestaurantName ?? 'Quán ăn gần đây';
     final detailId = state.nearbyRestaurantDetailId ?? '';
     showModalBottomSheet(
       context: ctx,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => PreOrderPopup(
-        title: 'QuÃƒÂ¡n Ã„Æ’n gÃ¡ÂºÂ§n bÃ¡ÂºÂ¡n!',
+        title: 'Quán ăn gần bạn!',
         message:
-            'BÃ¡ÂºÂ¡n Ã„â€˜ang trong bÃƒÂ¡n kÃƒÂ­nh ${TrackingConfig.foodProximityKm.toInt()} km. Ã„ÂÃ¡ÂºÂ·t trÃ†Â°Ã¡Â»â€ºc Ã„â€˜Ã¡Â»Æ’ khÃƒÂ´ng phÃ¡ÂºÂ£i chÃ¡Â»Â?',
+            'Bạn đang trong bán kính ${TrackingConfig.foodProximityKm.toInt()} km. Đặt trước để không phải chờ?',
         restaurantName: name,
         estimatedWaitMinutes: 15,
         rating: 0,
@@ -1058,7 +1058,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
         },
       ),
     ).then((_) {
-      // Ã„ÂÃƒÂ³ng popup Ã¢â€ â€™ dismiss Ã„â€˜Ã¡Â»Æ’ khÃƒÂ´ng hiÃ¡Â»â€¡n lÃ¡ÂºÂ¡i ngay
+      // Đóng popup → dismiss để không hiện lại ngay
       if (ctx.mounted) {
         ctx.read<TrackingCubit>().dismissNearbyRestaurant();
       }
@@ -1235,13 +1235,13 @@ class _LazyMapPreview extends StatelessWidget {
       final category = (activity.category ?? '').toLowerCase();
       final title = activity.title.toLowerCase();
       final isHotel =
-          category.contains('lÃ†Â°u trÃƒÂº') ||
+          category.contains('lưu trú') ||
           category.contains('luu tru') ||
-          category.contains('khÃƒÂ¡ch sÃ¡ÂºÂ¡n') ||
+          category.contains('khách sạn') ||
           category.contains('khach san') ||
           category.contains('hotel') ||
           title.contains('hotel') ||
-          title.contains('khÃƒÂ¡ch sÃ¡ÂºÂ¡n') ||
+          title.contains('khách sạn') ||
           title.contains('khach san');
       return !(sameTime && isHotel);
     }).length;
@@ -1318,7 +1318,7 @@ class _LazyMapPreview extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'NgÃƒÂ y ${day.dayNumber} Ã¢â‚¬Â¢ $pointCount Ã„â€˜iÃ¡Â»Æ’m / BÃ¡ÂºÂ£n Ã„â€˜Ã¡Â»â€œ sÃ¡ÂºÂ½ chÃ¡Â»â€° tÃ¡ÂºÂ£i khi bÃ¡ÂºÂ¡n cÃ¡ÂºÂ§n xem tuyÃ¡ÂºÂ¿n Ã„â€˜Ã†Â°Ã¡Â»Âng.',
+                      'Ngày ${day.dayNumber} • $pointCount điểm / Bản đồ sẽ chỉ tải khi bạn cần xem tuyến đường.',
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -1496,7 +1496,7 @@ class _ItineraryDetailView extends StatelessWidget {
                     ElevatedButton(
                       onPressed: () =>
                           context.read<ItineraryCubit>().loadData(),
-                      child: Text('ThÃ¡Â»Â­ lÃ¡ÂºÂ¡i'),
+                      child: Text('Thử lại'),
                     ),
                   ],
                 ),
@@ -1513,7 +1513,7 @@ class _ItineraryDetailView extends StatelessWidget {
 
             return Stack(
               children: [
-                // Ã¢Å“â€¦ MAP CHIÃ¡ÂºÂ¾M TOÃƒâ‚¬N MÃƒâ‚¬N HÃƒÅ’NH (full-screen, tÃ†Â°Ã†Â¡ng tÃƒÂ¡c hoÃƒÂ n toÃƒÂ n)
+                // ✅ MAP CHIẾM TOÀN MÀN HÌNH (full-screen, tương tác hoàn toàn)
                 Positioned.fill(
                   child: isMapLoaded
                       ? ItineraryMapView(
@@ -1529,11 +1529,11 @@ class _ItineraryDetailView extends StatelessWidget {
                         ),
                 ),
 
-                // Ã¢Å“â€¦ BOTTOM SHEET KÃƒâ€°O LÃƒÅ N/XUÃ¡Â»ÂNG (DraggableScrollableSheet)
+                // ✅ BOTTOM SHEET KÉO LÊN/XUỐNG (DraggableScrollableSheet)
                 DraggableScrollableSheet(
-                  initialChildSize: 0.45, // MÃ¡Â»Å¸ 45% mÃƒÂ n hÃƒÂ¬nh ban Ã„â€˜Ã¡ÂºÂ§u
-                  minChildSize: 0.12, // Thu nhÃ¡Â»Â tÃ¡Â»â€˜i Ã„â€˜a Ã¢â€ â€™ gÃ¡ÂºÂ§n nhÃ†Â° chÃ¡Â»â€° thÃ¡ÂºÂ¥y map
-                  maxChildSize: 0.85, // MÃ¡Â»Å¸ rÃ¡Â»â„¢ng tÃ¡Â»â€˜i Ã„â€˜a Ã¢â€ â€™ che gÃ¡ÂºÂ§n hÃ¡ÂºÂ¿t map
+                  initialChildSize: 0.45, // Mở 45% màn hình ban đầu
+                  minChildSize: 0.12, // Thu nhỏ tối đa → gần như chỉ thấy map
+                  maxChildSize: 0.85, // Mở rộng tối đa → che gần hết map
                   snap: true,
                   snapSizes: const [0.12, 0.45, 0.85],
                   builder: (context, sheetScrollController) {
@@ -1553,7 +1553,7 @@ class _ItineraryDetailView extends StatelessWidget {
                       ),
                       child: Column(
                         children: [
-                          // Thanh kÃƒÂ©o (drag handle)
+                          // Thanh kéo (drag handle)
                           Padding(
                             padding: const EdgeInsets.only(top: 12, bottom: 8),
                             child: Container(
@@ -1565,7 +1565,7 @@ class _ItineraryDetailView extends StatelessWidget {
                               ),
                             ),
                           ),
-                          // NÃ¡Â»â„¢i dung cuÃ¡Â»â„¢n Ã„â€˜Ã†Â°Ã¡Â»Â£c
+                          // Nội dung cuộn được
                           Expanded(
                             child: ListView(
                               controller: sheetScrollController,
@@ -1586,7 +1586,7 @@ class _ItineraryDetailView extends StatelessWidget {
                   },
                 ),
 
-                // Ã¢Å“â€¦ FLOATING BUTTONS (Back, Share, Rate) Ã¡Â»Å¸ trÃƒÂªn cÃƒÂ¹ng
+                // ✅ FLOATING BUTTONS (Back, Share, Rate) ở trên cùng
                 Positioned(
                   top: MediaQuery.of(context).padding.top + AppSizes.s12,
                   left: AppSizes.s20,
@@ -1684,21 +1684,21 @@ class _ItineraryDetailView extends StatelessWidget {
       builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         title: Text(
-          nextValue ? 'CÃƒÂ´ng khai lÃ¡Â»â€¹ch trÃƒÂ¬nh?' : 'ChuyÃ¡Â»Æ’n vÃ¡Â»Â riÃƒÂªng tÃ†Â°?',
+          nextValue ? 'Công khai lịch trình?' : 'Chuyển về riêng tư?',
         ),
         content: Text(
           nextValue
-              ? 'LÃ¡Â»â€¹ch trÃƒÂ¬nh sÃ¡ÂºÂ½ hiÃ¡Â»Æ’n thÃ¡Â»â€¹ trong khu vÃ¡Â»Â±c khÃƒÂ¡m phÃƒÂ¡ cÃƒÂ´ng khai.'
-              : 'NgÃ†Â°Ã¡Â»Âi khÃƒÂ¡c sÃ¡ÂºÂ½ khÃƒÂ´ng cÃƒÂ²n thÃ¡ÂºÂ¥y lÃ¡Â»â€¹ch trÃƒÂ¬nh nÃƒÂ y trong khu vÃ¡Â»Â±c cÃƒÂ´ng khai.',
+              ? 'Lịch trình sẽ hiển thị trong khu vực khám phá công khai.'
+              : 'Người khác sẽ không còn thấy lịch trình này trong khu vực công khai.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('HÃ¡Â»Â§y'),
+            child: const Text('Hủy'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('XÃƒÂ¡c nhÃ¡ÂºÂ­n'),
+            child: const Text('Xác nhận'),
           ),
         ],
       ),
@@ -1712,8 +1712,8 @@ class _ItineraryDetailView extends StatelessWidget {
         SnackBar(
           content: Text(
             nextValue
-                ? 'Ã„ÂÃƒÂ£ cÃƒÂ´ng khai lÃ¡Â»â€¹ch trÃƒÂ¬nh'
-                : 'Ã„ÂÃƒÂ£ chuyÃ¡Â»Æ’n lÃ¡Â»â€¹ch trÃƒÂ¬nh vÃ¡Â»Â riÃƒÂªng tÃ†Â°',
+                ? 'Đã công khai lịch trình'
+                : 'Đã chuyển lịch trình về riêng tư',
           ),
           behavior: SnackBarBehavior.floating,
         ),
@@ -1722,7 +1722,7 @@ class _ItineraryDetailView extends StatelessWidget {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('KhÃƒÂ´ng thÃ¡Â»Æ’ cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t trÃ¡ÂºÂ¡ng thÃƒÂ¡i cÃƒÂ´ng khai'),
+          content: Text('Không thể cập nhật trạng thái công khai'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -1779,7 +1779,7 @@ class _ItineraryDetailView extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Text(
-            '$destinationCount Ã„â€˜iÃ¡Â»Æ’m trong ngÃƒÂ y',
+            '$destinationCount điểm trong ngày',
             style: AppTextStylesExt.bodyMedium.copyWith(
               color: const Color(0xFF0F172A),
               fontSize: 15,
@@ -1817,7 +1817,7 @@ class _ItineraryDetailView extends StatelessWidget {
                     Icon(Icons.add_rounded, size: 16, color: Colors.white),
                     SizedBox(width: 5),
                     Text(
-                      'ThÃƒÂªm Ã„â€˜Ã¡Â»â€¹a Ã„â€˜iÃ¡Â»Æ’m',
+                      'Thêm địa điểm',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 12,
@@ -1847,8 +1847,8 @@ class _ItineraryDetailView extends StatelessWidget {
                 .read<ItineraryCubit>()
                 .toggleItineraryStatus(itin.id, false),
           ),
-          // DÃƒÂ¹ng Builder Ã„â€˜Ã¡Â»Æ’ Ã„â€˜Ã¡Â»Âc TrackingCubit (Ã„â€˜Ã†Â°Ã¡Â»Â£c provide Ã¡Â»Å¸ ItineraryDetailScreen)
-          // vÃƒÂ  truyÃ¡Â»Ân trackingStatus cho tÃ¡Â»Â«ng TimelineActivityCard.
+          // Dùng Builder để đọc TrackingCubit (được provide ở ItineraryDetailScreen)
+          // và truyền trackingStatus cho từng TimelineActivityCard.
           Builder(
             builder: (context) {
               final tracking = context.watch<TrackingCubit>().state;
@@ -1951,13 +1951,13 @@ class _ItineraryDetailView extends StatelessWidget {
     final title = activity.title.toLowerCase();
     final sameTime = activity.startTime == activity.endTime;
     return sameTime &&
-        (category.contains('lÃ†Â°u trÃƒÂº') ||
+        (category.contains('lưu trú') ||
             category.contains('luu tru') ||
-            category.contains('khÃƒÂ¡ch sÃ¡ÂºÂ¡n') ||
+            category.contains('khách sạn') ||
             category.contains('khach san') ||
             category.contains('hotel') ||
             title.contains('hotel') ||
-            title.contains('khÃƒÂ¡ch sÃ¡ÂºÂ¡n') ||
+            title.contains('khách sạn') ||
             title.contains('khach san'));
   }
 
@@ -1965,7 +1965,7 @@ class _ItineraryDetailView extends StatelessWidget {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}';
   }
 
-  // Ã†Â¯Ã¡Â»â€ºc tÃƒÂ­nh thÃ¡Â»Âi gian di chuyÃ¡Â»Æ’n tÃ¡Â»Â« tÃ¡Â»Âa Ã„â€˜Ã¡Â»â„¢ (Haversine + tÃ¡Â»â€˜c Ã„â€˜Ã¡Â»â„¢ 25 km/h)
+  // Ước tính thời gian di chuyển từ tọa độ (Haversine + tốc độ 25 km/h)
   static String _estimateTransit(
     double? lat1,
     double? lng1,
@@ -1973,7 +1973,7 @@ class _ItineraryDetailView extends StatelessWidget {
     double? lng2,
   ) {
     if (lat1 == null || lng1 == null || lat2 == null || lng2 == null) {
-      return 'Di chuyÃ¡Â»Æ’n Ã„â€˜Ã¡ÂºÂ¿n Ã„â€˜iÃ¡Â»Æ’m tiÃ¡ÂºÂ¿p theo';
+      return 'Di chuyển đến điểm tiếp theo';
     }
     const r = 6371.0;
     final dLat = (lat2 - lat1) * pi / 180;
@@ -1986,10 +1986,10 @@ class _ItineraryDetailView extends StatelessWidget {
             sin(dLng / 2);
     final km = r * 2 * atan2(sqrt(a), sqrt(1 - a));
     final mins = (km / 25 * 60).ceil().clamp(1, 999);
-    if (mins < 60) return '~$mins phÃƒÂºt di chuyÃ¡Â»Æ’n';
+    if (mins < 60) return '~$mins phút di chuyển';
     final h = mins ~/ 60;
     final m = mins % 60;
-    return m == 0 ? '~$h giÃ¡Â»Â di chuyÃ¡Â»Æ’n' : '~$h giÃ¡Â»Â $m phÃƒÂºt di chuyÃ¡Â»Æ’n';
+    return m == 0 ? '~$h giờ di chuyển' : '~$h giờ $m phút di chuyển';
   }
 
   Widget _floatingCircleButton(
