@@ -26,6 +26,7 @@ class TimelineActivityCard extends StatelessWidget {
   final int day;
   final bool isHighlighted;
   final bool isEditMode;
+  final bool isOpeningReview;
   final String? nextTransportInfo;
 
   /// Trạng thái theo dõi của địa điểm này (null = tracking chưa bật).
@@ -56,6 +57,7 @@ class TimelineActivityCard extends StatelessWidget {
     required this.day,
     this.isHighlighted = false,
     this.isEditMode = false,
+    this.isOpeningReview = false,
     this.nextTransportInfo,
     this.trackingStatus,
     this.onCheckIn,
@@ -479,9 +481,12 @@ class TimelineActivityCard extends StatelessWidget {
             icon: hasUserRated ? Icons.star_rounded : Icons.rate_review_rounded,
             label: hasUserRated
                 ? '\u0110\u00e3 \u0111\u00e1nh gi\u00e1 ${userRating?.toStringAsFixed(1) ?? ''}'
+                : isOpeningReview
+                ? '\u0110ang m\u1edf'
                 : '\u0110\u00e1nh gi\u00e1',
             color: const Color(0xFF10B981),
-            onTap: onRateTap,
+            onTap: isOpeningReview ? null : onRateTap,
+            isLoading: isOpeningReview,
           ),
       ],
     );
@@ -492,6 +497,7 @@ class TimelineActivityCard extends StatelessWidget {
     required String label,
     required Color color,
     VoidCallback? onTap,
+    bool isLoading = false,
   }) {
     return InkWell(
       onTap: onTap,
@@ -506,7 +512,17 @@ class TimelineActivityCard extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 13, color: color),
+            if (isLoading)
+              SizedBox(
+                width: 13,
+                height: 13,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(color),
+                ),
+              )
+            else
+              Icon(icon, size: 13, color: color),
             const SizedBox(width: 5),
             Text(
               label,

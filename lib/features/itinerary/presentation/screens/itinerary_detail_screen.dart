@@ -66,6 +66,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
   MapboxMap? _mapController;
   final ScrollController _scrollController = ScrollController();
   final Map<String, GlobalKey> _activityKeys = {};
+  final Set<String> _openingReviewActivityIds = <String>{};
   String? _highlightedActivityId;
 
   DateTime? _visitDateForDay(int dayNumber) {
@@ -605,6 +606,10 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
   }
 
   Future<void> _onRateActivity(ItineraryActivityEntity activity) async {
+    if (_openingReviewActivityIds.contains(activity.id)) {
+      return;
+    }
+    setState(() => _openingReviewActivityIds.add(activity.id));
     final reviewCubit = sl<ReviewCubit>();
 
     try {
@@ -667,6 +672,9 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
       );
     } finally {
       await reviewCubit.close();
+      if (mounted) {
+        setState(() => _openingReviewActivityIds.remove(activity.id));
+      }
     }
   }
 
@@ -1002,6 +1010,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
             onReplaceActivity: _onReplaceActivity,
             onDeleteActivity: _onDeleteActivity,
             onRateActivity: _onRateActivity,
+            openingReviewActivityIds: _openingReviewActivityIds,
             onEditTime: _onEditTime,
             onDirectionTap: _launchDirections,
             onShareTap: _showShareSheet,
@@ -1414,6 +1423,7 @@ class _ItineraryDetailView extends StatelessWidget {
   final Function(ItineraryActivityEntity) onReplaceActivity;
   final Function(ItineraryActivityEntity) onDeleteActivity;
   final Function(ItineraryActivityEntity) onRateActivity;
+  final Set<String> openingReviewActivityIds;
   final Function(ItineraryActivityEntity, bool, bool) onEditTime;
   final Function(ItineraryActivityEntity, ItineraryActivityEntity)
   onDirectionTap;
@@ -1443,6 +1453,7 @@ class _ItineraryDetailView extends StatelessWidget {
     required this.onReplaceActivity,
     required this.onDeleteActivity,
     required this.onRateActivity,
+    required this.openingReviewActivityIds,
     required this.onEditTime,
     required this.onDirectionTap,
     required this.onShareTap,
@@ -1863,7 +1874,6 @@ class _ItineraryDetailView extends StatelessWidget {
                                 nextActivity.latitude,
                                 nextActivity.longitude,
                               ));
-                  // LÃ¡ÂºÂ¥y trÃ¡ÂºÂ¡ng thÃƒÂ¡i tracking theo itineraryDetailId (= activity.id)
                   final TrackingPlaceStatus? trackingStatus = tracking.isActive
                       ? tracking.byDetailId(activity.id)
                       : null;
@@ -1878,7 +1888,14 @@ class _ItineraryDetailView extends StatelessWidget {
                     onEditTap: () => onEditActivity(activity),
                     onReplaceTap: () => onReplaceActivity(activity),
                     onDeleteTap: () => onDeleteActivity(activity),
-                    onRateTap: () => onRateActivity(activity),
+                    onRateTap: () => onRateActivity(
+                      trackingStatus?.status == VisitStatus.visited
+                          ? activity.copyWith(status: ActivityStatus.daDi)
+                          : activity,
+                    ),
+                    isOpeningReview: openingReviewActivityIds.contains(
+                      activity.id,
+                    ),
                     onCardTap: () => onActivityTap(activity),
                     onCardLongPress: () => onActivityLongPress(activity),
                     onViewDetailTap: () => onActivityLongPress(activity),
