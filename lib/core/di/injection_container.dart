@@ -71,7 +71,10 @@ import 'package:travel_advisor_mobile/features/search/data/repositories/search_r
 import 'package:travel_advisor_mobile/features/search/domain/repositories/search_repository.dart';
 import 'package:travel_advisor_mobile/features/search/domain/usecases/get_recent_searches.dart';
 import 'package:travel_advisor_mobile/features/search/domain/usecases/search_locations.dart';
+import 'package:travel_advisor_mobile/features/search/domain/usecases/search_all_usecase.dart';
+import 'package:travel_advisor_mobile/features/search/domain/usecases/search_by_type_usecase.dart';
 import 'package:travel_advisor_mobile/features/search/presentation/cubit/search_cubit.dart';
+import 'package:travel_advisor_mobile/features/search/presentation/cubit/search_all_cubit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:travel_advisor_mobile/features/search/data/datasources/search_local_datasource.dart';
 import 'package:travel_advisor_mobile/features/search/domain/usecases/save_recent_search.dart';
@@ -83,23 +86,23 @@ import 'package:travel_advisor_mobile/features/home/presentation/cubit/notificat
 
 final sl = GetIt.instance;
 
-/// 🔌 Single registration point for all dependencies.
+/// ðŸ”Œ Single registration point for all dependencies.
 Future<void> initDependencies() async {
-  // ── Network ────────────────────────────────────────────────────────────────
+  // â”€â”€ Network â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   sl.registerLazySingleton<DioClient>(() => DioClient());
 
-  // ── Location (vị trí hiện tại + reverse geocoding) ───────────────────────────
+  // â”€â”€ Location (vá»‹ trÃ­ hiá»‡n táº¡i + reverse geocoding) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   sl.registerLazySingleton<LocationService>(() => LocationService());
   sl.registerFactory(() => LocationCubit(sl()));
 
-  // ── Activity Tracking ──────────────────────────────────────────────────────
+  // â”€â”€ Activity Tracking â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   sl.registerLazySingleton<ActivityService>(() => ActivityService(sl()));
 
-  // ── Auth ───────────────────────────────────────────────────────────────────
+  // â”€â”€ Auth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   sl.registerLazySingleton<AuthDataSource>(() => RemoteAuthDataSource(sl()));
   sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(sl()));
 
-  // Đăng ký các UseCase
+  // ÄÄƒng kÃ½ cÃ¡c UseCase
   sl.registerLazySingleton(() => LoginUseCase(sl()));
   sl.registerLazySingleton(() => RegisterTouristUseCase(sl()));
   sl.registerLazySingleton(() => ForgotPasswordUseCase(sl()));
@@ -109,7 +112,7 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton(() => CheckSessionUseCase(sl()));
   sl.registerLazySingleton(() => LogoutUseCase(sl()));
 
-  // Đăng ký Cubit
+  // ÄÄƒng kÃ½ Cubit
   sl.registerFactory(
     () => AuthCubit(
       loginUseCase: sl(),
@@ -123,7 +126,7 @@ Future<void> initDependencies() async {
     ),
   );
 
-  // ── Home ───────────────────────────────────────────────────────────────────
+  // â”€â”€ Home â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   sl.registerLazySingleton<HomeDataSource>(() => RemoteHomeDataSource(sl()));
   sl.registerLazySingleton<HomeRepository>(() => HomeRepositoryImpl(sl()));
   sl.registerLazySingleton(() => GetExploreHomeUseCase(sl()));
@@ -142,7 +145,7 @@ Future<void> initDependencies() async {
     ),
   );
 
-  // ── Notifications ─────────────────────────────────────────────────────────
+  // â”€â”€ Notifications â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   sl.registerLazySingleton<NotificationDataSource>(
     () => RemoteNotificationDataSource(sl()),
   );
@@ -162,10 +165,10 @@ Future<void> initDependencies() async {
     ),
   );
 
-  // ── Itinerary ──────────────────────────────────────────────────────────────
+  // â”€â”€ Itinerary â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   sl.registerLazySingleton<ItineraryDataSource>(
     () => RemoteItineraryDataSource(), //MockItineraryDataSource(),
-    // TODO: swap → RemoteItineraryDataSource(sl<DioClient>())
+    // TODO: swap â†’ RemoteItineraryDataSource(sl<DioClient>())
   );
   sl.registerLazySingleton<ItineraryRepository>(
     () => ItineraryRepositoryImpl(sl()),
@@ -187,10 +190,11 @@ Future<void> initDependencies() async {
       getItineraryDetail: sl(),
       updateActivities: sl(),
       updateTitle: sl(),
+      toggleVisibility: sl(),
     ),
   );
 
-  // ── Itinerary Tracking (geofence + dwell) ───────────────────────────────────
+  // â”€â”€ Itinerary Tracking (geofence + dwell) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   sl.registerLazySingleton<TrackingRemoteDataSource>(
     () => TrackingRemoteDataSource(sl<DioClient>()),
   );
@@ -219,7 +223,7 @@ Future<void> initDependencies() async {
     ),
   );
 
-  // ── Profile ────────────────────────────────────────────────────────────────
+  // â”€â”€ Profile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   sl.registerLazySingleton<ProfileDataSource>(
     () => RemoteProfileDataSource(sl()),
   );
@@ -239,7 +243,7 @@ Future<void> initDependencies() async {
     ),
   );
 
-  // ── Review ─────────────────────────────────────────────────────────────────
+  // â”€â”€ Review â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   sl.registerLazySingleton<ReviewDataSource>(
     () => RemoteReviewDataSource(sl()),
   );
@@ -248,11 +252,11 @@ Future<void> initDependencies() async {
   sl.registerFactory(
     () => ReviewCubit(getItineraryForReview: sl(), reviewRepository: sl()),
   );
-  // Trong hàm initDependencies(), thêm SharedPreferences ở phần đầu (trước tất cả features):
+  // Trong hÃ m initDependencies(), thÃªm SharedPreferences á»Ÿ pháº§n Ä‘áº§u (trÆ°á»›c táº¥t cáº£ features):
   final sharedPreferences = await SharedPreferences.getInstance();
   sl.registerLazySingleton<SharedPreferences>(() => sharedPreferences);
 
-  // ── Search ─────────────────────────────────────────────────────────────────
+  // â”€â”€ Search â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   sl.registerLazySingleton<SearchRemoteDataSource>(
     () => SearchRemoteDataSourceImpl(dioClient: sl<DioClient>()),
   );
@@ -269,9 +273,12 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton(() => GetRecentSearches(sl()));
   sl.registerLazySingleton(() => SearchLocations(sl()));
   sl.registerLazySingleton(() => SaveRecentSearch(sl()));
+  sl.registerLazySingleton(() => SearchAllUseCase(sl()));
+  sl.registerLazySingleton(() => SearchByTypeUseCase(sl()));
   sl.registerFactory(() => SearchCubit(sl(), sl(), sl(), sl()));
+  sl.registerFactory(() => SearchAllCubit(sl()));
 
-  // ── City Detail ────────────────────────────────────────────────────────────
+  // â”€â”€ City Detail â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   sl.registerLazySingleton<CityDetailDataSource>(
     () => RemoteCityDetailDataSource(sl()),
   );
@@ -281,13 +288,13 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton(() => GetCityOverviewUseCase(sl()));
   sl.registerFactory(() => CityDetailCubit(sl()));
 
-  // ── Food / Orders ─────────────────────────────────────────────────────────
+  // â”€â”€ Food / Orders â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   sl.registerLazySingleton<FoodRemoteDataSource>(
     () => FoodRemoteDataSource(sl()),
   );
   sl.registerFactory(() => FoodCubit(remote: sl()));
 
-  // ── Place ──────────────────────────────────────────────────────────────────
+  // â”€â”€ Place â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   sl.registerLazySingleton<PlaceDataSource>(() => RemotePlaceDataSource(sl()));
   sl.registerLazySingleton<PlaceRepository>(() => PlaceRepositoryImpl(sl()));
   sl.registerLazySingleton(() => GetPlaceDetailUseCase(sl()));
@@ -298,7 +305,7 @@ Future<void> initDependencies() async {
     ),
   );
 
-  // ── Saved ──────────────────────────────────────────────────────────────────
+  // â”€â”€ Saved â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   sl.registerLazySingleton<CollectionsDataSource>(
     () => RemoteCollectionsDataSource(sl()),
   );
@@ -319,15 +326,15 @@ Future<void> initDependencies() async {
     ),
   );
 
-  // ── City ──────────────────────────────────────────────────────────────────
+  // â”€â”€ City â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   sl.registerLazySingleton<CityDataSource>(() => RemoteCityDataSource(sl()));
   sl.registerLazySingleton<CityRepository>(() => CityRepositoryImpl(sl()));
   sl.registerLazySingleton(() => SearchCitiesUseCase(sl()));
 
-  // ── Trip Planner ───────────────────────────────────────────────────────────
+  // â”€â”€ Trip Planner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   sl.registerLazySingleton(() => CreateItineraryUseCase(sl()));
   sl.registerFactory(() => TripPlannerCubit(createItinerary: sl()));
 
-  // ── Survey ─────────────────────────────────────────────────────────────────
+  // â”€â”€ Survey â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   sl.registerFactory(() => SurveyCubit());
 }
