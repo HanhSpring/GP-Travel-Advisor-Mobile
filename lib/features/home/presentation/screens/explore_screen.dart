@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 
@@ -565,7 +565,7 @@ class _ExploreViewState extends State<_ExploreView> {
 
   Widget _buildContent(BuildContext context, ExploreLoaded state) {
     final screenW = MediaQuery.of(context).size.width;
-    final suggestionCardH = screenW * 0.88 * (9 / 16) + 100;
+    final suggestionCardH = screenW * 0.88 * (9 / 16) + 126;
     final destinationCardH = screenW * 0.35 * (1 / 1) + 64;
     final restaurantCardH = screenW * 0.45 * (3 / 4) + 80;
     final hotelCardH = screenW * 0.45 * (3 / 4) + 100;
@@ -814,26 +814,22 @@ class _ExploreViewState extends State<_ExploreView> {
                           left: i == 0 ? 16 : 0,
                           right: 12,
                         ),
-                        child: VisiblePlaceTracker(
-                          placeId: item.id,
-                          child: GestureDetector(
-                            onTap: () {
-                              sl<ActivityService>().trackClick(item.id);
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => BlocProvider(
-                                    create: (_) => sl<PlaceDetailCubit>(),
-                                    child: PlaceDetailScreen(placeId: item.id),
-                                  ),
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => BlocProvider(
+                                  create: (_) => sl<PlaceDetailCubit>(),
+                                  child: PlaceDetailScreen(placeId: item.id),
                                 ),
-                              );
-                            },
-                            child: city_cards.HotelCard(
-                              item: item,
-                              onFavoriteChanged: (value) =>
-                                  _setPlaceFavorite(item.id, value),
-                            ),
+                              ),
+                            );
+                          },
+                          child: city_cards.HotelCard(
+                            item: item,
+                            onFavoriteChanged: (value) =>
+                                _setPlaceFavorite(item.id, value),
                           ),
                         ),
                       );

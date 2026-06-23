@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 
@@ -34,10 +34,10 @@ class PlaceDetailScreen extends StatefulWidget {
 }
 
 class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
+  StreamSubscription<FavoriteChangedEvent>? _favoriteSubscription;
   final _activityService = sl<ActivityService>();
   Timer? _dwellTimer;
   bool _viewTracked = false;
-  StreamSubscription<FavoriteChangedEvent>? _favoriteSubscription;
 
   @override
   void initState() {
@@ -61,13 +61,6 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<PlaceDetailCubit>().loadPlaceDetail(widget.placeId);
     });
-  }
-
-  @override
-  void dispose() {
-    _dwellTimer?.cancel();
-    _favoriteSubscription?.cancel();
-    super.dispose();
   }
 
   void _startDwellTimer() {
@@ -121,6 +114,13 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
     );
   }
   @override
+  void dispose() {
+    _favoriteSubscription?.cancel();
+    _dwellTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
@@ -135,6 +135,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
+
           if (state is PlaceDetailError) {
             return Center(
               child: Column(
@@ -146,7 +147,9 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () => context
+                        
                         .read<PlaceDetailCubit>()
+                        
                         .loadPlaceDetail(widget.placeId),
                     child: const Text('Thử lại'),
                   ),
@@ -155,6 +158,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
             );
           }
 
+
           if (state is PlaceDetailLoaded) {
             final place = state.placeDetail;
             return SingleChildScrollView(
@@ -162,7 +166,9 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                 children: [
                   PlaceHeader(
                     imageUrl: place.images.isNotEmpty
+                       
                         ? place.images[0]
+                       
                         : 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=800&q=80',
                     isFavorite: place.isFavorite,
                     onBack: () => Navigator.pop(context),
@@ -232,6 +238,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                   // 7. Related Places - ONLY SHOW if showRelatedPlaces is true
                   if (widget.showRelatedPlaces)
                     RelatedPlacesSection(relatedPlaces: place.relatedPlaces),
+
 
                   const SizedBox(height: 60),
                 ],

@@ -6,7 +6,6 @@ import 'package:dio/dio.dart';
 import 'place_review_screen.dart';
 
 import 'package:travel_advisor_mobile/core/di/injection_container.dart';
-import 'package:travel_advisor_mobile/core/services/activity_service.dart';
 import 'package:travel_advisor_mobile/core/theme/app_colors.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_cubit.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_state.dart';
@@ -55,6 +54,7 @@ class _RateItineraryView extends StatelessWidget {
   final String itineraryId;
   final bool isReadOnly;
   final bool popExtraOnSubmit;
+
   const _RateItineraryView({
     required this.itineraryId,
     required this.isReadOnly,
@@ -101,8 +101,8 @@ class _RateItineraryView extends StatelessWidget {
             final filteredLocations = state.selectedDay == 0
                 ? visitedLocations
                 : visitedLocations
-                      .where((location) => location.day == state.selectedDay)
-                      .toList();
+                        .where((location) => location.day == state.selectedDay)
+                        .toList();
 
             return Stack(
               children: [
@@ -173,9 +173,7 @@ class _RateItineraryView extends StatelessWidget {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.blobLight.withValues(
-                                  alpha: 0.3,
-                                ),
+                                color: AppColors.blobLight.withValues(alpha: 0.3),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
@@ -204,18 +202,13 @@ class _RateItineraryView extends StatelessWidget {
                           mediaItems:
                               state.locationMediaByDetailId[loc.id] ?? const [],
                           isVisited: loc.isVisited,
-                          isReadOnly: isReadOnly,
-                          onRatingChanged: isReadOnly
-                              ? (_) {}
-                              : (rating) {
-                                  context.read<ReviewCubit>().setLocationRating(
-                                    loc.id,
-                                    rating,
-                                  );
-                                  if (loc.placeId != null && loc.placeId!.isNotEmpty) {
-                                    sl<ActivityService>().trackRating(loc.placeId!);
-                                  }
-                                },
+                          isReadOnly: false,
+                          onRatingChanged: (rating) {
+                            context.read<ReviewCubit>().setLocationRating(
+                              loc.id,
+                              rating,
+                            );
+                          },
                           onWriteReview: () {
                             Navigator.push(
                               context,
@@ -355,11 +348,7 @@ class _RateItineraryView extends StatelessWidget {
 
   List<Widget> _buildDayFilterChips(BuildContext context, ReviewLoaded state) {
     final days =
-        state.itinerary.locations
-            .where((item) => item.isVisited)
-            .map((item) => item.day)
-            .toSet()
-            .toList()
+        state.itinerary.locations.map((item) => item.day).toSet().toList()
           ..sort();
 
     return [

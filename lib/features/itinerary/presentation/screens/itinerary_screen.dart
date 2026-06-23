@@ -58,6 +58,41 @@ class _ItineraryViewState extends State<_ItineraryView> {
     if (mounted) setState(() {});
   }
 
+  Future<void> _confirmAndDelete(
+    BuildContext context,
+    ItineraryCubit cubit,
+    String id,
+    String title,
+  ) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Xoá lịch trình?',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          'Lịch trình "$title" sẽ bị xoá vĩnh viễn và không thể khôi phục. Bạn có chắc chắn không?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Huỷ'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Xoá'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true && context.mounted) {
+      cubit.deleteItem(id);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ItineraryCubit, ItineraryState>(
@@ -89,7 +124,9 @@ class _ItineraryViewState extends State<_ItineraryView> {
     // Dùng summary.total để biết user có itinerary nào không (độc lập với filter hiện tại).
     final hasAnyItineraries = state.summary.total > 0;
 
-    return CustomScrollView(
+    return RefreshIndicator(
+      onRefresh: () => cubit.loadData(),
+      child: CustomScrollView(
       slivers: [
         SliverToBoxAdapter(
           child: Padding(
@@ -132,7 +169,6 @@ class _ItineraryViewState extends State<_ItineraryView> {
             ),
           ),
 
-        // Filter chips luôn hiển thị khi user có ít nhất 1 lịch trình.
         if (hasAnyItineraries)
           SliverToBoxAdapter(
             child: Padding(
@@ -182,7 +218,9 @@ class _ItineraryViewState extends State<_ItineraryView> {
                   MaterialPageRoute(
                     builder: (context) => const TripPlannerScreen(),
                   ),
-                );
+                ).then((_) {
+                  if (context.mounted) cubit.loadData();
+                });
               },
             ),
           )
@@ -209,19 +247,22 @@ class _ItineraryViewState extends State<_ItineraryView> {
                       child: ItinerarySummaryScreen(itineraryId: item.id),
                     ),
                   ),
-                );
+                ).then((_) {
+                  if (context.mounted) cubit.loadData();
+                });
               }
 
               return _ItineraryCardWithStart(
                 item: item,
                 onCardTap: onCardTap,
-                onDelete: () => cubit.deleteItem(item.id),
+                onDelete: () => _confirmAndDelete(context, cubit, item.id, item.title),
               );
             },
             childCount: state.itineraries.length + 2,
           ),
         ),
       ],
+      ),
     );
   }
 
@@ -364,6 +405,21 @@ class _StartButton extends StatefulWidget {
 class _StartButtonState extends State<_StartButton> {
   bool _loading = false;
 
+  bool _isTodayStartDate() {
+    final startDate = widget.item.startDate;
+    if (startDate == null) return true;
+    final now = DateTime.now();
+    return startDate.year == now.year &&
+        startDate.month == now.month &&
+        startDate.day == now.day;
+  }
+
+  String _formatStartDate() {
+    final d = widget.item.startDate;
+    if (d == null) return '';
+    return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+  }
+
   bool _isOngoing(TrackingState trackingState) {
     if (widget.item.trackingActive) return true;
     return trackingState.isActive && trackingState.itineraryId == widget.item.id;
@@ -372,6 +428,16 @@ class _StartButtonState extends State<_StartButton> {
   Future<void> _onTap(bool isOngoing) async {
     if (isOngoing) {
       await _confirmStop();
+      return;
+    }
+
+    if (!_isTodayStartDate()) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Lịch trình chỉ có thể bắt đầu vào ngày ${_formatStartDate()}.'),
+          duration: const Duration(seconds: 3),
+        ));
+      }
       return;
     }
 
@@ -486,8 +552,17 @@ class _StartButtonState extends State<_StartButton> {
       buildWhen: (p, c) => p.isActive != c.isActive || p.itineraryId != c.itineraryId,
       builder: (context, trackingState) {
         final isOngoing = _isOngoing(trackingState);
-        final color = isOngoing ? const Color(0xFF2563EB) : const Color(0xFF0E9E87);
-        final bgColor = isOngoing ? const Color(0xFFEFF6FF) : const Color(0xFFE8FDF8);
+        final isLocked = !isOngoing && !_isTodayStartDate();
+        final color = isOngoing
+            ? const Color(0xFF2563EB)
+            : isLocked
+                ? const Color(0xFF9CA3AF)
+                : const Color(0xFF0E9E87);
+        final bgColor = isOngoing
+            ? const Color(0xFFEFF6FF)
+            : isLocked
+                ? const Color(0xFFF3F4F6)
+                : const Color(0xFFE8FDF8);
 
         return GestureDetector(
           onTap: _loading ? null : () => _onTap(isOngoing),
@@ -503,19 +578,31 @@ class _StartButtonState extends State<_StartButton> {
                   )
                 else
                   Icon(
-                    isOngoing ? Icons.location_searching : Icons.play_circle_outline_rounded,
+                    isOngoing
+                        ? Icons.location_searching
+                        : isLocked
+                            ? Icons.calendar_today_outlined
+                            : Icons.play_circle_outline_rounded,
                     size: 16,
                     color: color,
                   ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    isOngoing ? 'ĐANG DIỄN RA' : 'BẮT ĐẦU LỊCH TRÌNH',
+                    isOngoing
+                        ? 'ĐANG DIỄN RA'
+                        : isLocked
+                            ? 'BẮT ĐẦU NGÀY ${_formatStartDate()}'
+                            : 'BẮT ĐẦU LỊCH TRÌNH',
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: color, letterSpacing: 0.5),
                   ),
                 ),
                 Icon(
-                  isOngoing ? Icons.stop_circle_outlined : Icons.arrow_forward_ios_rounded,
+                  isOngoing
+                      ? Icons.stop_circle_outlined
+                      : isLocked
+                          ? Icons.lock_outline_rounded
+                          : Icons.arrow_forward_ios_rounded,
                   size: 14,
                   color: color,
                 ),

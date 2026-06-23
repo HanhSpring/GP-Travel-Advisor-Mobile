@@ -95,8 +95,16 @@ class ItineraryDetailModel {
       status: json['status'] ?? '',
       isPublic: json['isPublic'] ?? json['is_public'] ?? true,
       isFavorite: json['isFavorite'] == true || json['is_favorite'] == true,
-      durationDays: json['durationDays'] ?? json['duration_days'] ?? json['totalDays'] ?? 0,
-      activitiesCount: json['activitiesCount'] ?? json['activities_count'] ?? json['totalPlaces'] ?? 0,
+      durationDays:
+          json['durationDays'] ??
+          json['duration_days'] ??
+          json['totalDays'] ??
+          0,
+      activitiesCount:
+          json['activitiesCount'] ??
+          json['activities_count'] ??
+          json['totalPlaces'] ??
+          0,
       totalLocations:
           json['totalLocations'] ??
           json['total_locations'] ??

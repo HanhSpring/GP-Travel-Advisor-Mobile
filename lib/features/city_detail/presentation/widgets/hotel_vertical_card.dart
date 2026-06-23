@@ -37,9 +37,7 @@ class _HotelVerticalCardState extends State<HotelVerticalCard> {
   }
 
   void _toggleFavorite() {
-    setState(() {
-      _isFavorite = !_isFavorite;
-    });
+    setState(() => _isFavorite = !_isFavorite);
     widget.onFavoriteChanged?.call(_isFavorite);
     if (_isFavorite) {
       ScaffoldMessenger.of(context)

@@ -76,7 +76,7 @@ class AuthCubit extends Cubit<AuthState> {
       );
       emit(AuthSuccess(result));
     } catch (e, stackTrace) {
-      debugPrint('--- LỖI ĐĂNG NHẬP ---');
+     debugPrint('--- LỖI ĐĂNG NHẬP ---\n$e\n$stackTrace');
       debugPrint('Error: $e');
       debugPrint('StackTrace: $stackTrace');
 

@@ -87,21 +87,14 @@ class TripPlannerCubit extends Cubit<TripPlannerState> {
 
   void updateStartDate(DateTime date) {
     state.maybeWhen(
-      loaded: (form) {
-        // Äáº£m báº£o endDate khÃ´ng trÆ°á»›c startDate
-        final end = form.endDate != null && form.endDate!.isBefore(date)
-            ? date
-            : form.endDate;
-        emit(
-          TripPlannerState.loaded(
-            tripForm: form.copyWith(startDate: date, endDate: end),
-          ),
-        );
-      },
+      loaded: (form) => emit(
+        TripPlannerState.loaded(
+          tripForm: form.copyWith(startDate: date),
+        ),
+      ),
       orElse: () {},
     );
   }
-
   void updateEndDate(DateTime date) {
     state.maybeWhen(
       loaded: (form) =>
@@ -258,6 +251,37 @@ class TripPlannerCubit extends Cubit<TripPlannerState> {
 
   // â”€â”€ Navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
+  // ── Validation per step ─────────────────────────────────────────────────────
+
+  String? validateStep1() {
+    final form = state.whenOrNull(loaded: (f) => f);
+    if (form == null) return null;
+    if (form.departureLocationId == null || form.departureLocationId!.isEmpty) {
+      return 'Vui lòng chọn điểm khởi hành';
+    }
+    if (form.destinationLocationId == null || form.destinationLocationId!.isEmpty) {
+      return 'Vui lòng chọn điểm đến';
+    }
+    return null;
+  }
+
+  String? validateStep2() {
+    final form = state.whenOrNull(loaded: (f) => f);
+    if (form == null) return null;
+    if (form.startDate == null) return 'Vui lòng chọn ngày bắt đầu';
+    if (form.endDate == null) return 'Vui lòng chọn ngày kết thúc';
+    if (form.endDate!.isBefore(form.startDate!)) {
+      return 'Ngày kết thúc không được trước ngày bắt đầu';
+    }
+    if (form.endDate!.difference(form.startDate!).inDays > 7) {
+      return 'Chuyến đi tối đa 7 ngày';
+    }
+    if (form.tripIntent == null || form.tripIntent!.trim().isEmpty) {
+      return 'Vui lòng chọn ít nhất một loại hình du lịch';
+    }
+    return null;
+  }
+
   void goNextStep() {
     state.maybeWhen(
       loaded: (form) {
@@ -306,15 +330,6 @@ class TripPlannerCubit extends Cubit<TripPlannerState> {
       emit(TripPlannerState.loaded(tripForm: form));
       return;
     }
-    if (form.departureLocationId == form.destinationLocationId) {
-      emit(
-        TripPlannerState.error(
-          'Äiá»ƒm khá»Ÿi hÃ nh vÃ  Ä‘iá»ƒm Ä‘áº¿n khÃ´ng Ä‘Æ°á»£c trÃ¹ng nhau',
-        ),
-      );
-      emit(TripPlannerState.loaded(tripForm: form));
-      return;
-    }
     if (form.startDate == null) {
       emit(TripPlannerState.error('Vui lÃ²ng chá»n ngÃ y báº¯t Ä‘áº§u'));
       emit(TripPlannerState.loaded(tripForm: form));
@@ -331,6 +346,11 @@ class TripPlannerCubit extends Cubit<TripPlannerState> {
           'NgÃ y káº¿t thÃºc khÃ´ng Ä‘Æ°á»£c trÆ°á»›c ngÃ y báº¯t Ä‘áº§u',
         ),
       );
+      emit(TripPlannerState.loaded(tripForm: form));
+      return;
+    }
+    if (form.endDate!.difference(form.startDate!).inDays > 7) {
+      emit(TripPlannerState.error('Chuyến đi tối đa 7 ngày'));
       emit(TripPlannerState.loaded(tripForm: form));
       return;
     }
