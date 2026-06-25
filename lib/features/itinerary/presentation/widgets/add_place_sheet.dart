@@ -91,7 +91,7 @@ class _AddPlaceSheetState extends State<AddPlaceSheet> {
         excludeIds: widget.existingIds,
         preferCategory: (q != null && q.isNotEmpty) ? null : 'Tham quan',
         radius: q != null && q.isNotEmpty ? 50 : 15,
-        limit: 10,
+        limit: q != null && q.isNotEmpty ? 30 : 10,
         q: q,
       );
 

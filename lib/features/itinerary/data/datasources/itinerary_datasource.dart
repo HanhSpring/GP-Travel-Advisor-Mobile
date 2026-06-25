@@ -224,6 +224,7 @@ class RemoteItineraryDataSource implements ItineraryDataSource {
             .map(
               (act) => {
                 'id': act.id,
+                'placeId': act.placeId ?? act.id,
                 'startTime': act.startTime,
                 'endTime': act.endTime,
               },

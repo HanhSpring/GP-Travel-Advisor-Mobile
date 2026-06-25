@@ -81,7 +81,7 @@ class _ReplacePlaceSheetState extends State<ReplacePlaceSheet> {
         excludeIds: widget.existingIds,
         preferCategory: (q != null && q.isNotEmpty) ? null : widget.currentActivity.category,
         radius: q != null && q.isNotEmpty ? 50 : 15,
-        limit: 10,
+        limit: q != null && q.isNotEmpty ? 30 : 10,
         q: q,
       );
 
