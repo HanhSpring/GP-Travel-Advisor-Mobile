@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math' show sqrt, sin, cos, atan2, pi;
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
@@ -68,60 +69,6 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
   final Map<String, GlobalKey> _activityKeys = {};
   final Set<String> _openingReviewActivityIds = <String>{};
   String? _highlightedActivityId;
-
-  DateTime? _visitDateForDay(int dayNumber) {
-    final state = context.read<ItineraryCubit>().state;
-    if (state is! ItineraryLoaded || state.selectedItinerary == null) {
-      return null;
-    }
-    try {
-      return state.selectedItinerary!.days
-          .firstWhere((day) => day.dayNumber == dayNumber)
-          .date;
-    } catch (_) {
-      return null;
-    }
-  }
-
-  (String, String)? _parseOpenSlot(String raw, DateTime visitDate) {
-    final matches = RegExp(
-      r'(\d{1,2}:\d{2})\s*[-–]\s*(\d{1,2}:\d{2})',
-    ).allMatches(raw).toList();
-    if (matches.isEmpty) return null;
-    final match = matches.first;
-    return (match.group(1)!, match.group(2)!);
-  }
-
-  void _onEditModeTap() {
-    final state = context.read<ItineraryCubit>().state;
-    if (_isEditMode) {
-      final itin = state is ItineraryLoaded ? state.selectedItinerary : null;
-      if (itin != null) {
-        context.read<ItineraryCubit>().confirmUpdateItinerary(itin.id);
-      }
-      setState(() {
-        _isEditMode = false;
-        _editSnapshot = null;
-      });
-      return;
-    }
-
-    setState(() {
-      _isEditMode = true;
-      _editSnapshot = state is ItineraryLoaded ? state.selectedItinerary : null;
-    });
-  }
-
-  void _onDiscardChanges() {
-    final snapshot = _editSnapshot;
-    if (snapshot != null) {
-      context.read<ItineraryCubit>().discardChanges(snapshot);
-    }
-    setState(() {
-      _isEditMode = false;
-      _editSnapshot = null;
-    });
-  }
 
   void _showAddPlaceScreen() {
     final state = context.read<ItineraryCubit>().state;
@@ -631,7 +578,6 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
     }
   }
 
-  /// Lấy DateTime của ngày [dayNumber] từ itinerary hiện tại.
   DateTime? _visitDateForDay(int dayNumber) {
     try {
       final state = context.read<ItineraryCubit>().state;
@@ -644,7 +590,6 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
     }
   }
 
-  /// Parse open_hour_compressed JSON, trả về (openTime, closeTime) dạng "HH:mm" cho [date].
   (String, String)? _parseOpenSlot(String jsonStr, DateTime date) {
     try {
       const dayNames = [
