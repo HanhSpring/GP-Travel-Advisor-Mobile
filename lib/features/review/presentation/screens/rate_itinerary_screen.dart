@@ -4,10 +4,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dio/dio.dart';
 
 import 'place_review_screen.dart';
+import 'review_catalog_screen.dart' show openReviewedPlaceReview;
 
 import 'package:travel_advisor_mobile/core/di/injection_container.dart';
 import 'package:travel_advisor_mobile/core/theme/app_colors.dart';
-import 'package:travel_advisor_mobile/features/review/presentation/constants/review_tags.dart' show getTagsForCategory;
+import 'package:travel_advisor_mobile/features/review/presentation/constants/review_tags.dart'
+    show getTagsForCategory;
 import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_cubit.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_state.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/utils/review_media_picker.dart';
@@ -102,8 +104,8 @@ class _RateItineraryView extends StatelessWidget {
             final filteredLocations = state.selectedDay == 0
                 ? visitedLocations
                 : visitedLocations
-                        .where((location) => location.day == state.selectedDay)
-                        .toList();
+                      .where((location) => location.day == state.selectedDay)
+                      .toList();
 
             return Stack(
               children: [
@@ -174,7 +176,9 @@ class _RateItineraryView extends StatelessWidget {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.blobLight.withValues(alpha: 0.3),
+                                color: AppColors.blobLight.withValues(
+                                  alpha: 0.3,
+                                ),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
@@ -203,14 +207,26 @@ class _RateItineraryView extends StatelessWidget {
                           mediaItems:
                               state.locationMediaByDetailId[loc.id] ?? const [],
                           isVisited: loc.isVisited,
-                          isReadOnly: false,
-                          onRatingChanged: (rating) {
-                            context.read<ReviewCubit>().setLocationRating(
-                              loc.id,
-                              rating,
-                            );
-                          },
-                          onWriteReview: () {
+                          isReadOnly: loc.hasReview,
+                          onRatingChanged: loc.hasReview
+                              ? null
+                              : (rating) {
+                                  context.read<ReviewCubit>().setLocationRating(
+                                    loc.id,
+                                    rating,
+                                  );
+                                },
+                          onWriteReview: () async {
+                            if (loc.hasReview) {
+                              await openReviewedPlaceReview(
+                                context,
+                                itineraryId: itineraryId,
+                                itineraryDetailId: loc.id,
+                              );
+                              return;
+                            }
+
+                            if (!context.mounted) return;
                             Navigator.push(
                               context,
                               MaterialPageRoute(

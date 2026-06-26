@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:travel_advisor_mobile/core/di/injection_container.dart';
 import 'package:travel_advisor_mobile/core/theme/app_colors.dart';
-import 'package:travel_advisor_mobile/features/review/data/datasources/review_datasource.dart';
+import 'package:travel_advisor_mobile/features/review/domain/entities/review_types.dart';
 import 'package:travel_advisor_mobile/features/review/domain/repositories/review_repository.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/constants/review_tags.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/screens/rate_itinerary_screen.dart';

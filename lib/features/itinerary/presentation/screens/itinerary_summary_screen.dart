@@ -597,7 +597,7 @@ class _ItinerarySummaryView extends StatelessWidget {
                             children: [
                               Expanded(
                                 child: Text(
-                                  '${itin.title} • ${_formatCompactDateRange(itin.startDate, itin.endDate)}',
+                                  itin.title,
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w800,

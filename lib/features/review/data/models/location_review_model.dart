@@ -14,6 +14,8 @@ class LocationReviewModel with _$LocationReviewModel {
     required int day,
     String? placeId,
     String? categoryId,
+    @Default(false) bool isVisited,
+    @Default(false) bool hasReview,
     double? rating,
     String? reviewText,
   }) = _LocationReviewModel;
@@ -30,6 +32,8 @@ class LocationReviewModel with _$LocationReviewModel {
         day: day,
         placeId: placeId,
         categoryId: categoryId,
+        isVisited: isVisited,
+        hasReview: hasReview,
         rating: rating,
         reviewText: reviewText,
       );

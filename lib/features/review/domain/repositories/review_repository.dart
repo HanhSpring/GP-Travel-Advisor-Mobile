@@ -1,5 +1,5 @@
 import 'package:travel_advisor_mobile/features/review/domain/entities/itinerary_review_entity.dart';
-import 'package:travel_advisor_mobile/features/review/data/datasources/review_datasource.dart';
+import 'package:travel_advisor_mobile/features/review/domain/entities/review_types.dart';
 
 abstract class ReviewRepository {
   Future<ReviewCatalog> getReviewCatalog();
