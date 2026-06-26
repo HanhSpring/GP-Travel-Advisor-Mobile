@@ -7,7 +7,7 @@ import 'package:travel_advisor_mobile/core/services/activity_service.dart';
 import 'package:travel_advisor_mobile/core/theme/app_colors.dart';
 import 'package:travel_advisor_mobile/core/widgets/net_image.dart';
 import 'package:travel_advisor_mobile/features/review/domain/entities/review_media_item.dart';
-import 'package:travel_advisor_mobile/features/review/presentation/constants/review_tags.dart';
+import 'package:travel_advisor_mobile/features/review/presentation/constants/review_tags.dart' show kDefaultReviewTags;
 import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_cubit.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_state.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/utils/review_media_picker.dart';
@@ -17,8 +17,8 @@ import 'package:travel_advisor_mobile/features/review/presentation/widgets/star_
 class PlaceReviewScreen extends StatefulWidget {
   final String locationId;
   final ReviewCubit reviewCubit;
-
   final bool isReadOnly;
+  final List<String> reviewTags;
   final bool submitOnSave;
   final String? itineraryId;
 
@@ -27,6 +27,7 @@ class PlaceReviewScreen extends StatefulWidget {
     required this.locationId,
     required this.reviewCubit,
     this.isReadOnly = false,
+    this.reviewTags = kDefaultReviewTags,
     this.submitOnSave = false,
     this.itineraryId,
   });
@@ -379,7 +380,7 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
                     spacing: 8,
                     runSpacing: 8,
                     children:
-                        (widget.isReadOnly ? _selectedTags : kTravelReviewTags)
+                        (widget.isReadOnly ? _selectedTags : widget.reviewTags)
                             .map((tag) {
                               final isSelected = _selectedTags.contains(tag);
                               return GestureDetector(

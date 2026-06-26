@@ -285,7 +285,7 @@ class _ItineraryRatingPopupState extends State<ItineraryRatingPopup> {
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: (_isHighlyCompleted ? kTravelReviewTags : kMissedLocationReasons)
+          children: (_isHighlyCompleted ? kItineraryReviewTags : kMissedLocationReasons)
               .map((reason) {
                 final isSelected = _missedReason == reason;
                 return _choiceChip(reason, isSelected);

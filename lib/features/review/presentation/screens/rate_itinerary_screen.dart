@@ -7,6 +7,7 @@ import 'place_review_screen.dart';
 
 import 'package:travel_advisor_mobile/core/di/injection_container.dart';
 import 'package:travel_advisor_mobile/core/theme/app_colors.dart';
+import 'package:travel_advisor_mobile/features/review/presentation/constants/review_tags.dart' show getTagsForCategory;
 import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_cubit.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_state.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/utils/review_media_picker.dart';
@@ -217,6 +218,9 @@ class _RateItineraryView extends StatelessWidget {
                                   locationId: loc.id,
                                   reviewCubit: context.read<ReviewCubit>(),
                                   isReadOnly: false,
+                                  reviewTags: getTagsForCategory(
+                                    loc.categoryId,
+                                  ),
                                 ),
                               ),
                             );
