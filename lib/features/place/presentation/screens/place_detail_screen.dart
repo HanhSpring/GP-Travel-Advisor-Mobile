@@ -35,6 +35,7 @@ class PlaceDetailScreen extends StatefulWidget {
 
 class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
   StreamSubscription<FavoriteChangedEvent>? _favoriteSubscription;
+
   final _activityService = sl<ActivityService>();
   Timer? _dwellTimer;
   bool _viewTracked = false;
@@ -161,87 +162,100 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
 
           if (state is PlaceDetailLoaded) {
             final place = state.placeDetail;
-            return SingleChildScrollView(
-              child: Column(
-                children: [
-                  PlaceHeader(
-                    imageUrl: place.images.isNotEmpty
-                       
-                        ? place.images[0]
-                       
-                        : 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=800&q=80',
-                    isFavorite: place.isFavorite,
-                    onBack: () => Navigator.pop(context),
-                    onFavorite: () async {
-                      final result = await context
-                          .read<PlaceDetailCubit>()
-                          .toggleFavorite();
-                      if (!context.mounted) return;
-                      if (result == true) {
-                        _activityService.trackSave(widget.placeId);
-                        ScaffoldMessenger.of(context).clearSnackBars();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Đã lưu vào danh mục yêu thích'),
-                            duration: Duration(seconds: 2),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      } else {
-                        _activityService.trackUnsave(widget.placeId);
-                      }
-                    },
-                  ),
-
-                  // 2. Title, Rating, Location, Vibes
-                  PlaceInfoSection(
-                    name: place.name,
-                    rating: place.rating,
-                    location: '${place.district}, ${place.city}',
-                    vibes: place.vibes,
-                    onLocationTap: () => _showMap(
-                      context,
-                      place.latitude ?? 10.7766,
-                      place.longitude ?? 106.7032,
-                      place.name,
-                      place.address,
+            return RefreshIndicator(
+              onRefresh: () => context
+                  .read<PlaceDetailCubit>()
+                  .loadPlaceDetail(widget.placeId, refresh: true),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  children: [
+                    PlaceHeader(
+                      imageUrl: place.images.isNotEmpty
+                          ? place.images[0]
+                          : 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=800&q=80',
+                      isFavorite: place.isFavorite,
+                      onBack: () => Navigator.pop(context),
+                      onFavorite: () async {
+                        final result = await context
+                            .read<PlaceDetailCubit>()
+                            .toggleFavorite();
+                        if (!context.mounted) return;
+                        if (result == true) {
+                          _activityService.trackSave(widget.placeId);
+                          ScaffoldMessenger.of(context).clearSnackBars();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Đã lưu vào danh mục yêu thích'),
+                              duration: Duration(seconds: 2),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        } else if (result == false) {
+                          _activityService.trackUnsave(widget.placeId);
+                        } else {
+                          // result == null: API error, state already reverted
+                          ScaffoldMessenger.of(context).clearSnackBars();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Không thể cập nhật yêu thích. Vui lòng thử lại.'),
+                              duration: Duration(seconds: 2),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      },
                     ),
-                  ),
 
-                  // 3. Image Gallery
-                  PlaceGallerySection(images: place.images),
-
-                  // 4. Description
-                  PlaceDescriptionSection(description: place.description),
-
-                  // 5. Contact Info (Hours, Phone, Address)
-                  PlaceContactSection(
-                    openHourCompressed: place.openHourCompressed,
-                    phone: place.phone,
-                    address: place.address,
-                    onLocationTap: () => _showMap(
-                      context,
-                      place.latitude ?? 10.7766,
-                      place.longitude ?? 106.7032,
-                      place.name,
-                      place.address,
+                    // 2. Title, Rating, Location, Vibes
+                    PlaceInfoSection(
+                      name: place.name,
+                      rating: place.rating,
+                      location: '${place.district}, ${place.city}',
+                      vibes: place.vibes,
+                      onLocationTap: () => _showMap(
+                        context,
+                        place.latitude ?? 10.7766,
+                        place.longitude ?? 106.7032,
+                        place.name,
+                        place.address,
+                      ),
                     ),
-                  ),
 
-                  // 6. Reviews Section
-                  PlaceReviewSection(
-                    rating: place.rating,
-                    totalReviews: place.totalReviews,
-                    reviews: place.reviews,
-                  ),
+                    // 3. Image Gallery
+                    PlaceGallerySection(images: place.images),
 
-                  // 7. Related Places - ONLY SHOW if showRelatedPlaces is true
-                  if (widget.showRelatedPlaces)
-                    RelatedPlacesSection(relatedPlaces: place.relatedPlaces),
+                    // 4. Description
+                    PlaceDescriptionSection(description: place.description),
 
+                    // 5. Contact Info (Hours, Phone, Address)
+                    PlaceContactSection(
+                      openHourCompressed: place.openHourCompressed,
+                      phone: place.phone,
+                      address: place.address,
+                      onLocationTap: () => _showMap(
+                        context,
+                        place.latitude ?? 10.7766,
+                        place.longitude ?? 106.7032,
+                        place.name,
+                        place.address,
+                      ),
+                    ),
 
-                  const SizedBox(height: 60),
-                ],
+                    // 6. Reviews Section
+                    PlaceReviewSection(
+                      rating: place.rating,
+                      totalReviews: place.totalReviews,
+                      reviews: place.reviews,
+                    ),
+
+                    // 7. Related Places - ONLY SHOW if showRelatedPlaces is true
+                    if (widget.showRelatedPlaces)
+                      RelatedPlacesSection(relatedPlaces: place.relatedPlaces),
+
+                    const SizedBox(height: 60),
+                  ],
+                ),
               ),
             );
           }

@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -367,13 +367,15 @@ class RemoteAuthDataSource implements AuthDataSource {
             .join('\n');
       }
     }
-    if (e.type == DioExceptionType.connectionError ||
+
+      if (e.type == DioExceptionType.connectionError ||
         e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout ||
         e.type == DioExceptionType.sendTimeout) {
       return 'Không thể kết nối đến máy chủ ${e.requestOptions.baseUrl}. '
           'Vui lòng kiểm tra backend và thử lại.';
     }
-    return fallback;
+
+      return fallback;
   }
 }
