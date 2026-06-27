@@ -73,6 +73,18 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
     super.dispose();
   }
 
+  String _visitDateLabel(ReviewLoaded state, int day) {
+    final startRaw = state.submittedReview?.startDate ?? '';
+    final start = DateTime.tryParse(startRaw);
+    if (start != null) {
+      final visitDate = start.add(Duration(days: day - 1));
+      final d = visitDate.day.toString().padLeft(2, '0');
+      final m = visitDate.month.toString().padLeft(2, '0');
+      return 'Ngày $day · $d/$m/${visitDate.year}';
+    }
+    return 'Ngày $day';
+  }
+
   String _getRatingText(double rating) {
     if (rating >= 5) return 'Tuyệt vời';
     if (rating >= 4) return 'Rất tốt';
@@ -338,17 +350,17 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
                               ),
                             ),
                             const SizedBox(height: 4),
-                            const Row(
+                            Row(
                               children: [
-                                Icon(
-                                  Icons.location_on,
+                                const Icon(
+                                  Icons.calendar_today_outlined,
                                   size: 12,
                                   color: AppColors.textSecondary,
                                 ),
-                                SizedBox(width: 4),
+                                const SizedBox(width: 4),
                                 Text(
-                                  'TP. HCM',
-                                  style: TextStyle(
+                                  _visitDateLabel(state, location.day),
+                                  style: const TextStyle(
                                     fontSize: 11,
                                     color: AppColors.textSecondary,
                                   ),

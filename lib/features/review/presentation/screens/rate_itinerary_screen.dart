@@ -109,7 +109,12 @@ class _RateItineraryView extends StatelessWidget {
           }
           if (state is ReviewLoaded) {
             final visitedLocations = state.itinerary.locations
-                .where((location) => location.isVisited)
+                .where(
+                  (location) =>
+                      location.isVisited ||
+                      location.hasReview ||
+                      location.rating != null,
+                )
                 .toList();
             final filteredLocations = state.selectedDay == 0
                 ? visitedLocations
@@ -268,6 +273,8 @@ class _RateItineraryView extends StatelessWidget {
                                 child: ReviewedPlaceCard(
                                   place: reviewedPlaceItemFromSubmittedPlace(
                                     submittedPlace,
+                                    startDate:
+                                        state.submittedReview?.startDate ?? '',
                                   ),
                                   itineraryTitle: state.itinerary.title,
                                 ),

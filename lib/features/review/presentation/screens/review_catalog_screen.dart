@@ -224,7 +224,12 @@ ReviewCatalogItem reviewCatalogItemFromSubmittedReview(
     itineraryStatus: data.itineraryStatus,
     placeReviews: data.places
         .where((place) => place.rating != null)
-        .map((place) => reviewedPlaceItemFromSubmittedPlace(place))
+        .map(
+          (place) => reviewedPlaceItemFromSubmittedPlace(
+            place,
+            startDate: data.startDate,
+          ),
+        )
         .toList(),
   );
 }
@@ -249,7 +254,7 @@ ReviewCatalogItem reviewCatalogItemFromSubmittedPlace(
     destination: data.destination,
     startDate: _parseDate(data.startDate),
     endDate: _parseDate(data.endDate),
-    visitDate: null,
+    visitDate: _computeVisitDate(data.startDate, place.dayLabel),
     tags: place.tags,
     mediaUrls: place.mediaUrls,
     reviewStatus: null,
@@ -259,14 +264,15 @@ ReviewCatalogItem reviewCatalogItemFromSubmittedPlace(
 }
 
 ReviewedPlaceItem reviewedPlaceItemFromSubmittedPlace(
-  SubmittedPlaceReview place,
-) {
+  SubmittedPlaceReview place, {
+  String startDate = '',
+}) {
   return ReviewedPlaceItem(
     title: place.placeName,
     imageUrl: place.placeImageUrl,
     rating: place.rating ?? 0,
     content: place.content,
-    visitDate: null,
+    visitDate: _computeVisitDate(startDate, place.dayLabel),
     tags: place.tags,
     mediaUrls: place.mediaUrls,
     reviewedAt: place.reviewedAt,
@@ -274,6 +280,14 @@ ReviewedPlaceItem reviewedPlaceItemFromSubmittedPlace(
 }
 
 DateTime? _parseDate(String value) => DateTime.tryParse(value);
+
+DateTime? _computeVisitDate(String startDate, String dayLabel) {
+  final start = DateTime.tryParse(startDate);
+  if (start == null) return null;
+  final match = RegExp(r'(\d+)').firstMatch(dayLabel.toUpperCase());
+  final day = int.tryParse(match?.group(1) ?? '') ?? 1;
+  return start.add(Duration(days: day - 1));
+}
 
 class ReviewCatalogScreen extends StatefulWidget {
   final int initialTab;
