@@ -28,11 +28,15 @@ class ReviewCubit extends Cubit<ReviewState> {
     String itineraryId, {
     double initialRating = 0.0,
     String initialComment = '',
+    bool forceRefresh = false,
   }) async {
     emit(ReviewLoading());
 
     try {
-      final itinerary = await getItineraryForReview(itineraryId);
+      final itinerary = await getItineraryForReview(
+        itineraryId,
+        forceRefresh: forceRefresh,
+      );
       var loadedItinerary = itinerary;
       var locationRatingsBeforeApplyAll = const <String, double?>{};
       if (initialRating > 0) {
@@ -55,6 +59,7 @@ class ReviewCubit extends Cubit<ReviewState> {
         try {
           submittedReview = await reviewRepository.getSubmittedReview(
             itineraryId,
+            forceRefresh: forceRefresh,
           );
           final mediaMap = <String, List<ReviewMediaItem>>{};
           for (final place in submittedReview.places) {
@@ -159,6 +164,7 @@ class ReviewCubit extends Cubit<ReviewState> {
           generalTags: data.overallTags,
           itineraryMedia: itineraryMedia,
           locationMediaByDetailId: locationMedia,
+          submittedReview: data,
         ),
       );
     } catch (e) {

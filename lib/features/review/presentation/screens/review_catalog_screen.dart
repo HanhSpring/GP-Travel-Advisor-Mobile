@@ -150,7 +150,8 @@ Future<void> openReviewedItineraryReview(
   final messenger = ScaffoldMessenger.maybeOf(context);
   try {
     final data =
-        cachedData ?? await sl<ReviewRepository>().getSubmittedReview(itineraryId);
+        cachedData ??
+        await sl<ReviewRepository>().getSubmittedReview(itineraryId);
     if (!context.mounted) return;
     await openReviewItem(context, reviewCatalogItemFromSubmittedReview(data));
   } catch (e) {
@@ -650,7 +651,7 @@ class _ItineraryReviewDetail extends StatelessWidget {
           const SizedBox(height: 12),
           ...item.placeReviews.map(
             (place) =>
-                _ReviewedPlaceCard(place: place, itineraryTitle: item.title),
+                ReviewedPlaceCard(place: place, itineraryTitle: item.title),
           ),
         ],
         _ReviewTimestamp(reviewedAt: item.reviewedAt),
@@ -659,10 +660,14 @@ class _ItineraryReviewDetail extends StatelessWidget {
   }
 }
 
-class _ReviewedPlaceCard extends StatelessWidget {
+class ReviewedPlaceCard extends StatelessWidget {
   final ReviewedPlaceItem place;
   final String itineraryTitle;
-  const _ReviewedPlaceCard({required this.place, required this.itineraryTitle});
+  const ReviewedPlaceCard({
+    super.key,
+    required this.place,
+    required this.itineraryTitle,
+  });
 
   @override
   Widget build(BuildContext context) => InkWell(
@@ -764,10 +769,7 @@ class _PlaceReviewDetail extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: const Color(0xFFE5E7EB),
-              width: 1.0,
-            ),
+            border: Border.all(color: const Color(0xFFE5E7EB), width: 1.0),
           ),
           child: Row(
             children: [
@@ -856,10 +858,7 @@ class _ReviewContent extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: const Color(0xFFE5E7EB),
-            width: 1.0,
-          ),
+          border: Border.all(color: const Color(0xFFE5E7EB), width: 1.0),
         ),
         child: Text(
           content?.trim().isNotEmpty == true
@@ -1157,10 +1156,7 @@ class ReviewedPlaceScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: const Color(0xFFE5E7EB),
-                  width: 1.0,
-                ),
+                border: Border.all(color: const Color(0xFFE5E7EB), width: 1.0),
               ),
               child: Row(
                 children: [

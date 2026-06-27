@@ -12,6 +12,7 @@ class ReviewRepositoryImpl implements ReviewRepository {
   ReviewCatalog? _catalogCache;
   DateTime? _catalogCachedAt;
   static const Duration _catalogTtl = Duration(seconds: 60);
+  final Set<String> _dirtyItineraryIds = <String>{};
 
   @override
   Future<ReviewCatalog> getReviewCatalog() async {
@@ -29,15 +30,34 @@ class ReviewRepositoryImpl implements ReviewRepository {
 
   @override
   Future<ItineraryReviewEntity> getItineraryForReview(
-    String itineraryId,
-  ) async {
-    final model = await dataSource.getItineraryForReview(itineraryId);
-    return model.toEntity();
+    String itineraryId, {
+    bool forceRefresh = false,
+  }) async {
+    final shouldRefresh =
+        forceRefresh || _dirtyItineraryIds.contains(itineraryId);
+    final model = await dataSource.getItineraryForReview(
+      itineraryId,
+      forceRefresh: shouldRefresh,
+    );
+    final entity = model.toEntity();
+    if (shouldRefresh &&
+        !entity.locations.any((location) => location.hasReview)) {
+      _dirtyItineraryIds.remove(itineraryId);
+    }
+    return entity;
   }
 
   @override
-  Future<SubmittedReviewData> getSubmittedReview(String itineraryId) {
-    return dataSource.getSubmittedReview(itineraryId);
+  Future<SubmittedReviewData> getSubmittedReview(
+    String itineraryId, {
+    bool forceRefresh = false,
+  }) {
+    final shouldRefresh =
+        forceRefresh || _dirtyItineraryIds.remove(itineraryId);
+    return dataSource.getSubmittedReview(
+      itineraryId,
+      forceRefresh: shouldRefresh,
+    );
   }
 
   @override
@@ -64,9 +84,9 @@ class ReviewRepositoryImpl implements ReviewRepository {
     bool applyAllPlaces = false,
     List<SubmitPlaceReviewInput> placeReviews = const [],
     List<SubmitReviewMediaInput> media = const [],
-  }) {
+  }) async {
     _catalogCache = null;
-    return dataSource.submitItineraryReview(
+    await dataSource.submitItineraryReview(
       itineraryId: itineraryId,
       overallRating: overallRating,
       overallContent: overallContent,
@@ -75,6 +95,7 @@ class ReviewRepositoryImpl implements ReviewRepository {
       placeReviews: placeReviews,
       media: media,
     );
+    _dirtyItineraryIds.add(itineraryId);
   }
 
   @override
@@ -85,9 +106,9 @@ class ReviewRepositoryImpl implements ReviewRepository {
     String? content,
     List<String> tags = const [],
     List<String> images = const [],
-  }) {
+  }) async {
     _catalogCache = null;
-    return dataSource.submitPlaceReview(
+    await dataSource.submitPlaceReview(
       placeId: placeId,
       itineraryId: itineraryId,
       rating: rating,
@@ -95,6 +116,10 @@ class ReviewRepositoryImpl implements ReviewRepository {
       tags: tags,
       images: images,
     );
+    final normalizedItineraryId = itineraryId?.trim() ?? '';
+    if (normalizedItineraryId.isNotEmpty) {
+      _dirtyItineraryIds.add(normalizedItineraryId);
+    }
   }
 
   @override

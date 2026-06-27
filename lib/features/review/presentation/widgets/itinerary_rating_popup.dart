@@ -38,10 +38,8 @@ class _ItineraryRatingPopupState extends State<ItineraryRatingPopup> {
   final TextEditingController _commentController = TextEditingController();
   bool _isSubmitting = false;
 
-
   // Read mode state
   ItineraryReviewSummary? _existingReview;
-
 
   bool get _isHighlyCompleted =>
       widget.totalLocations > 0 &&
@@ -135,6 +133,7 @@ class _ItineraryRatingPopupState extends State<ItineraryRatingPopup> {
           itineraryId: widget.itineraryId,
           initialRating: _rating,
           initialComment: _commentController.text,
+          forceRefreshOnLoad: true,
         ),
       ),
     );
@@ -286,12 +285,15 @@ class _ItineraryRatingPopupState extends State<ItineraryRatingPopup> {
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: (_isHighlyCompleted ? kItineraryReviewTags : kMissedLocationReasons)
-              .map((reason) {
-                final isSelected = _missedReason == reason;
-                return _choiceChip(reason, isSelected);
-              })
-              .toList(),
+          children:
+              (_isHighlyCompleted
+                      ? kItineraryReviewTags
+                      : kMissedLocationReasons)
+                  .map((reason) {
+                    final isSelected = _missedReason == reason;
+                    return _choiceChip(reason, isSelected);
+                  })
+                  .toList(),
         ),
         const SizedBox(height: 16),
         TextField(
@@ -507,7 +509,7 @@ class _ItineraryRatingPopupState extends State<ItineraryRatingPopup> {
                     color: AppColors.primary.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
-                  )
+                  ),
                 ]
               : null,
         ),

@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dio/dio.dart';
-
 import 'place_review_screen.dart';
-import 'review_catalog_screen.dart' show openReviewedPlaceReview;
+import 'review_catalog_screen.dart'
+    show
+        ReviewedPlaceCard,
+        openReviewedPlaceReview,
+        reviewedPlaceItemFromSubmittedPlace;
 
 import 'package:travel_advisor_mobile/core/di/injection_container.dart';
 import 'package:travel_advisor_mobile/core/theme/app_colors.dart';
+import 'package:travel_advisor_mobile/features/review/domain/entities/review_types.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/constants/review_tags.dart'
     show getTagsForCategory;
 import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_cubit.dart';
@@ -22,6 +26,7 @@ class RateItineraryScreen extends StatelessWidget {
   final double initialRating;
   final String initialComment;
   final bool popExtraOnSubmit;
+  final bool forceRefreshOnLoad;
 
   const RateItineraryScreen({
     super.key,
@@ -30,6 +35,7 @@ class RateItineraryScreen extends StatelessWidget {
     this.initialRating = 0.0,
     this.initialComment = '',
     this.popExtraOnSubmit = true,
+    this.forceRefreshOnLoad = false,
   });
 
   @override
@@ -44,6 +50,7 @@ class RateItineraryScreen extends StatelessWidget {
             itineraryId,
             initialRating: initialRating,
             initialComment: initialComment,
+            forceRefresh: forceRefreshOnLoad,
           );
         }
         return cubit;
@@ -61,7 +68,6 @@ class _RateItineraryView extends StatelessWidget {
   final String itineraryId;
   final bool isReadOnly;
   final bool popExtraOnSubmit;
-
   const _RateItineraryView({
     required this.itineraryId,
     required this.isReadOnly,
@@ -110,6 +116,13 @@ class _RateItineraryView extends StatelessWidget {
                 : visitedLocations
                       .where((location) => location.day == state.selectedDay)
                       .toList();
+            final submittedPlacesByDetailId = {
+              for (final place
+                  in state.submittedReview?.places ??
+                      const <SubmittedPlaceReview>[])
+                if (place.itineraryDetailId.isNotEmpty)
+                  place.itineraryDetailId: place,
+            };
 
             return Column(
               children: [
@@ -241,8 +254,27 @@ class _RateItineraryView extends StatelessWidget {
                             ),
                           )
                         else
-                          ...filteredLocations.map(
-                            (loc) => LocationReviewListTile(
+                          ...filteredLocations.map((loc) {
+                            final submittedPlace =
+                                submittedPlacesByDetailId[loc.id];
+
+                            // Places already reviewed — show same card as ReviewReadOnlyScreen
+                            if (submittedPlace != null &&
+                                (isReadOnly || loc.hasReview)) {
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                ),
+                                child: ReviewedPlaceCard(
+                                  place: reviewedPlaceItemFromSubmittedPlace(
+                                    submittedPlace,
+                                  ),
+                                  itineraryTitle: state.itinerary.title,
+                                ),
+                              );
+                            }
+
+                            return LocationReviewListTile(
                               location: loc,
                               mediaItems:
                                   state.locationMediaByDetailId[loc.id] ??
@@ -263,15 +295,14 @@ class _RateItineraryView extends StatelessWidget {
                                     MaterialPageRoute(
                                       builder: (_) => PlaceReviewScreen(
                                         locationId: loc.id,
-                                        reviewCubit: context
-                                            .read<ReviewCubit>(),
+                                        reviewCubit:
+                                            context.read<ReviewCubit>(),
                                         isReadOnly: true,
                                       ),
                                     ),
                                   );
                                   return;
                                 }
-
                                 if (loc.hasReview) {
                                   await openReviewedPlaceReview(
                                     context,
@@ -281,7 +312,6 @@ class _RateItineraryView extends StatelessWidget {
                                   );
                                   return;
                                 }
-
                                 if (!context.mounted) return;
                                 Navigator.push(
                                   context,
@@ -297,8 +327,8 @@ class _RateItineraryView extends StatelessWidget {
                                   ),
                                 );
                               },
-                            ),
-                          ),
+                            );
+                          }),
                       ],
                     ),
                   ),

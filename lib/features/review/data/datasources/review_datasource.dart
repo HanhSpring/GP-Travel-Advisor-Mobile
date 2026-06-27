@@ -11,8 +11,14 @@ export 'package:travel_advisor_mobile/features/review/domain/entities/review_typ
 
 abstract class ReviewDataSource {
   Future<ReviewCatalog> getReviewCatalog();
-  Future<ItineraryReviewModel> getItineraryForReview(String itineraryId);
-  Future<SubmittedReviewData> getSubmittedReview(String itineraryId);
+  Future<ItineraryReviewModel> getItineraryForReview(
+    String itineraryId, {
+    bool forceRefresh = false,
+  });
+  Future<SubmittedReviewData> getSubmittedReview(
+    String itineraryId, {
+    bool forceRefresh = false,
+  });
   Future<ItineraryReviewSummary> getReviewSummary(String itineraryId);
   Future<ItineraryReviewPopupData> getPopupData(String itineraryId);
   Future<void> dismissPopup(String itineraryId);
@@ -96,11 +102,15 @@ class RemoteReviewDataSource implements ReviewDataSource {
   }
 
   @override
-  Future<ItineraryReviewModel> getItineraryForReview(String itineraryId) async {
+  Future<ItineraryReviewModel> getItineraryForReview(
+    String itineraryId, {
+    bool forceRefresh = false,
+  }) async {
     final touristId = await AuthUtils.requireCurrentUserId();
     final response = await _client.dio.get(
       '/itinerary-reviews/$itineraryId/detail',
       queryParameters: {'tourist_id': touristId},
+      options: forceRefresh ? _client.forceRefreshOptions : null,
     );
 
     final data = response.data as Map<String, dynamic>;
@@ -139,11 +149,15 @@ class RemoteReviewDataSource implements ReviewDataSource {
   }
 
   @override
-  Future<SubmittedReviewData> getSubmittedReview(String itineraryId) async {
+  Future<SubmittedReviewData> getSubmittedReview(
+    String itineraryId, {
+    bool forceRefresh = false,
+  }) async {
     final touristId = await AuthUtils.requireCurrentUserId();
     final response = await _client.dio.get(
       '/itinerary-reviews/$itineraryId/review-detail',
       queryParameters: {'tourist_id': touristId},
+      options: forceRefresh ? _client.forceRefreshOptions : null,
     );
     final data = response.data as Map<String, dynamic>;
     final itinerary = (data['itinerary'] as Map<String, dynamic>?) ?? const {};
