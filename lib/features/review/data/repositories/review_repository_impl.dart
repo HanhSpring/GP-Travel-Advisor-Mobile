@@ -9,8 +9,23 @@ class ReviewRepositoryImpl implements ReviewRepository {
 
   ReviewRepositoryImpl(this.dataSource);
 
+  ReviewCatalog? _catalogCache;
+  DateTime? _catalogCachedAt;
+  static const Duration _catalogTtl = Duration(seconds: 60);
+
   @override
-  Future<ReviewCatalog> getReviewCatalog() => dataSource.getReviewCatalog();
+  Future<ReviewCatalog> getReviewCatalog() async {
+    final now = DateTime.now();
+    if (_catalogCache != null &&
+        _catalogCachedAt != null &&
+        now.difference(_catalogCachedAt!) < _catalogTtl) {
+      return _catalogCache!;
+    }
+    final result = await dataSource.getReviewCatalog();
+    _catalogCache = result;
+    _catalogCachedAt = now;
+    return result;
+  }
 
   @override
   Future<ItineraryReviewEntity> getItineraryForReview(
@@ -50,6 +65,7 @@ class ReviewRepositoryImpl implements ReviewRepository {
     List<SubmitPlaceReviewInput> placeReviews = const [],
     List<SubmitReviewMediaInput> media = const [],
   }) {
+    _catalogCache = null;
     return dataSource.submitItineraryReview(
       itineraryId: itineraryId,
       overallRating: overallRating,
@@ -70,6 +86,7 @@ class ReviewRepositoryImpl implements ReviewRepository {
     List<String> tags = const [],
     List<String> images = const [],
   }) {
+    _catalogCache = null;
     return dataSource.submitPlaceReview(
       placeId: placeId,
       itineraryId: itineraryId,

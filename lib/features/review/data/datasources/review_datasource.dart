@@ -301,14 +301,14 @@ class RemoteReviewDataSource implements ReviewDataSource {
     List<String> tags = const [],
     List<String> images = const [],
   }) async {
-    final touristId = await AuthUtils.requireCurrentUserId();
+    final normalizedItineraryId = itineraryId?.trim() ?? '';
 
     await _client.dio.post(
       '/reviews',
       data: {
-        'tourist_id': touristId,
         'place_id': placeId,
-        if (itineraryId != null) 'itinerary_id': itineraryId,
+        if (normalizedItineraryId.isNotEmpty)
+          'itinerary_id': normalizedItineraryId,
         'rating': rating.round(),
         if (content != null && content.trim().isNotEmpty) 'content': content,
         if (tags.isNotEmpty) 'tags': tags,
@@ -328,12 +328,15 @@ class RemoteReviewDataSource implements ReviewDataSource {
       return const [];
     }
 
+    final normalizedItineraryDetailId = itineraryDetailId?.trim() ?? '';
+
     final response = await _client.dio.post(
       '/upload/reviews/presigned-urls',
       data: {
         'scope': scope,
         'itinerary_id': itineraryId,
-        if (itineraryDetailId != null) 'itinerary_detail_id': itineraryDetailId,
+        if (normalizedItineraryDetailId.isNotEmpty)
+          'itinerary_detail_id': normalizedItineraryDetailId,
         'files': files
             .map(
               (file) => {
@@ -385,4 +388,3 @@ class RemoteReviewDataSource implements ReviewDataSource {
     );
   }
 }
-

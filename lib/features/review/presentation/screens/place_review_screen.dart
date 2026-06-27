@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:travel_advisor_mobile/core/di/injection_container.dart';
@@ -7,7 +8,8 @@ import 'package:travel_advisor_mobile/core/services/activity_service.dart';
 import 'package:travel_advisor_mobile/core/theme/app_colors.dart';
 import 'package:travel_advisor_mobile/core/widgets/net_image.dart';
 import 'package:travel_advisor_mobile/features/review/domain/entities/review_media_item.dart';
-import 'package:travel_advisor_mobile/features/review/presentation/constants/review_tags.dart' show kDefaultReviewTags;
+import 'package:travel_advisor_mobile/features/review/presentation/constants/review_tags.dart'
+    show kDefaultReviewTags;
 import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_cubit.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_state.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/utils/review_media_picker.dart';
@@ -41,6 +43,7 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
   late TextEditingController _reviewController;
   late List<ReviewMediaItem> _mediaItems;
   late List<String> _selectedTags;
+  bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -77,6 +80,30 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
     if (rating >= 2) return 'Tệ';
     if (rating >= 1) return 'Rất tệ';
     return '';
+  }
+
+  String _formatSubmitError(Object error) {
+    if (error is DioException) {
+      final responseData = error.response?.data;
+      if (responseData is Map) {
+        final message = responseData['message'];
+        if (message is List && message.isNotEmpty) {
+          return message.map((item) => item.toString()).join('\n');
+        }
+        if (message != null && message.toString().trim().isNotEmpty) {
+          return message.toString();
+        }
+        final errorText = responseData['error'];
+        if (errorText != null && errorText.toString().trim().isNotEmpty) {
+          return errorText.toString();
+        }
+      }
+      if (responseData != null && responseData.toString().trim().isNotEmpty) {
+        return responseData.toString();
+      }
+      return 'Kh\u00f4ng th\u1ec3 g\u1eedi \u0111\u00e1nh gi\u00e1. Vui l\u00f2ng th\u1eed l\u1ea1i.';
+    }
+    return error.toString();
   }
 
   Future<void> _pickImages() async {
@@ -141,17 +168,31 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
   }
 
   Future<void> _submit() async {
+    if (_isSubmitting) return;
+
+    if (widget.submitOnSave && _rating <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vui lòng chọn số sao trước khi gửi'),
+          backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     // Lấy placeId thực sự của POI trước khi cập nhật state
     String? placeId;
     final cubitState = widget.reviewCubit.state;
     if (cubitState is ReviewLoaded) {
-      final idx = cubitState.itinerary.locations
-          .indexWhere((l) => l.id == widget.locationId);
+      final idx = cubitState.itinerary.locations.indexWhere(
+        (l) => l.id == widget.locationId,
+      );
       if (idx != -1) placeId = cubitState.itinerary.locations[idx].placeId;
     }
     widget.reviewCubit.updateLocationReviewDetails(
       locationId: widget.locationId,
-      rating: _rating,
+      rating: _rating > 0 ? _rating : null,
       reviewText: _reviewController.text,
       reviewTags: _selectedTags,
       mediaItems: _mediaItems,
@@ -167,7 +208,39 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
     }
 
     if (widget.submitOnSave && widget.itineraryId != null) {
-      await widget.reviewCubit.submitReview(widget.itineraryId!);
+      setState(() => _isSubmitting = true);
+      try {
+        await widget.reviewCubit.submitSinglePlaceReview(
+          itineraryId: widget.itineraryId!,
+          locationId: widget.locationId,
+        );
+        if (!mounted) return;
+        Navigator.pop(context, true);
+      } catch (e) {
+        final message = _formatSubmitError(e);
+        if (e is DioException) {
+          debugPrint(
+            '[PlaceReview] submitSinglePlaceReview failed: '
+            '${e.requestOptions.method} ${e.requestOptions.uri} '
+            'status=${e.response?.statusCode} '
+            'request=${e.requestOptions.data} '
+            'response=${e.response?.data}',
+          );
+        } else {
+          debugPrint('[PlaceReview] submitSinglePlaceReview error: $e');
+        }
+        if (!mounted) return;
+        setState(() => _isSubmitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('L\u1ed7i: $message'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 8),
+          ),
+        );
+      }
+      return;
     }
     if (!mounted) return;
     Navigator.pop(context);
@@ -209,14 +282,20 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
             actions: [
               if (!widget.isReadOnly)
                 TextButton(
-                  onPressed: _submit,
-                  child: Text(
-                    'Gửi',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  onPressed: _isSubmitting ? null : _submit,
+                  child: _isSubmitting
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(
+                          'Gửi',
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
             ],
           ),
@@ -443,7 +522,7 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
                 const SizedBox(height: 32),
                 if (!widget.isReadOnly)
                   ElevatedButton(
-                    onPressed: _submit,
+                    onPressed: _isSubmitting ? null : _submit,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       minimumSize: const Size(double.infinity, 50),
@@ -452,14 +531,23 @@ class _PlaceReviewScreenState extends State<PlaceReviewScreen> {
                       ),
                       elevation: 0,
                     ),
-                    child: Text(
-                      'Gửi đánh giá',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    child: _isSubmitting
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Gửi đánh giá',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 const SizedBox(height: 20),
               ],

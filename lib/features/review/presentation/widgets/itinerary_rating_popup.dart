@@ -96,6 +96,7 @@ class _ItineraryRatingPopupState extends State<ItineraryRatingPopup> {
         overallContent: _commentController.text.trim().isEmpty
             ? null
             : _commentController.text.trim(),
+        overallTags: _missedReason.isNotEmpty ? [_missedReason] : const [],
         applyAllPlaces: false,
       );
       if (!mounted) return;

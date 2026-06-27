@@ -34,6 +34,8 @@ import 'package:travel_advisor_mobile/features/saved/data/datasources/favorite_r
 import 'package:travel_advisor_mobile/features/review/domain/entities/location_review_entity.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_cubit.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/cubit/review_state.dart';
+import 'package:travel_advisor_mobile/features/review/presentation/constants/review_tags.dart'
+    show getTagsForCategory;
 import 'package:travel_advisor_mobile/features/review/presentation/screens/place_review_screen.dart';
 import 'package:travel_advisor_mobile/features/review/presentation/screens/review_catalog_screen.dart';
 import '../widgets/itinerary_map_view.dart';
@@ -1018,6 +1020,12 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
         return;
       }
 
+      // Lấy categoryId từ detail đã load để hiển thị tag đúng danh mục
+      final categoryId = state.itinerary.locations
+          .where((l) => l.id == activity.id)
+          .firstOrNull
+          ?.categoryId;
+
       if (!state.itinerary.locations.any((loc) => loc.id == activity.id)) {
         _sharedReviewCubit.ensureLocationAvailable(
           LocationReviewEntity(
@@ -1037,16 +1045,16 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
           builder: (_) => PlaceReviewScreen(
             locationId: activity.id,
             reviewCubit: _sharedReviewCubit,
+            submitOnSave: true,
+            itineraryId: widget.itineraryId,
+            reviewTags: getTagsForCategory(categoryId),
           ),
         ),
       );
 
       if (submitted == true) {
-        await _sharedReviewCubit.submitReview(widget.itineraryId);
         if (!mounted) return;
-        // Cập nhật local cache ngay, refresh ngầm
         setState(() => _hasReviewById[activity.id] = true);
-        _loadReviewStatuses();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Đã lưu đánh giá địa điểm'),
