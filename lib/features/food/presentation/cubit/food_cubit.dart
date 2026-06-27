@@ -139,6 +139,7 @@ class FoodCubit extends Cubit<FoodState> {
     required String restaurantName,
     String? itineraryDetailId,
   }) async {
+    print('[FoodCubit] loadRestaurantMenu called | placeId="$placeId" | restaurant="$restaurantName"');
     emit(state.copyWith(
       placeId: placeId,
       itineraryDetailId: itineraryDetailId,
@@ -167,7 +168,9 @@ class FoodCubit extends Cubit<FoodState> {
         isLoading: false,
         clearErrorMessage: true,
       ));
-    } catch (e) {
+    } catch (e, st) {
+      print('[FoodCubit] loadRestaurantMenu error | placeId=$placeId | $e');
+      print(st);
       emit(state.copyWith(
         placeId: placeId,
         itineraryDetailId: itineraryDetailId,

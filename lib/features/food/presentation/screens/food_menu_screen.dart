@@ -82,8 +82,7 @@ class FoodMenuScreen extends StatelessWidget {
 
                   if (state.errorMessage != null) {
                     return _FoodMenuMessage(
-                      message:
-                          'Không thể tải thực đơn từ cơ sở dữ liệu. Vui lòng thử lại.',
+                      message: '[placeId: ${state.placeId}]\n\n${state.errorMessage!}',
                       actionLabel: 'Thử lại',
                       onAction: () =>
                           context.read<FoodCubit>().loadRestaurantMenu(
