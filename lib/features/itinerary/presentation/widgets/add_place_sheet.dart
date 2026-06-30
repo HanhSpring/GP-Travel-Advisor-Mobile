@@ -80,20 +80,53 @@ class _AddPlaceSheetState extends State<AddPlaceSheet> {
     _loadNearbyPlaces();
   }
 
+  // Whitelist: chỉ hiện category là địa điểm du lịch / tham quan / vui chơi
+  static const _tourismCategoryKeywords = [
+    // Di tích, tín ngưỡng
+    'chùa', 'đền', 'tháp', 'đình', 'miếu', 'nhà thờ', 'tu viện',
+    'pagoda', 'temple', 'shrine', 'church', 'cathedral',
+    // Thắng cảnh, lịch sử
+    'di tích', 'thắng cảnh', 'danh lam', 'lịch sử', 'văn hóa', 'heritage',
+    'landmark', 'monument', 'ruins', 'citadel', 'castle', 'palace',
+    // Thiên nhiên
+    'công viên', 'vườn', 'thiên nhiên', 'núi', 'biển', 'hồ', 'thác', 'hang',
+    'park', 'garden', 'nature', 'beach', 'mountain', 'lake', 'waterfall', 'cave',
+    // Tham quan
+    'tham quan', 'du lịch', 'điểm đến', 'attraction', 'sightseeing', 'tourist',
+    'khu du lịch', 'khu tham quan',
+    // Vui chơi giải trí
+    'vui chơi', 'giải trí', 'khu vui', 'công viên nước', 'khu nghỉ dưỡng',
+    'amusement', 'entertainment', 'theme park', 'resort', 'leisure',
+    // Nghệ thuật, văn hóa
+    'bảo tàng', 'gallery', 'triển lãm', 'nhà hát', 'nghệ thuật',
+    'museum', 'art', 'theater', 'exhibition', 'gallery',
+    // Chợ, phố cổ, làng nghề
+    'chợ', 'phố cổ', 'làng', 'market', 'old town', 'village',
+  ];
+
   Future<void> _loadNearbyPlaces({String? q}) async {
     setState(() => _isLoading = true);
     try {
       final lat = widget.referenceLat ?? 16.047079;
       final lng = widget.referenceLng ?? 108.206230;
-      final places = await NearbyPlacesApi.getNearbyPlaces(
+      var places = await NearbyPlacesApi.getNearbyPlaces(
         lat,
         lng,
         excludeIds: widget.existingIds,
         preferCategory: (q != null && q.isNotEmpty) ? null : 'Tham quan',
-        radius: q != null && q.isNotEmpty ? 50 : 15,
-        limit: q != null && q.isNotEmpty ? 30 : 10,
+        radius: q != null && q.isNotEmpty ? 50 : 30,
+        limit: q != null && q.isNotEmpty ? 30 : 25,
         q: q,
       );
+
+      // Khi không tìm kiếm: chỉ gợi ý địa điểm du lịch/tham quan nổi tiếng,
+      // loại bỏ hoàn toàn nhà hàng, quán ăn, khách sạn, v.v.
+      if (q == null || q.isEmpty) {
+        places = places.where((p) {
+          final cat = p.category.toLowerCase();
+          return _tourismCategoryKeywords.any((kw) => cat.contains(kw));
+        }).toList();
+      }
 
       if (mounted) {
         places.sort((a, b) {
