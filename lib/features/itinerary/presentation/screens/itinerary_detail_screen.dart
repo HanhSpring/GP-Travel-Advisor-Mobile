@@ -1450,7 +1450,10 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
                 children: [
                   Expanded(
                     child: TextButton(
-                      onPressed: () => Navigator.pop(ctx, false),
+                      onPressed: () {
+                        Navigator.pop(ctx, false);
+                        _showExtendTripDialog(context, place);
+                      },
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

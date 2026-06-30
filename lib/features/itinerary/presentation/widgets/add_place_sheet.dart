@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:travel_advisor_mobile/core/constants/app_colors.dart';
 import 'package:travel_advisor_mobile/core/constants/app_sizes.dart';
@@ -189,89 +188,8 @@ class _AddPlaceSheetState extends State<AddPlaceSheet> {
   }
 
   Future<void> _onSelect(NearbyPlaceModel place) async {
-    // Validate opening hours dựa theo ngày tham quan và giờ dự kiến
-    if (place.openHourCompressed != null && widget.proposedVisitTime != null) {
-      final slot = _openSlotForDay(
-          place.openHourCompressed!, widget.visitDate ?? DateTime.now());
-      final hoursStr = slot != null ? '${slot.$1} – ${slot.$2}' : 'không xác định';
-      final outside = slot != null
-          ? !_isWithinHours(widget.proposedVisitTime!, slot.$1, slot.$2)
-          : false;
-      if (outside) {
-        final proceed = await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppSizes.r16)),
-            title: const Text('Ngoài giờ mở cửa',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-            content: Text(
-              '”${place.name}” mở cửa từ $hoursStr.\n\n'
-              'Thời gian tham quan dự kiến ${widget.proposedVisitTime} '
-              'nằm ngoài khung giờ mở cửa. Bạn có muốn tiếp tục thêm không?',
-              style: const TextStyle(height: 1.5),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Hủy',
-                    style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontWeight: FontWeight.bold)),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColorsExt.warning,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppSizes.r8)),
-                  elevation: 0,
-                ),
-                child: const Text('Tiếp tục thêm',
-                    style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-        );
-        if (proceed != true || !mounted) return;
-      }
-    }
-
     Navigator.pop(context);
     await widget.onAdd(place);
-  }
-
-  /// Trả về (openTime, closeTime) dạng "HH:mm" cho ngày [date], hoặc null nếu không tìm thấy.
-  (String, String)? _openSlotForDay(String jsonStr, DateTime date) {
-    try {
-      const dayNames = [
-        'Monday', 'Tuesday', 'Wednesday', 'Thursday',
-        'Friday', 'Saturday', 'Sunday'
-      ];
-      final dayName = dayNames[date.weekday - 1];
-      final Map<String, dynamic> map = jsonDecode(jsonStr);
-      final slots = map[dayName] as List?;
-      if (slots == null || slots.isEmpty) return null;
-      final slot = slots[0] as List;
-      // "07:00:00" -> "07:00"
-      final open = (slot[0] as String).substring(0, 5);
-      final close = (slot[1] as String).substring(0, 5);
-      return (open, close);
-    } catch (_) {
-      return null;
-    }
-  }
-
-  bool _isWithinHours(String time, String openTime, String closeTime) {
-    int toMins(String t) {
-      final p = t.split(':');
-      return int.parse(p[0]) * 60 + int.parse(p[1]);
-    }
-    final t = toMins(time);
-    final o = toMins(openTime);
-    final c = toMins(closeTime);
-    return c >= o ? (t >= o && t <= c) : (t >= o || t <= c);
   }
 
   // ─── Build ─────────────────────────────────────────────────────────────────

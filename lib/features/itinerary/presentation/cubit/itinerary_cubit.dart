@@ -1340,11 +1340,10 @@ class ItineraryCubit extends Cubit<ItineraryState> {
       final dayStart = hasStart
           ? itin.dailyStartTime!
           : day.activities.first.startTime;
-      final dayLastEnd = day.activities.last.endTime;
-      // Thêm 90 phút buffer sau hoạt động cuối cùng nếu không có dailyEndTime
-      final derivedEnd = hasEnd
-          ? itin.dailyEndTime!
-          : _shiftTimeStr(dayLastEnd, 90);
+      // Dùng fallback "22:00" thay vì last_activity.endTime + 90 phút.
+      // Lý do: khi thêm địa điểm mới, lịch có thể kéo dài hơn giờ kết thúc hiện tại,
+      // nên window cần đủ rộng để optimizer xếp được.
+      final derivedEnd = hasEnd ? itin.dailyEndTime! : '22:00';
       return (startTime: dayStart, endTime: derivedEnd);
     }
 
