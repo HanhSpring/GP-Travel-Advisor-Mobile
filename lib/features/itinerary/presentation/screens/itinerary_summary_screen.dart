@@ -1,4 +1,4 @@
-﻿import 'dart:ui';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -546,6 +546,8 @@ class _ItinerarySummaryViewState extends State<_ItinerarySummaryView> {
     int visitedVisitCount,
     int totalVisitCount,
   ) {
+    final isFuture = DateTime.now().isBefore(itin.startDate);
+
     return SizedBox(
       height: MediaQuery.of(context).size.height * 0.48,
       width: double.infinity,
@@ -1328,19 +1330,10 @@ class _ItinerarySummaryViewState extends State<_ItinerarySummaryView> {
   }
 
   Widget _buildActionBtn(BuildContext context, ItineraryDetailEntity itin) {
-    final now = DateTime.now();
-    // Logic xét trạng thái dựa trên thời gian thực
-    final bool isFuture = now.isBefore(itin.startDate);
-
     String btnText = 'XEM CHI TIẾT LỊCH TRÌNH';
     Color btnColor = const Color(0xFF1E3A8A);
     IconData btnIcon = Icons.arrow_forward;
     void onPressed() => _navigateToDetail(context, itin);
-
-    if (isFuture) {
-      btnText = 'BẮT ĐẦU LỊCH TRÌNH';
-      btnIcon = Icons.play_circle_outline_rounded;
-    }
 
     return Container(
       decoration: BoxDecoration(
@@ -1631,8 +1624,7 @@ class _ItinerarySummaryViewState extends State<_ItinerarySummaryView> {
   bool _isHotelStart(ItineraryActivityEntity activity) {
     final category = (activity.category ?? '').toLowerCase();
     final title = activity.title.toLowerCase();
-    final isHotelLike =
-        category.contains('lưu trú') ||
+    return category.contains('lưu trú') ||
         category.contains('khách sạn') ||
         category.contains('accommodation') ||
         category.contains('hotel') ||
@@ -1643,8 +1635,6 @@ class _ItinerarySummaryViewState extends State<_ItinerarySummaryView> {
         title.contains('resort') ||
         title.contains('homestay') ||
         title.contains('villa');
-    final sameTime = activity.startTime == activity.endTime;
-    return isHotelLike && sameTime;
   }
 
   List<ItineraryActivityEntity> _visitActivities(ItineraryDayEntity day) {
