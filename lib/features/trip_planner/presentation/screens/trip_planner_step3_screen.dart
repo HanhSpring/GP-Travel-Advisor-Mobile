@@ -25,6 +25,9 @@ class _TripPlannerStep3ScreenState extends State<TripPlannerStep3Screen> {
   // [TRIP_NAME_INPUT] Controller cho TextField tên chuyến đi
   late final TextEditingController _nameController;
 
+  // Engine selection: 'ga_v1' | 'scheduler_v2' | 'compare'
+  String _plannerEngine = 'compare';
+
   @override
   void initState() {
     super.initState();
@@ -241,6 +244,56 @@ class _TripPlannerStep3ScreenState extends State<TripPlannerStep3Screen> {
                         ),
                         // ════════════════════════════════════════
                         const SizedBox(height: 36),
+                        // ── ENGINE SELECTOR ──────────────────────
+                        const Text(
+                          'Thuật toán lên lịch',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Chọn thuật toán tạo lịch trình phù hợp.',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textSecondary,
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.all(4),
+                          child: Row(
+                            children: [
+                              _engineTab(
+                                label: 'OR-Tools',
+                                subtitle: 'Chính xác',
+                                value: 'scheduler_v2',
+                                icon: Icons.route_rounded,
+                              ),
+                              _engineTab(
+                                label: 'So sánh',
+                                subtitle: 'Xem cả hai',
+                                value: 'compare',
+                                icon: Icons.compare_arrows_rounded,
+                              ),
+                              _engineTab(
+                                label: 'GA',
+                                subtitle: 'Đa dạng',
+                                value: 'ga_v1',
+                                icon: Icons.shuffle_rounded,
+                              ),
+                            ],
+                          ),
+                        ),
+                        // ── END ENGINE SELECTOR ───────────────────
+                        const SizedBox(height: 36),
                         // Phần ngân sách (giữ nguyên như cũ)
                         const Text(
                           'Ngân sách',
@@ -274,8 +327,9 @@ class _TripPlannerStep3ScreenState extends State<TripPlannerStep3Screen> {
                   padding: const EdgeInsets.all(16),
                   color: AppColors.background,
                   child: ElevatedButton(
-                    onPressed: () =>
-                        context.read<TripPlannerCubit>().submitTripPlan(),
+                    onPressed: () => context
+                        .read<TripPlannerCubit>()
+                        .submitTripPlan(plannerEngine: _plannerEngine),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       minimumSize: const Size(double.infinity, 56),
@@ -307,6 +361,63 @@ class _TripPlannerStep3ScreenState extends State<TripPlannerStep3Screen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _engineTab({
+    required String label,
+    required String subtitle,
+    required String value,
+    required IconData icon,
+  }) {
+    final isSelected = _plannerEngine == value;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _plannerEngine = value),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primary : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    icon,
+                    size: 16,
+                    color: isSelected ? Colors.white : AppColors.textSecondary,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color:
+                          isSelected ? Colors.white : AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: isSelected
+                      ? Colors.white.withValues(alpha: 0.8)
+                      : AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

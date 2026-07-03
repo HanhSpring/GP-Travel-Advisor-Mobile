@@ -9,6 +9,9 @@ import 'trip_planner_state.dart';
 class TripPlannerCubit extends Cubit<TripPlannerState> {
   final CreateItineraryUseCase _createItinerary;
 
+  /// Giữ gaItineraryId ngoài state (tránh tái gen Freezed) — chỉ có giá trị khi compare.
+  String? lastGaItineraryId;
+
   TripPlannerCubit({required CreateItineraryUseCase createItinerary})
     : _createItinerary = createItinerary,
       super(
@@ -314,7 +317,7 @@ class TripPlannerCubit extends Cubit<TripPlannerState> {
 
   // â”€â”€ Submit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  Future<void> submitTripPlan() async {
+  Future<void> submitTripPlan({String plannerEngine = 'scheduler_v2'}) async {
     final form = state.whenOrNull(loaded: (f) => f);
     if (form == null) return;
 
@@ -387,7 +390,7 @@ class TripPlannerCubit extends Cubit<TripPlannerState> {
     try {
       final userId = await AuthUtils.requireCurrentUserId();
 
-      final id = await _createItinerary(
+      final result = await _createItinerary(
         CreateItineraryParams(
           userId: userId,
           tripType: _tripTypeToApi(form.tripType),
@@ -405,14 +408,15 @@ class TripPlannerCubit extends Cubit<TripPlannerState> {
           childCount: form.childCount,
           budget: form.budget,
           foodPreferences: form.foodPreferences,
-          // [TRIP_NAME_INPUT] Dùng tên user đã nhập, fallback sang tên tự sinh
           tripName: (form.tripName != null && form.tripName!.isNotEmpty)
               ? form.tripName
               : _generateTripName(form),
+          plannerEngine: plannerEngine,
         ),
       );
 
-      emit(TripPlannerState.success(itineraryId: id));
+      lastGaItineraryId = result.gaItineraryId;
+      emit(TripPlannerState.success(itineraryId: result.itineraryId));
     } catch (e) {
       emit(TripPlannerState.error(e.toString()));
       emit(TripPlannerState.loaded(tripForm: form));
