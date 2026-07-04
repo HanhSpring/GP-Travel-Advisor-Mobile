@@ -537,6 +537,10 @@ class RemoteItineraryDataSource implements ItineraryDataSource {
       estimatedBudget: _asDouble(
         data['totalBudget'] ?? data['estimatedBudget'],
       ),
+      participantCount: _asInt(
+        data['participantCount'] ?? data['participant_count'],
+        1,
+      ),
       spentBudget: _asDouble(data['spentBudget'] ?? data['spent_budget']),
       placeCost: _asDouble(data['placeCost'] ?? data['place_cost']),
       hotelCost: _asDouble(data['hotelCost'] ?? data['hotel_cost']),

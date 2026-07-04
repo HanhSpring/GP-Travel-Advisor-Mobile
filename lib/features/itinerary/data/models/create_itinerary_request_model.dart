@@ -15,7 +15,6 @@ class CreateItineraryRequestModel {
   final List<String> foodPreferences;
   // [TRIP_NAME_INPUT] Ánh xạ sang trường description trong CreateItineraryDto
   final String? description;
-  final String plannerEngine;
 
   const CreateItineraryRequestModel({
     required this.userId,
@@ -33,7 +32,6 @@ class CreateItineraryRequestModel {
     required this.budget,
     required this.foodPreferences,
     this.description,
-    this.plannerEngine = 'scheduler_v2',
   });
 
   static const _foodPrefMap = {
@@ -45,25 +43,24 @@ class CreateItineraryRequestModel {
   };
 
   Map<String, dynamic> toJson() => {
-        'userId': userId,
-        'tripType': tripType,
-        'departureLocationId': departureLocationId,
-        'destinationLocationId': destinationLocationId,
-        'transportMode': transportMode,
-        'startDate': startDate,
-        'endDate': endDate,
-        'dailyStartTime': dailyStartTime,
-        'dailyEndTime': dailyEndTime,
-        'tripIntent': tripIntent,
-        'adultCount': adultCount,
-        'childCount': childCount,
-        'budget': budget,
-        'foodPreferences': foodPreferences
-            .map((p) => _foodPrefMap[p] ?? p)
-            .toList(),
-        // [TRIP_NAME_INPUT] Chỉ gửi khi user đã nhập tên
-        if (description != null && description!.isNotEmpty)
-          'description': description,
-        'plannerEngine': plannerEngine,
-      };
+    'userId': userId,
+    'tripType': tripType,
+    'departureLocationId': departureLocationId,
+    'destinationLocationId': destinationLocationId,
+    'transportMode': transportMode,
+    'startDate': startDate,
+    'endDate': endDate,
+    'dailyStartTime': dailyStartTime,
+    'dailyEndTime': dailyEndTime,
+    'tripIntent': tripIntent,
+    'adultCount': adultCount,
+    'childCount': childCount,
+    'budget': budget,
+    'foodPreferences': foodPreferences
+        .map((p) => _foodPrefMap[p] ?? p)
+        .toList(),
+    // [TRIP_NAME_INPUT] Chỉ gửi khi user đã nhập tên
+    if (description != null && description!.isNotEmpty)
+      'description': description,
+  };
 }

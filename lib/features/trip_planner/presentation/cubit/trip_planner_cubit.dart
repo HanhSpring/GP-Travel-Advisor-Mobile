@@ -91,13 +91,12 @@ class TripPlannerCubit extends Cubit<TripPlannerState> {
   void updateStartDate(DateTime date) {
     state.maybeWhen(
       loaded: (form) => emit(
-        TripPlannerState.loaded(
-          tripForm: form.copyWith(startDate: date),
-        ),
+        TripPlannerState.loaded(tripForm: form.copyWith(startDate: date)),
       ),
       orElse: () {},
     );
   }
+
   void updateEndDate(DateTime date) {
     state.maybeWhen(
       loaded: (form) =>
@@ -218,7 +217,8 @@ class TripPlannerCubit extends Cubit<TripPlannerState> {
   String resolveOrGenerateTripName() {
     final form = state.whenOrNull(loaded: (f) => f);
     if (form == null) return '';
-    if (form.tripName != null && form.tripName!.isNotEmpty) return form.tripName!;
+    if (form.tripName != null && form.tripName!.isNotEmpty)
+      return form.tripName!;
     final generated = _generateTripName(form);
     emit(TripPlannerState.loaded(tripForm: form.copyWith(tripName: generated)));
     return generated;
@@ -262,7 +262,8 @@ class TripPlannerCubit extends Cubit<TripPlannerState> {
     if (form.departureLocationId == null || form.departureLocationId!.isEmpty) {
       return 'Vui lòng chọn điểm khởi hành';
     }
-    if (form.destinationLocationId == null || form.destinationLocationId!.isEmpty) {
+    if (form.destinationLocationId == null ||
+        form.destinationLocationId!.isEmpty) {
       return 'Vui lòng chọn điểm đến';
     }
     return null;
@@ -317,7 +318,7 @@ class TripPlannerCubit extends Cubit<TripPlannerState> {
 
   // â”€â”€ Submit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  Future<void> submitTripPlan({String plannerEngine = 'scheduler_v2'}) async {
+  Future<void> submitTripPlan() async {
     final form = state.whenOrNull(loaded: (f) => f);
     if (form == null) return;
 
@@ -411,7 +412,6 @@ class TripPlannerCubit extends Cubit<TripPlannerState> {
           tripName: (form.tripName != null && form.tripName!.isNotEmpty)
               ? form.tripName
               : _generateTripName(form),
-          plannerEngine: plannerEngine,
         ),
       );
 
@@ -489,13 +489,13 @@ class TripPlannerCubit extends Cubit<TripPlannerState> {
   List<String> _normalizeTripIntents(List<String> intents) {
     if (intents.isEmpty) return const [];
     final seen = <String>{};
-    final valid = intents
-        .where(kTripIntents.contains)
-        .where(seen.add)
-        .toList();
+    final valid = intents.where(kTripIntents.contains).where(seen.add).toList();
     // Safety net: nếu general trộn với specific, bỏ general
     if (valid.length > 1 && valid.contains(kGeneralTripIntent)) {
-      return valid.where((v) => v != kGeneralTripIntent).take(kMaxTripIntents).toList();
+      return valid
+          .where((v) => v != kGeneralTripIntent)
+          .take(kMaxTripIntents)
+          .toList();
     }
     return valid.take(kMaxTripIntents).toList();
   }

@@ -127,7 +127,9 @@ class ItineraryRepositoryImpl implements ItineraryRepository {
   }
 
   @override
-  Future<CreateItineraryResult> createItinerary(CreateItineraryParams params) async {
+  Future<CreateItineraryResult> createItinerary(
+    CreateItineraryParams params,
+  ) async {
     final request = CreateItineraryRequestModel(
       userId: params.userId,
       tripType: params.tripType,
@@ -144,7 +146,6 @@ class ItineraryRepositoryImpl implements ItineraryRepository {
       budget: params.budget,
       foodPreferences: params.foodPreferences,
       description: params.tripName,
-      plannerEngine: params.plannerEngine,
     );
     return _dataSource.createItinerary(request);
   }

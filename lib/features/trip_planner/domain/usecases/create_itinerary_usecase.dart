@@ -24,7 +24,6 @@ class CreateItineraryParams {
   final List<String> foodPreferences;
   // [TRIP_NAME_INPUT] Tên chuyến đi do user nhập ở Bước 3
   final String? tripName;
-  final String plannerEngine;
 
   const CreateItineraryParams({
     required this.userId,
@@ -42,7 +41,6 @@ class CreateItineraryParams {
     required this.budget,
     required this.foodPreferences,
     this.tripName,
-    this.plannerEngine = 'scheduler_v2',
   });
 }
 
