@@ -797,6 +797,8 @@ class _ItinerarySummaryViewState extends State<_ItinerarySummaryView> {
                 width: size,
                 height: size,
                 fit: BoxFit.cover,
+                // Avatar nhỏ — giải mã đúng kích thước hiển thị
+                cacheWidth: (size * 3).ceil(),
                 errorBuilder: (_, _, _) => fallback,
               )
             : fallback,

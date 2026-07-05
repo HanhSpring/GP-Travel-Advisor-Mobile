@@ -87,15 +87,23 @@ Future<bool> showStopTrackingDialog(BuildContext context) async {
                         backgroundColor: const Color(0xFFF97316),
                         foregroundColor: Colors.white,
                         elevation: 0,
+                        // Padding ngang mặc định lớn làm chữ bị xuống dòng
+                        // trong dialog hẹp — thu nhỏ lại
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
-                        'Dừng chuyến đi',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
+                      // FittedBox: luôn 1 dòng, tự co chữ nếu màn quá hẹp
+                      child: const FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'Dừng chuyến đi',
+                          maxLines: 1,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                     ),

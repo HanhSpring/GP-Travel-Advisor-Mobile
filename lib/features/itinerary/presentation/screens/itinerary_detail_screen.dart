@@ -2185,11 +2185,151 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
   }
 }
 
+/// Card "Tiến độ tham quan" trong ngày — thay cho dòng "x/z đã đi" trong box
+/// chi phí và thanh "Đã đi X/Y địa điểm" cũ.
+///
+/// Trạng thái "đã đi" gộp từ 3 nguồn nên luôn đúng cả khi refresh lẫn khi
+/// tracking cập nhật realtime: `activity.status` (chi tiết lịch trình sau
+/// refresh), `visitedByBackend` (geofence_visits) và tracking state trong RAM
+/// (qua `context.watch<TrackingCubit>`).
+class _DayVisitProgressCard extends StatelessWidget {
+  final List<ItineraryActivityEntity> visitActivities;
+  final Map<String, bool> visitedByBackend;
+
+  const _DayVisitProgressCard({
+    required this.visitActivities,
+    this.visitedByBackend = const {},
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tracking = context.watch<TrackingCubit>().state;
+    bool isVisited(ItineraryActivityEntity activity) {
+      if (activity.status == ActivityStatus.daDi) return true;
+      if (visitedByBackend[activity.id] ?? false) return true;
+      return tracking.isActive &&
+          tracking.byDetailId(activity.id)?.status == VisitStatus.visited;
+    }
+
+    final total = visitActivities.length;
+    if (total == 0) return const SizedBox.shrink();
+
+    final visited = visitActivities.where(isVisited).length;
+    final progress = (visited / total).clamp(0.0, 1.0);
+    final isDone = visited >= total;
+    final accent = isDone ? const Color(0xFF10B981) : const Color(0xFF0E9E87);
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: AppSizes.s12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: Icon(
+                  isDone
+                      ? Icons.celebration_rounded
+                      : Icons.where_to_vote_rounded,
+                  size: 18,
+                  color: accent,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Tiến độ tham quan',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      isDone
+                          ? 'Đã ghé hết địa điểm trong ngày 🎉'
+                          : 'Đã đi $visited/$total địa điểm trong ngày',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF64748B),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '$visited/$total',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    color: accent,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: TweenAnimationBuilder<double>(
+              duration: const Duration(milliseconds: 350),
+              curve: Curves.easeOut,
+              tween: Tween(begin: 0, end: progress),
+              builder: (context, value, _) => LinearProgressIndicator(
+                value: value,
+                minHeight: 8,
+                backgroundColor: const Color(0xFFF1F5F9),
+                valueColor: AlwaysStoppedAnimation<Color>(accent),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _DayCostSummaryCard extends StatelessWidget {
   final ItineraryDayEntity day;
   final List<ItineraryActivityEntity> visitActivities;
   final bool Function(ItineraryActivityEntity activity) isHotelStart;
-  final Map<String, bool> visitedByBackend;
   final int participantCount;
   final bool showPerPersonCost;
   final ValueChanged<bool> onCostScopeChanged;
@@ -2198,7 +2338,6 @@ class _DayCostSummaryCard extends StatelessWidget {
     required this.day,
     required this.visitActivities,
     required this.isHotelStart,
-    this.visitedByBackend = const {},
     required this.participantCount,
     required this.showPerPersonCost,
     required this.onCostScopeChanged,
@@ -2218,13 +2357,6 @@ class _DayCostSummaryCard extends StatelessWidget {
       0,
       (sum, activity) => sum + activity.transportCost,
     );
-    final visitedCount = visitActivities
-        .where(
-          (activity) =>
-              activity.status == ActivityStatus.daDi ||
-              (visitedByBackend[activity.id] ?? false),
-        )
-        .length;
     final totalCost = placeCost + hotelCost + selfDriveCost;
 
     final people = participantCount.clamp(1, 999);
@@ -2251,29 +2383,15 @@ class _DayCostSummaryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  showPerPersonCost
-                      ? 'Chi ph\u00ed trong ng\u00e0y / 1 ng\u01b0\u1eddi'
-                      : 'T\u1ed5ng chi ph\u00ed trong ng\u00e0y / $people ng\u01b0\u1eddi',
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF0F172A),
-                  ),
-                ),
-              ),
-              Text(
-                '$visitedCount/${visitActivities.length} \u0111\u00e3 \u0111i',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF64748B),
-                ),
-              ),
-            ],
+          Text(
+            showPerPersonCost
+                ? 'Chi ph\u00ed trong ng\u00e0y / 1 ng\u01b0\u1eddi'
+                : 'T\u1ed5ng chi ph\u00ed trong ng\u00e0y / $people ng\u01b0\u1eddi',
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF0F172A),
+            ),
           ),
           const SizedBox(height: 10),
           SegmentedButton<bool>(
@@ -3083,12 +3201,16 @@ class _ItineraryDetailView extends StatelessWidget {
             day: currentDayData,
             visitActivities: _visitActivities(currentDayData),
             isHotelStart: _isHotelStart,
-            visitedByBackend: reviewIsVisitedById,
             participantCount: itin.participantCount,
             showPerPersonCost: showPerPersonCost,
             onCostScopeChanged: onCostScopeChanged,
           ),
-          const SizedBox(height: AppSizes.s16),
+          const SizedBox(height: AppSizes.s12),
+          _DayVisitProgressCard(
+            visitActivities: _visitActivities(currentDayData),
+            visitedByBackend: reviewIsVisitedById,
+          ),
+          const SizedBox(height: AppSizes.s4),
           if (itin.isOwner)
             TrackingSection(
               itineraryId: itin.id,

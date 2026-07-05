@@ -63,7 +63,7 @@ Khi bật lại: thay `_shouldShowStart` thành `_shouldShowStart && _dayReached
 ### TrackingSection (compact bar)
 
 - **Chưa bật**: nút full-width "Bắt đầu theo dõi lịch trình"
-- **Đang bật**: bar xanh "Đã đi X/Y địa điểm" (chỉ hiển thị — nút Dừng đã bỏ khỏi bar; muốn dừng dùng thẻ lịch trình ở trang Khám phá / Lịch trình của tôi)
+- **Đang bật**: `TrackingSection` không render UI nữa — tiến độ ngày hiển thị ở card **"Tiến độ tham quan"** (`_DayVisitProgressCard`) nằm ngay dưới box chi phí trong ngày: icon + "Đã đi x/z địa điểm trong ngày" + chip x/z + progress bar; đủ z địa điểm thì đổi màu xanh lá + "Đã ghé hết địa điểm trong ngày 🎉". Trạng thái "đã đi" gộp từ 3 nguồn (activity.status sau refresh, geofence_visits backend, tracking state RAM) nên refresh lẫn tracking realtime đều cập nhật đúng. Dòng "x/z đã đi" trong header box chi phí đã bỏ. `TrackingSection` vẫn nằm trong tree để sync activities (food proximity), dọn phiên stale theo `dbTrackingActive` và hiện snackbar message. Muốn dừng theo dõi dùng thẻ lịch trình ở trang Khám phá / Lịch trình của tôi.
 - **Không còn liệt kê địa điểm riêng** — trạng thái hiện trực tiếp trong timeline
 
 ### Ràng buộc ngày trong TrackingSection

@@ -9,11 +9,13 @@ import '../cubit/tracking_cubit.dart';
 import '../cubit/tracking_state.dart';
 import 'tracking_permissions.dart';
 
-/// Khối UI "Theo dõi lịch trình" nhúng vào màn chi tiết.
+/// Khối "Theo dõi lịch trình" nhúng vào màn chi tiết.
 ///
 /// Khi tracking KHÔNG active: hiện nút "Bắt đầu theo dõi" (nếu showStartButton=true).
-/// Khi tracking ACTIVE: hiện compact bar "Đã đi X/Y địa điểm" (chỉ hiển thị,
-/// muốn dừng thì dùng thẻ lịch trình ở trang Khám phá / Lịch trình của tôi).
+/// Khi tracking ACTIVE: không render UI (tiến độ ngày hiển thị ở card
+/// "Tiến độ tham quan" trong màn chi tiết) — widget vẫn cần nằm trong tree để
+/// đồng bộ activities cho food-proximity, dọn phiên stale theo dbTrackingActive
+/// và hiện snackbar message từ TrackingCubit.
 class TrackingSection extends StatefulWidget {
   final String itineraryId;
   final DateTime date;
@@ -143,52 +145,19 @@ class _TrackingBody extends StatelessWidget {
         }
       },
       builder: (context, state) {
+        if (!showStartButton) return const SizedBox.shrink();
         final isThisTrip = state.itineraryId == itineraryId;
         final isTrackedDay =
             state.date != null &&
             state.date!.year == date.year &&
             state.date!.month == date.month &&
             state.date!.day == date.day;
+        // Đang theo dõi lịch trình/ngày này → không cần nút bắt đầu.
         if (state.isActive && isThisTrip && isTrackedDay) {
-          return _activeBar(context, state);
+          return const SizedBox.shrink();
         }
-        if (!showStartButton) return const SizedBox.shrink();
         return _startButton(context, state);
       },
-    );
-  }
-
-  // ── Compact bar khi đang theo dõi ──────────────────────────────────────────
-  Widget _activeBar(BuildContext context, TrackingState state) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSizes.s12),
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSizes.s16,
-        vertical: 10,
-      ),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE8FDF8),
-        borderRadius: BorderRadius.circular(AppSizes.r12),
-        border: Border.all(
-          color: const Color(0xFF14DFBC).withValues(alpha: 0.4),
-        ),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.map_outlined, color: Color(0xFF14DFBC), size: 18),
-          const SizedBox(width: AppSizes.s8),
-          Expanded(
-            child: Text(
-              'Đã đi ${state.visitedCount}/${state.totalCount} địa điểm',
-              style: const TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-                color: Color(0xFF0E9E87),
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 

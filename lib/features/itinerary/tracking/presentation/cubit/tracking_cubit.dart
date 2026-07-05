@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -285,6 +287,42 @@ class TrackingCubit extends Cubit<TrackingState> with WidgetsBindingObserver {
     _subscribeLocationStream();
   }
 
+  /// Cấu hình stream vị trí theo nền tảng.
+  ///
+  /// Trên Android, stream chạy kèm **foreground service** + notification
+  /// "Đang theo dõi lịch trình": hệ điều hành coi app đang làm việc thực sự
+  /// nên không kill process khi người dùng đa nhiệm/chạy nền — phát hiện
+  /// geofence chủ động và gợi ý quán ăn tiếp tục hoạt động. Notification chỉ
+  /// tồn tại trong lúc theo dõi (stream hủy là service dừng).
+  ///
+  /// KHÔNG bật wake lock / wifi lock: giữ CPU + WiFi thức liên tục mới là
+  /// thứ hao pin, còn bản thân foreground service thì không — mức tiêu thụ
+  /// do GPS quyết định và đã được tối ưu bằng accuracy/distanceFilter
+  /// thích ứng bên dưới.
+  LocationSettings _locationSettings({required bool highAccuracy}) {
+    // Gần điểm -> high + filter 10m (bắt ENTER/DWELL chính xác).
+    // Xa điểm  -> medium + filter 100m (nhẹ pin lúc di chuyển/đứng xa).
+    final accuracy = highAccuracy
+        ? LocationAccuracy.high
+        : LocationAccuracy.medium;
+    final distanceFilter = highAccuracy ? 10 : 100;
+
+    if (!kIsWeb && Platform.isAndroid) {
+      return AndroidSettings(
+        accuracy: accuracy,
+        distanceFilter: distanceFilter,
+        foregroundNotificationConfig: const ForegroundNotificationConfig(
+          notificationTitle: 'Đang theo dõi lịch trình',
+          notificationText:
+              'Tripvivu đang tự động điểm danh các địa điểm trong chuyến đi của bạn.',
+          notificationChannelName: 'Theo dõi lịch trình',
+          setOngoing: true,
+        ),
+      );
+    }
+    return LocationSettings(accuracy: accuracy, distanceFilter: distanceFilter);
+  }
+
   void _subscribeLocationStream({bool highAccuracy = false}) {
     _locationSub?.cancel();
     // Luôn cần stream khi đang theo dõi: phục vụ cả phát hiện geofence chủ động
@@ -293,14 +331,7 @@ class TrackingCubit extends Cubit<TrackingState> with WidgetsBindingObserver {
     _highAccuracyMode = highAccuracy;
     try {
       _locationSub = Geolocator.getPositionStream(
-        // Gần điểm -> high + filter 10m (bắt ENTER/DWELL chính xác).
-        // Xa điểm  -> medium + filter 100m (nhẹ pin lúc di chuyển/đứng xa).
-        locationSettings: LocationSettings(
-          accuracy: highAccuracy
-              ? LocationAccuracy.high
-              : LocationAccuracy.medium,
-          distanceFilter: highAccuracy ? 10 : 100,
-        ),
+        locationSettings: _locationSettings(highAccuracy: highAccuracy),
       ).listen(_onPosition, onError: (_) {});
     } catch (_) {}
   }

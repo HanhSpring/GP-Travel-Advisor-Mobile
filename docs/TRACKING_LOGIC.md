@@ -150,6 +150,26 @@ accuracy:       highAccuracy ? high   : medium
 distanceFilter: highAccuracy ? 10m    : 100m
 ```
 
+### Foreground service — chống bị kill khi đa nhiệm, không tốn thêm pin
+
+Trên Android, stream dùng `AndroidSettings` với `ForegroundNotificationConfig`
+(`_locationSettings`): trong lúc theo dõi, geolocator chạy một **foreground
+service** kèm notification "Đang theo dõi lịch trình" (`setOngoing`). Hệ điều
+hành coi app đang làm việc thực sự nên **không kill process khi người dùng
+đa nhiệm/chạy nền** — phát hiện geofence chủ động + gợi ý quán ăn vẫn chạy.
+Notification tự biến mất khi stream hủy (Dừng theo dõi / hết ngày).
+
+Cân bằng pin — các lựa chọn cố tình KHÔNG dùng:
+
+- **Không `enableWakeLock` / `enableWifiLock`**: giữ CPU + WiFi thức liên tục
+  mới là thứ hao pin; bản thân foreground service thì không. Mức tiêu thụ do
+  GPS quyết định và đã được tối ưu bằng accuracy/distanceFilter thích ứng
+  (mục trên) + dwell timer chỉ chạy khi ở trong vùng (mục 6).
+- **Không xin `ignoreBatteryOptimizations`**: tắt Doze cho app là nguồn hao
+  pin lớn. Trường hợp app bị kill dù có foreground service (một số máy OEM
+  siết mạnh) thì native geofence + AlarmManager vẫn lo phần nền, và
+  `restoreIfActive`/refresh sẽ khôi phục phiên khi mở lại app.
+
 ### `_maybeSwitchAccuracy(pos)` — đổi chế độ theo khoảng cách
 
 ```
@@ -332,9 +352,11 @@ lại chi tiết lịch trình mà còn đồng bộ tracking theo dữ liệu D
 
 `TrackingSection` cũng tự dọn phiên stale: khi `dbTrackingActive` đổi từ
 `true → false` (qua `didUpdateWidget`) nó gọi `notifyDbState(id, false)`.
-Thanh "Đã đi X/Y địa điểm" trong chi tiết chỉ hiển thị tiến độ — nút Dừng đã
-bỏ; muốn dừng thì dùng thẻ lịch trình ở trang Khám phá / Lịch trình của tôi
-(dialog thân thiện `stop_tracking_dialog.dart`).
+Thanh "Đã đi X/Y địa điểm" cũ đã bỏ hẳn — tiến độ ngày hiển thị ở card
+"Tiến độ tham quan" (`_DayVisitProgressCard`) dưới box chi phí, gộp trạng thái
+từ 3 nguồn (activity.status, geofence_visits, tracking state) nên refresh là
+đúng ngay. Muốn dừng theo dõi dùng thẻ lịch trình ở trang Khám phá /
+Lịch trình của tôi (dialog thân thiện `stop_tracking_dialog.dart`).
 
 ### Sắp xếp tab "Tất cả"
 
