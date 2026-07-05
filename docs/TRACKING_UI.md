@@ -63,7 +63,7 @@ Khi bật lại: thay `_shouldShowStart` thành `_shouldShowStart && _dayReached
 ### TrackingSection (compact bar)
 
 - **Chưa bật**: nút full-width "Bắt đầu theo dõi lịch trình"
-- **Đang bật**: bar xanh "Đang theo dõi · đã ghé X/Y" + nút Dừng
+- **Đang bật**: bar xanh "Đã đi X/Y địa điểm" (chỉ hiển thị — nút Dừng đã bỏ khỏi bar; muốn dừng dùng thẻ lịch trình ở trang Khám phá / Lịch trình của tôi)
 - **Không còn liệt kê địa điểm riêng** — trạng thái hiện trực tiếp trong timeline
 
 ### Ràng buộc ngày trong TrackingSection
@@ -87,6 +87,12 @@ Khi tracking active, mỗi `TimelineActivityCard` hiện badge nhỏ bên trong 
 | `notVisited`  | 📍 **Tôi đã đến** (nút xanh dương, bấm để check-in thủ công) |
 
 Loading spinner thay nút khi đang xử lý check-in (`isCheckingIn == true`).
+
+> Điều kiện "đã ghé" được gộp từ **cả 3 nguồn** (`_isVisited`): tracking state
+> trong RAM, `activity.status == daDi` (chi tiết lịch trình sau refresh) và
+> `backendIsVisited` (geofence_visits). Địa điểm đã check-in thì sau refresh
+> luôn hiện badge "Đã đến nơi", không hiện lại nút "Tôi đã đến" kể cả khi
+> tracking state chưa kịp đồng bộ.
 
 ---
 
