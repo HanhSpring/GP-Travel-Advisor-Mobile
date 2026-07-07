@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -104,7 +106,10 @@ class CityDetailScreen extends StatelessWidget {
               );
               return;
             }
-            Navigator.popUntil(context, (route) => route.isFirst);
+            final didSelectTab = MainShellTabController.selectTab(i);
+            if (didSelectTab) {
+              Navigator.popUntil(context, (route) => route.isFirst);
+            }
           },
         ),
       ),
@@ -145,14 +150,47 @@ class _CityDetailContentState extends State<_CityDetailContent> {
   final PageController _restaurantController = PageController(viewportFraction: 0.45);
   final PageController _hotelController = PageController(viewportFraction: 0.45);
   final FavoriteRemoteDataSource _favoriteRemoteDataSource = sl<FavoriteRemoteDataSource>();
+  StreamSubscription<FavoriteChangedEvent>? _favoriteSubscription;
 
   int _itineraryIndex = 0;
   int _activityIndex = 0;
   int _restaurantIndex = 0;
   int _hotelIndex = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    _favoriteSubscription = _favoriteRemoteDataSource.changes.listen((event) {
+      if (!mounted || event.type != FavoriteTargetType.place) return;
+      context.read<CityDetailCubit>().updatePlaceFavorite(
+            event.id,
+            event.isFavorite,
+          );
+    });
+  }
+
+  @override
+  void dispose() {
+    _favoriteSubscription?.cancel();
+    _itineraryController.dispose();
+    _activityController.dispose();
+    _restaurantController.dispose();
+    _hotelController.dispose();
+    super.dispose();
+  }
+
   Future<bool> _setPlaceFavorite(String placeId, bool isFavorite) async {
-    return _favoriteRemoteDataSource.setPlaceFavorite(placeId, isFavorite);
+    final updatedFavorite = await _favoriteRemoteDataSource.setPlaceFavorite(
+      placeId,
+      isFavorite,
+    );
+    if (mounted) {
+      context.read<CityDetailCubit>().updatePlaceFavorite(
+            placeId,
+            updatedFavorite,
+          );
+    }
+    return updatedFavorite;
   }
 
   @override
