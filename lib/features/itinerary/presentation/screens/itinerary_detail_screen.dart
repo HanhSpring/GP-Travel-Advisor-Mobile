@@ -23,6 +23,7 @@ import 'package:travel_advisor_mobile/features/itinerary/tracking/data/models/tr
 import 'package:travel_advisor_mobile/features/itinerary/tracking/presentation/widgets/tracking_section.dart';
 import 'package:travel_advisor_mobile/features/itinerary/tracking/tracking_config.dart';
 import 'package:travel_advisor_mobile/features/itinerary/domain/entities/itinerary_detail_entity.dart';
+import 'package:travel_advisor_mobile/features/itinerary/domain/repositories/itinerary_repository.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/cubit/itinerary_cubit.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/cubit/itinerary_state.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/day_selector_chip.dart';
@@ -80,6 +81,11 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
   bool _reviewStatusLoading = false;
   bool _isRefreshing = false;
 
+  /// Tổng chi phí phát sinh (mục 1.6) theo từng place_id — chỉ hiển thị bên
+  /// cạnh giá, không có hành động thêm/sửa ở màn này (xem "Quản lý chi phí"
+  /// ở tổng quan lịch trình).
+  Map<String, double> _costsByPlace = {};
+
   ItineraryDetailEntity? get _currentItinerary {
     final state = context.read<ItineraryCubit>().state;
     if (state is ItineraryLoaded) return state.selectedItinerary;
@@ -95,6 +101,27 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _loadReviewStatuses();
     });
+    _loadCostsByPlace();
+  }
+
+  /// Chỉ để hiển thị badge "+chi phí" bên cạnh giá — lỗi ở đây không được
+  /// làm hỏng màn hình chi tiết lịch trình.
+  Future<void> _loadCostsByPlace() async {
+    try {
+      final costs = await sl<ItineraryRepository>().getIncurredCosts(
+        widget.itineraryId,
+      );
+      if (!mounted) return;
+      final byPlace = <String, double>{};
+      for (final cost in costs) {
+        final placeId = cost.placeId;
+        if (placeId == null || placeId.isEmpty) continue;
+        byPlace[placeId] = (byPlace[placeId] ?? 0) + cost.amount;
+      }
+      setState(() => _costsByPlace = byPlace);
+    } catch (_) {
+      // Bỏ qua — badge chi phí phát sinh chỉ là hiển thị phụ.
+    }
   }
 
   void _showAddPlaceScreen() {
@@ -2131,6 +2158,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
             onCostScopeChanged: (value) {
               setState(() => _showPerPersonCost = value);
             },
+            costsByPlace: _costsByPlace,
           ),
         ),
       ),
@@ -2706,6 +2734,7 @@ class _ItineraryDetailView extends StatelessWidget {
   final VoidCallback onRefreshTap;
   final bool showPerPersonCost;
   final ValueChanged<bool> onCostScopeChanged;
+  final Map<String, double> costsByPlace;
 
   const _ItineraryDetailView({
     required this.selectedDay,
@@ -2740,6 +2769,7 @@ class _ItineraryDetailView extends StatelessWidget {
     required this.onRefreshTap,
     required this.showPerPersonCost,
     required this.onCostScopeChanged,
+    this.costsByPlace = const {},
   });
 
   @override
@@ -3097,6 +3127,46 @@ class _ItineraryDetailView extends StatelessWidget {
     }
   }
 
+  DayQualityNoteEntity? _dayQualityNoteFor(
+    ItineraryDetailEntity itin,
+    int dayNumber,
+  ) {
+    for (final note in itin.dayQuality) {
+      if (note.day == dayNumber) return note;
+    }
+    return null;
+  }
+
+  Widget _buildDayQualityBanner(DayQualityNoteEntity note) {
+    final Color background;
+    final Color foreground;
+    switch (note.layer) {
+      case 4:
+        background = const Color(0xFFFEF2F2);
+        foreground = const Color(0xFFB91C1C);
+        break;
+      case 3:
+        background = const Color(0xFFFFF7ED);
+        foreground = const Color(0xFFB45309);
+        break;
+      default:
+        background = const Color(0xFFFFFBEB);
+        foreground = const Color(0xFF92400E);
+    }
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Text(
+        note.message,
+        style: TextStyle(fontSize: 13, color: foreground, height: 1.4),
+      ),
+    );
+  }
+
   Widget _buildContentCard(
     BuildContext context,
     ItineraryDetailEntity itin,
@@ -3196,6 +3266,12 @@ class _ItineraryDetailView extends StatelessWidget {
                 ),
             ],
           ),
+          if (_dayQualityNoteFor(itin, currentDayData.dayNumber) != null) ...[
+            const SizedBox(height: AppSizes.s12),
+            _buildDayQualityBanner(
+              _dayQualityNoteFor(itin, currentDayData.dayNumber)!,
+            ),
+          ],
           const SizedBox(height: AppSizes.s16),
           _DayCostSummaryCard(
             day: currentDayData,
@@ -3260,6 +3336,9 @@ class _ItineraryDetailView extends StatelessWidget {
                     nextTransportInfo: nextTransport,
                     participantCount: itin.participantCount,
                     showPerPersonCost: showPerPersonCost,
+                    extraCost: activity.placeId != null
+                        ? costsByPlace[activity.placeId]
+                        : null,
                     onAddTap: itin.isOwner ? onAddPlaceTap : null,
                     onEditTap: itin.isOwner
                         ? () => onEditActivity(activity)

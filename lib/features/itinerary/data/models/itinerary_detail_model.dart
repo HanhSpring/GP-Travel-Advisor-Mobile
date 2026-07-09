@@ -22,6 +22,7 @@ class ItineraryDetailModel {
   final int hotelsCount;
   final int transportTurns;
   final double estimatedBudget;
+  final double userBudget;
   final int participantCount;
   final double spentBudget;
   final double placeCost;
@@ -33,6 +34,7 @@ class ItineraryDetailModel {
   final List<String> notes;
   final List<double> centerCoordinate;
   final List<VisitedRestaurantModel> visitedRestaurants;
+  final List<DayQualityNoteModel> dayQuality;
   final bool trackingActive;
 
   final String? dailyStartTime;
@@ -58,6 +60,7 @@ class ItineraryDetailModel {
     required this.hotelsCount,
     required this.transportTurns,
     required this.estimatedBudget,
+    this.userBudget = 0,
     this.participantCount = 1,
     required this.spentBudget,
     this.placeCost = 0,
@@ -68,6 +71,7 @@ class ItineraryDetailModel {
     this.days = const [],
     this.notes = const [],
     this.visitedRestaurants = const [],
+    this.dayQuality = const [],
     this.centerCoordinate = const [],
     this.trackingActive = false,
     this.dailyStartTime,
@@ -141,6 +145,8 @@ class ItineraryDetailModel {
                   json['totalBudget'] ??
                   0.0)
               .toDouble(),
+      userBudget: (json['userBudget'] ?? json['user_budget'] ?? 0.0)
+          .toDouble(),
       participantCount:
           (json['participantCount'] ?? json['participant_count'] as num?)
               ?.toInt() ??
@@ -180,6 +186,12 @@ class ItineraryDetailModel {
               )
               .toList() ??
           const [],
+      dayQuality:
+          ((json['dayQuality'] ?? json['day_quality']) as List?)
+              ?.whereType<Map<String, dynamic>>()
+              .map(DayQualityNoteModel.fromJson)
+              .toList() ??
+          const [],
       trackingActive:
           json['trackingActive'] == true || json['tracking_active'] == true,
       dailyStartTime:
@@ -212,6 +224,7 @@ class ItineraryDetailModel {
       hotelsCount: hotelsCount,
       transportTurns: transportTurns,
       estimatedBudget: estimatedBudget,
+      userBudget: userBudget,
       participantCount: participantCount,
       spentBudget: spentBudget,
       placeCost: placeCost,
@@ -222,12 +235,43 @@ class ItineraryDetailModel {
       days: days.map((e) => e.toEntity()).toList(),
       notes: notes,
       visitedRestaurants: visitedRestaurants.map((e) => e.toEntity()).toList(),
+      dayQuality: dayQuality.map((e) => e.toEntity()).toList(),
       centerCoordinate: centerCoordinate,
       trackingActive: trackingActive,
       dailyStartTime: dailyStartTime,
       dailyEndTime: dailyEndTime,
     );
   }
+}
+
+class DayQualityNoteModel {
+  final int day;
+  final String date;
+  final int layer;
+  final String message;
+
+  const DayQualityNoteModel({
+    required this.day,
+    required this.date,
+    required this.layer,
+    required this.message,
+  });
+
+  factory DayQualityNoteModel.fromJson(Map<String, dynamic> json) {
+    return DayQualityNoteModel(
+      day: (json['day'] as num?)?.toInt() ?? 0,
+      date: (json['date'] ?? '').toString(),
+      layer: (json['layer'] as num?)?.toInt() ?? 1,
+      message: (json['message'] ?? '').toString(),
+    );
+  }
+
+  DayQualityNoteEntity toEntity() => DayQualityNoteEntity(
+    day: day,
+    date: date,
+    layer: layer,
+    message: message,
+  );
 }
 
 class ItineraryMemberModel {

@@ -27,6 +27,7 @@ import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/pu
 import 'package:travel_advisor_mobile/features/food/presentation/screens/food_menu_screen.dart';
 import 'package:travel_advisor_mobile/features/food/presentation/widgets/pre_order_popup.dart';
 import 'package:travel_advisor_mobile/features/itinerary/tracking/tracking_config.dart';
+import 'package:travel_advisor_mobile/features/itinerary/presentation/screens/incurred_costs_screen.dart';
 
 /// Chế độ thiết kế: true dùng dữ liệu mẫu, false dùng API.
 const bool _useMockData = AppConfig.kUseMockData;
@@ -364,6 +365,9 @@ class _ItinerarySummaryViewState extends State<_ItinerarySummaryView> {
 
                         const SizedBox(height: 36),
                         _buildBudgetSection(itin, costSnapshot),
+
+                        const SizedBox(height: 20),
+                        _buildIncurredCostsEntry(itin),
 
                         const SizedBox(height: 36),
                         const SectionHeader(title: 'Tổng quan theo ngày'),
@@ -1157,7 +1161,7 @@ class _ItinerarySummaryViewState extends State<_ItinerarySummaryView> {
   }
 
   Widget _buildStatsGrid(ItineraryDetailEntity itin) {
-    final hotelCount = _uniqueHotelCount(itin);
+    final hotelName = _hotelDisplayName(itin);
     final visitCount = _totalVisitCount(itin);
 
     return Column(
@@ -1189,25 +1193,80 @@ class _ItinerarySummaryViewState extends State<_ItinerarySummaryView> {
             Expanded(
               child: _StatCardV2(
                 label: 'Chỗ ở',
-                value: hotelCount > 0 ? '$hotelCount khách sạn' : 'Chưa chọn',
+                value: hotelName ?? 'Chưa chọn',
                 icon: Icons.hotel_rounded,
                 color: const Color(0xFFEC4899),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _StatCardV2(
-                label: 'Di chuyển',
-                value: itin.transportTurns > 0
-                    ? '${itin.transportTurns} chặng'
-                    : 'Theo lộ trình',
-                icon: Icons.directions_car_filled_rounded,
-                color: const Color(0xFF10B981),
               ),
             ),
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildIncurredCostsEntry(ItineraryDetailEntity itin) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(20),
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => IncurredCostsScreen(
+              itineraryId: itin.id,
+              members: itin.members,
+              isCompleted: itin.status.toUpperCase() == 'COMPLETED',
+            ),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFF1F5F9)),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF334155).withValues(alpha: 0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.receipt_long_rounded,
+                color: Color(0xFFF59E0B),
+              ),
+            ),
+            const SizedBox(width: 14),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Quản lý chi phí phát sinh',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Ghi chú chi phí, chia cho từng thành viên',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8)),
+          ],
+        ),
+      ),
     );
   }
 
@@ -1224,6 +1283,7 @@ class _ItinerarySummaryViewState extends State<_ItinerarySummaryView> {
         : 1;
     final estimatedCost = groupEstimatedCost / costDivisor;
     final spentCost = costSnapshot.spentCost / costDivisor;
+    final userBudget = itin.userBudget / costDivisor;
     final spentProgress = estimatedCost > 0
         ? (spentCost / estimatedCost).clamp(0.0, 1.0)
         : 0.0;
@@ -1232,6 +1292,7 @@ class _ItinerarySummaryViewState extends State<_ItinerarySummaryView> {
       itin: itin,
       formatter: formatter,
       estimatedCost: estimatedCost,
+      userBudget: userBudget,
       spentCost: spentCost,
       spentProgress: spentProgress,
       costSnapshot: costSnapshot,
@@ -1242,13 +1303,23 @@ class _ItinerarySummaryViewState extends State<_ItinerarySummaryView> {
     required ItineraryDetailEntity itin,
     required NumberFormat formatter,
     required double estimatedCost,
+    required double userBudget,
     required double spentCost,
     required double spentProgress,
     required _CostSnapshot costSnapshot,
   }) {
+    // "Chi ph\u00ed \u01b0\u1edbc t\u00ednh" must stay \u2264 90% of "M\u1ee9c c\u00f3 th\u1ec3 chi tr\u1ea3" (m\u1ee5c 1.1).
+    // Warn in red when it doesn't \u2014 e.g. the user proceeded with an
+    // over-budget itinerary anyway (m\u1ee5c 1.5) or extra costs were added later.
+    final hasUserBudget = userBudget > 0;
+    final isOverNinetyPercent =
+        hasUserBudget && estimatedCost > userBudget * 0.9;
     final estimatedLabel = estimatedCost > 0
         ? '${formatter.format(estimatedCost)} ${itin.currency}'
         : '\u0110ang c\u1eadp nh\u1eadt';
+    final userBudgetLabel = hasUserBudget
+        ? '${formatter.format(userBudget)} ${itin.currency}'
+        : null;
     final spentLabel = spentCost > 0
         ? '${formatter.format(spentCost)} ${itin.currency}'
         : '0 ${itin.currency}';
@@ -1297,9 +1368,23 @@ class _ItinerarySummaryViewState extends State<_ItinerarySummaryView> {
                     : 'Tổng chi phí ước tính cho ${itin.participantCount.clamp(1, 999)} người',
                 value: estimatedLabel,
                 icon: Icons.receipt_long_rounded,
-                color: const Color(0xFF10B981),
+                color: isOverNinetyPercent
+                    ? const Color(0xFFDC2626)
+                    : const Color(0xFF10B981),
                 fullWidth: true,
               ),
+              if (userBudgetLabel != null) ...[
+                const SizedBox(height: 12),
+                _BudgetMetric(
+                  label: 'Mức có thể chi trả',
+                  value: userBudgetLabel,
+                  icon: Icons.account_balance_wallet_rounded,
+                  color: isOverNinetyPercent
+                      ? const Color(0xFFDC2626)
+                      : const Color(0xFF64748B),
+                  fullWidth: true,
+                ),
+              ],
               if (itin.hotelCost > 0 || itin.transportCost > 0) ...[
                 const SizedBox(height: 12),
                 _BudgetMetric(
@@ -1815,15 +1900,20 @@ class _ItinerarySummaryViewState extends State<_ItinerarySummaryView> {
   }
 
   bool _isHotelStart(ItineraryActivityEntity activity) {
-    final category = (activity.category ?? '').toLowerCase();
+    final category = (activity.category ?? '').trim().toLowerCase();
+    if (category.isNotEmpty) {
+      // The backend already classifies this precisely (category == 'hotel'
+      // for the real accommodation row). Trust it instead of guessing from
+      // the free-text title, which can contain words like "homestay" in a
+      // café's own name (e.g. "The Laban - Cafe & Homestay") and cause a
+      // false positive that inflates the hotel count/name shown here.
+      return category == 'hotel' ||
+          category.contains('lưu trú') ||
+          category.contains('khách sạn') ||
+          category.contains('accommodation');
+    }
     final title = activity.title.toLowerCase();
-    return category.contains('lưu trú') ||
-        category.contains('khách sạn') ||
-        category.contains('accommodation') ||
-        category.contains('hotel') ||
-        category.contains('resort') ||
-        category.contains('homestay') ||
-        title.contains('hotel') ||
+    return title.contains('hotel') ||
         title.contains('khách sạn') ||
         title.contains('resort') ||
         title.contains('homestay') ||
@@ -1845,18 +1935,16 @@ class _ItinerarySummaryViewState extends State<_ItinerarySummaryView> {
     return '$visitCount điểm • ${formatter.format(budget)} ${day.currency}';
   }
 
-  int _uniqueHotelCount(ItineraryDetailEntity itin) {
-    final hotels = <String>{};
+  String? _hotelDisplayName(ItineraryDetailEntity itin) {
     for (final day in itin.days) {
       for (final activity in day.activities.where(_isHotelStart)) {
-        final key = activity.placeId?.isNotEmpty == true
-            ? activity.placeId!
-            : activity.title.toLowerCase();
-        hotels.add(key);
+        final name = activity.locationName.isNotEmpty
+            ? activity.locationName
+            : activity.title;
+        if (name.isNotEmpty) return name;
       }
     }
-    if (hotels.isNotEmpty) return hotels.length;
-    return itin.hotelsCount > 0 ? 1 : 0;
+    return null;
   }
 
   _CostSnapshot _buildCostSnapshot(

@@ -47,6 +47,11 @@ class TimelineActivityCard extends StatelessWidget {
   /// Đã ghé địa điểm này theo dữ liệu backend (geofence_visits).
   final bool backendIsVisited;
 
+  /// Tổng chi phí phát sinh (mục 1.6) đã ghi nhận cho địa điểm này, nếu có.
+  /// Chỉ hiển thị thêm — không có hành động thêm/sửa ở đây (xem màn
+  /// "Quản lý chi phí" ở tổng quan lịch trình).
+  final double? extraCost;
+
   const TimelineActivityCard({
     super.key,
     required this.activity,
@@ -76,6 +81,7 @@ class TimelineActivityCard extends StatelessWidget {
     this.isCheckingIn = false,
     this.hasReview,
     this.backendIsVisited = false,
+    this.extraCost,
   });
 
   String _formatReviewCount(int? count) {
@@ -495,6 +501,26 @@ class TimelineActivityCard extends StatelessWidget {
                               fontWeight: FontWeight.w600,
                               fontSize: 11,
                             ),
+                          ),
+                        if (extraCost != null && extraCost! > 0)
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.add_circle_outline,
+                                size: 12,
+                                color: Color(0xFFF59E0B),
+                              ),
+                              const SizedBox(width: 3),
+                              Text(
+                                '${_formatPrice(extraCost!)} phát sinh',
+                                style: AppTextStylesExt.bodySmall.copyWith(
+                                  color: const Color(0xFFF59E0B),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
                           ),
                       ],
                     ),

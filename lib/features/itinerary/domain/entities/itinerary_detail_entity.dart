@@ -24,6 +24,23 @@ class VisitedRestaurant {
   });
 }
 
+/// A "quality layer" banner note for one day of the itinerary — layer 2
+/// (lunch time shifted), layer 3 (restaurant dropped) or layer 4 (greedy
+/// fallback used). Layer 1 (perfect solve) never gets a note.
+class DayQualityNoteEntity {
+  final int day;
+  final String date;
+  final int layer;
+  final String message;
+
+  const DayQualityNoteEntity({
+    required this.day,
+    required this.date,
+    required this.layer,
+    required this.message,
+  });
+}
+
 class ItineraryMemberEntity {
   final String id;
   final String fullName;
@@ -59,6 +76,11 @@ class ItineraryDetailEntity {
   final int transportTurns;
 
   final double estimatedBudget;
+  // User's original input budget ceiling (trip_budget_total), 0 when unknown
+  // (e.g. itineraries created before this field existed). Kept separate from
+  // estimatedBudget so the UI can show both and warn when the calculated
+  // cost exceeds 90% of it.
+  final double userBudget;
   final int participantCount;
   final double spentBudget;
   final double placeCost;
@@ -70,6 +92,7 @@ class ItineraryDetailEntity {
   final List<ItineraryDayEntity> days;
   final List<String> notes;
   final List<VisitedRestaurant> visitedRestaurants;
+  final List<DayQualityNoteEntity> dayQuality;
 
   final List<double> centerCoordinate;
   final bool trackingActive;
@@ -97,6 +120,7 @@ class ItineraryDetailEntity {
     required this.hotelsCount,
     required this.transportTurns,
     required this.estimatedBudget,
+    this.userBudget = 0,
     this.participantCount = 1,
     required this.spentBudget,
     this.placeCost = 0,
@@ -107,6 +131,7 @@ class ItineraryDetailEntity {
     this.days = const [],
     this.notes = const [],
     this.visitedRestaurants = const [],
+    this.dayQuality = const [],
     this.centerCoordinate = const [],
     this.trackingActive = false,
     this.dailyStartTime,
@@ -133,6 +158,7 @@ class ItineraryDetailEntity {
     int? hotelsCount,
     int? transportTurns,
     double? estimatedBudget,
+    double? userBudget,
     int? participantCount,
     double? spentBudget,
     double? placeCost,
@@ -143,6 +169,7 @@ class ItineraryDetailEntity {
     List<ItineraryDayEntity>? days,
     List<String>? notes,
     List<VisitedRestaurant>? visitedRestaurants,
+    List<DayQualityNoteEntity>? dayQuality,
     List<double>? centerCoordinate,
     bool? trackingActive,
     String? dailyStartTime,
@@ -168,6 +195,7 @@ class ItineraryDetailEntity {
       hotelsCount: hotelsCount ?? this.hotelsCount,
       transportTurns: transportTurns ?? this.transportTurns,
       estimatedBudget: estimatedBudget ?? this.estimatedBudget,
+      userBudget: userBudget ?? this.userBudget,
       participantCount: participantCount ?? this.participantCount,
       spentBudget: spentBudget ?? this.spentBudget,
       placeCost: placeCost ?? this.placeCost,
@@ -179,6 +207,7 @@ class ItineraryDetailEntity {
       days: days ?? this.days,
       notes: notes ?? this.notes,
       visitedRestaurants: visitedRestaurants ?? this.visitedRestaurants,
+      dayQuality: dayQuality ?? this.dayQuality,
       centerCoordinate: centerCoordinate ?? this.centerCoordinate,
       trackingActive: trackingActive ?? this.trackingActive,
       dailyStartTime: dailyStartTime ?? this.dailyStartTime,
