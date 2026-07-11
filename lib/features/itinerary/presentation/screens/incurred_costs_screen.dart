@@ -72,9 +72,13 @@ class _IncurredCostsScreenState extends State<IncurredCostsScreen> {
     }
   }
 
+  // price_adjustment: chỉ chủ lịch trình được sửa/xoá (không có ngoại lệ
+  // creator vì chỉ owner mới tạo được type này). Các type khác: chỉ đúng
+  // người tạo, kể cả chủ lịch trình cũng không được sửa khoản của người khác
+  // — khớp assertCanModify() ở backend.
   bool _canModify(IncurredCostEntity cost) {
     if (widget.isCompleted) return false;
-    if (_isOwner) return true;
+    if (cost.type == CostType.priceAdjustment) return _isOwner;
     return cost.createdBy == _currentUserId;
   }
 
@@ -90,6 +94,7 @@ class _IncurredCostsScreenState extends State<IncurredCostsScreen> {
       context,
       itineraryId: widget.itineraryId,
       members: widget.members,
+      isOwner: _isOwner,
       editingCost: editing,
       onSaved: _load,
     );
@@ -173,7 +178,13 @@ class _IncurredCostsScreenState extends State<IncurredCostsScreen> {
                         ],
                       ),
                     ),
-                  if (_breakdown != null) _buildBreakdownCard(_breakdown!),
+                  if (_breakdown != null) ...[
+                    _buildEstimateCard(_breakdown!),
+                    const SizedBox(height: 12),
+                    _buildSpentCard(_breakdown!),
+                    const SizedBox(height: 12),
+                    _buildMemberBreakdownCard(_breakdown!),
+                  ],
                   const SizedBox(height: 20),
                   const Text(
                     'Danh sách chi phí phát sinh',
@@ -198,7 +209,80 @@ class _IncurredCostsScreenState extends State<IncurredCostsScreen> {
     );
   }
 
-  Widget _buildBreakdownCard(CostBreakdownEntity breakdown) {
+  /// Card 1: chi phí ước tính + mức có thể chi trả. Mỗi mục người lớn/trẻ em
+  /// hiển thị công thức nhân rõ ràng ("2 × 1.500.000đ = 3.000.000đ"); riêng
+  /// phần ước tính có thể bấm xổ ra breakdown Địa điểm/Lưu trú/Xăng xe.
+  Widget _buildEstimateCard(CostBreakdownEntity breakdown) {
+    String formula(int count, double unitPrice) =>
+        '$count × ${_formatter.format(unitPrice)}đ = '
+        '${_formatter.format(count * unitPrice)}đ';
+
+    Widget breakdownRow(String label, double value, {String? caption}) => Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                ),
+              ),
+              Text(
+                '${_formatter.format(value)}đ',
+                style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+              ),
+            ],
+          ),
+          if (caption != null)
+            Text(
+              caption,
+              style: const TextStyle(fontSize: 10.5, color: Color(0xFFB0B8C1)),
+            ),
+        ],
+      ),
+    );
+
+    // Minh bạch căn cứ tính "Xăng xe/tự túc" — đáp ứng phản hồi "chi phí xăng
+    // xe đang hơi thấp" bằng cách cho thấy mức giá/km đang dùng thay vì chỉ
+    // hiện 1 con số không rõ nguồn gốc.
+    final rateCaption =
+        'Ước tính theo ${_formatter.format(breakdown.transportRatePerKmMotorbike)}đ/km '
+        '(xe máy) hoặc ${_formatter.format(breakdown.transportRatePerKmCar)}đ/km (ô tô)';
+
+    Widget travelerTile({
+      required String label,
+      required int count,
+      required double unitPrice,
+      required double placeCost,
+      required double hotelCost,
+      required double transportCost,
+    }) {
+      return ExpansionTile(
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: const EdgeInsets.only(left: 8, bottom: 8),
+        title: Text(
+          '$label: ${formula(count, unitPrice)}',
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+        ),
+        children: [
+          breakdownRow('Địa điểm & ăn uống', placeCost),
+          breakdownRow('Lưu trú', hotelCost),
+          breakdownRow('Xăng xe/tự túc', transportCost, caption: rateCaption),
+        ],
+      );
+    }
+
+    Widget formulaLine(String label, int count, double unitPrice) => Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Text(
+        '$label: ${formula(count, unitPrice)}',
+        style: const TextStyle(fontSize: 13, color: Color(0xFF475569)),
+      ),
+    );
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -210,20 +294,201 @@ class _IncurredCostsScreenState extends State<IncurredCostsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Tổng chi phí thực tế',
+            'Chi phí ước tính',
             style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
           ),
           Text(
-            '${_formatter.format(breakdown.totalCost)}đ',
+            '${_formatter.format(breakdown.estimatedCostForGroup)}đ',
             style: const TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w800,
               color: Color(0xFF0F172A),
             ),
           ),
-          const SizedBox(height: 12),
+          const Text(
+            'cho cả nhóm',
+            style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+          ),
+          const SizedBox(height: 6),
+          travelerTile(
+            label: 'Người lớn',
+            count: breakdown.adultCount,
+            unitPrice: breakdown.estimatedCostPerAdult,
+            placeCost: breakdown.placeCostPerAdult,
+            hotelCost: breakdown.hotelCostPerAdult,
+            transportCost: breakdown.transportPerAdult,
+          ),
+          if (breakdown.childCount > 0)
+            travelerTile(
+              label: 'Trẻ em',
+              count: breakdown.childCount,
+              unitPrice: breakdown.estimatedCostPerChild,
+              placeCost: breakdown.placeCostPerChild,
+              hotelCost: breakdown.hotelCostPerChild,
+              transportCost: breakdown.transportPerAdult,
+            ),
+          const SizedBox(height: 8),
           const Divider(height: 1),
           const SizedBox(height: 12),
+          const Text(
+            'Mức có thể chi trả',
+            style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+          ),
+          Text(
+            '${_formatter.format(breakdown.payableLimitForGroup)}đ',
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF0F172A),
+            ),
+          ),
+          const Text(
+            'cho cả nhóm',
+            style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+          ),
+          const SizedBox(height: 8),
+          formulaLine(
+            'Người lớn',
+            breakdown.adultCount,
+            breakdown.payableLimitPerAdult,
+          ),
+          if (breakdown.childCount > 0)
+            formulaLine(
+              'Trẻ em',
+              breakdown.childCount,
+              breakdown.payableLimitPerChild,
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Card 2: chi phí thực tế đã tiêu so với mức có thể chi trả, cảnh báo tăng
+  /// dần ở 90/95/100%.
+  Widget _buildSpentCard(CostBreakdownEntity breakdown) {
+    final limit = breakdown.payableLimitForGroup;
+    final progress = limit > 0
+        ? (breakdown.spentSoFar / limit).clamp(0.0, 1.0)
+        : 0.0;
+    final percent = limit > 0 ? (breakdown.spentSoFar / limit) * 100 : 0.0;
+    final Color barColor;
+    final String? warning;
+    if (percent >= 100) {
+      barColor = const Color(0xFFDC2626);
+      warning = 'Đã vượt mức có thể chi trả!';
+    } else if (percent >= 95) {
+      barColor = const Color(0xFFDC2626);
+      warning = 'Đã dùng hơn 95% mức có thể chi trả.';
+    } else if (percent >= 90) {
+      barColor = const Color(0xFFF59E0B);
+      warning = 'Đã dùng hơn 90% mức có thể chi trả.';
+    } else {
+      barColor = const Color(0xFF10B981);
+      warning = null;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFF1F5F9)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Chi phí thực tế đã tiêu',
+                  style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                ),
+              ),
+              Text(
+                '${_formatter.format(breakdown.spentSoFar)}đ',
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Stack(
+            children: [
+              Container(
+                height: 12,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 280),
+                    curve: Curves.easeOut,
+                    height: 12,
+                    width: constraints.maxWidth * progress,
+                    decoration: BoxDecoration(
+                      color: barColor,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '/ ${_formatter.format(limit)}đ có thể chi trả cho cả nhóm',
+            style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+          ),
+          if (warning != null) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.warning_amber_rounded, size: 16, color: barColor),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    warning,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: barColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+          const SizedBox(height: 10),
+          const Text(
+            'Chi phí hiển thị là ước tính, có thể thay đổi theo thời gian.',
+            style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Card 3: "mỗi người phải trả tổng bao nhiêu" (mục 1.7), không đổi so với
+  /// bản cũ ngoài việc tách khỏi headline tổng chi phí (đã chuyển sang Card 2).
+  Widget _buildMemberBreakdownCard(CostBreakdownEntity breakdown) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFF1F5F9)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           const Text(
             'Mỗi người phải trả',
             style: TextStyle(fontWeight: FontWeight.w700),
@@ -232,19 +497,51 @@ class _IncurredCostsScreenState extends State<IncurredCostsScreen> {
           ...breakdown.memberTotals.map(
             (m) => Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Text(
-                      m.fullName.isNotEmpty
-                          ? '${m.fullName}${m.isOwner ? ' (Chủ lịch trình)' : ''}'
-                          : 'Thành viên',
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          m.fullName.isNotEmpty
+                              ? '${m.fullName}${m.isOwner ? ' (Chủ lịch trình)' : ''}'
+                              : 'Thành viên',
+                        ),
+                      ),
+                      Text(
+                        '${_formatter.format(m.total)}đ',
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ],
+                  ),
+                  // Chi phí trẻ em không cộng gộp vào total ở trên — hiển thị
+                  // thành dòng riêng cho người đang chịu trách nhiệm phần này.
+                  if (m.childrenShare > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              '+ Phần trẻ em (phụ trách)',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF64748B),
+                              ),
+                            ),
+                          ),
+                          Text(
+                            '${_formatter.format(m.childrenShare)}đ',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF64748B),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  Text(
-                    '${_formatter.format(m.total)}đ',
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
                 ],
               ),
             ),

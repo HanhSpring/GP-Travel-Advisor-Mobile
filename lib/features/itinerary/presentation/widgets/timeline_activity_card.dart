@@ -28,8 +28,6 @@ class TimelineActivityCard extends StatelessWidget {
   final bool isEditMode;
   final bool isOpeningReview;
   final String? nextTransportInfo;
-  final int participantCount;
-  final bool showPerPersonCost;
   final bool canReview;
 
   /// Trạng thái theo dõi của địa điểm này (null = tracking chưa bật).
@@ -73,8 +71,6 @@ class TimelineActivityCard extends StatelessWidget {
     this.isEditMode = false,
     this.isOpeningReview = false,
     this.nextTransportInfo,
-    this.participantCount = 1,
-    this.showPerPersonCost = false,
     this.canReview = true,
     this.trackingStatus,
     this.onCheckIn,
@@ -103,14 +99,7 @@ class TimelineActivityCard extends StatelessWidget {
     return '${price.toInt()}₫';
   }
 
-  String _priceWithScope() {
-    final people = participantCount.clamp(1, 999);
-    final displayedPrice = showPerPersonCost
-        ? activity.price / people
-        : activity.price;
-    final scope = showPerPersonCost ? '/người' : '/tổng $people người';
-    return '${_formatPrice(displayedPrice)} $scope';
-  }
+  String _priceWithScope() => '${_formatPrice(activity.price)}/người lớn';
 
   String _durationLabel() {
     if (_isAccommodationStart) return 'Nơi ở & điểm xuất phát';

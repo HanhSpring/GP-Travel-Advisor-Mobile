@@ -4,6 +4,11 @@ class RegionInfo {
   final List<String> placeIds;
   final List<String> placeNames;
   final int maxDays;
+  // Backend's ready-to-submit default: central region first (up to its own
+  // maxDays), then any leftover trip days borrowed from the nearest
+  // remaining regions in order — the wizard prefills steppers with this so
+  // the user can just tap "Tạo lịch trình" without manually distributing days.
+  final int suggestedDays;
   final int totalVisitMinutes;
   final int travelMinutesFromCentral;
   final bool isRemote;
@@ -13,6 +18,7 @@ class RegionInfo {
     required this.placeIds,
     required this.placeNames,
     required this.maxDays,
+    required this.suggestedDays,
     required this.totalVisitMinutes,
     required this.travelMinutesFromCentral,
     required this.isRemote,
@@ -28,6 +34,7 @@ class RegionInfo {
           (json['placeNames'] as List?)?.map((e) => e.toString()).toList() ??
           const [],
       maxDays: (json['maxDays'] as num?)?.toInt() ?? 1,
+      suggestedDays: (json['suggestedDays'] as num?)?.toInt() ?? 0,
       totalVisitMinutes: (json['totalVisitMinutes'] as num?)?.toInt() ?? 0,
       travelMinutesFromCentral:
           (json['travelMinutesFromCentral'] as num?)?.toInt() ?? 0,
@@ -46,12 +53,16 @@ class RegionAllocationRequiredException implements Exception {
   final List<RegionInfo> regions;
   final int numDays;
   final int estimatedTotalDays;
+  // > 0 when even every detected region's maxDays combined can't cover
+  // numDays — show ONE consolidated notice instead of per-region warnings.
+  final int shortfallDays;
 
   RegionAllocationRequiredException({
     required this.message,
     required this.regions,
     required this.numDays,
     required this.estimatedTotalDays,
+    required this.shortfallDays,
   });
 
   factory RegionAllocationRequiredException.fromJson(
@@ -69,6 +80,7 @@ class RegionAllocationRequiredException implements Exception {
       regions: regions,
       numDays: (json['numDays'] as num?)?.toInt() ?? 0,
       estimatedTotalDays: (json['estimatedTotalDays'] as num?)?.toInt() ?? 0,
+      shortfallDays: (json['shortfallDays'] as num?)?.toInt() ?? 0,
     );
   }
 

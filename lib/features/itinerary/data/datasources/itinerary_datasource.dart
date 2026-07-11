@@ -11,6 +11,8 @@ import 'package:travel_advisor_mobile/features/itinerary/data/models/itinerary_d
 import 'package:travel_advisor_mobile/features/itinerary/data/models/itinerary_model.dart';
 import 'package:travel_advisor_mobile/features/itinerary/data/models/customize_activity_response_model.dart';
 import 'package:travel_advisor_mobile/features/itinerary/data/models/incurred_cost_model.dart';
+import 'package:travel_advisor_mobile/features/itinerary/domain/entities/incurred_cost_entity.dart'
+    show CostType;
 import 'package:travel_advisor_mobile/features/itinerary/domain/entities/itinerary_day_entity.dart';
 import 'package:travel_advisor_mobile/core/error/conflict_exception.dart';
 import 'package:travel_advisor_mobile/core/error/budget_confirmation_required_exception.dart';
@@ -93,6 +95,7 @@ abstract class ItineraryDataSource {
   Future<CostBreakdownModel> getCostBreakdown(String itineraryId);
   Future<IncurredCostModel> createIncurredCost(
     String itineraryId, {
+    CostType type = CostType.other,
     required String note,
     required double amount,
     String? placeId,
@@ -101,6 +104,7 @@ abstract class ItineraryDataSource {
   Future<IncurredCostModel> updateIncurredCost(
     String itineraryId,
     String costId, {
+    CostType? type,
     String? note,
     double? amount,
     String? placeId,
@@ -582,7 +586,6 @@ class RemoteItineraryDataSource implements ItineraryDataSource {
         data['participantCount'] ?? data['participant_count'],
         1,
       ),
-      spentBudget: _asDouble(data['spentBudget'] ?? data['spent_budget']),
       placeCost: _asDouble(data['placeCost'] ?? data['place_cost']),
       hotelCost: _asDouble(data['hotelCost'] ?? data['hotel_cost']),
       transportCost: _asDouble(data['transportCost'] ?? data['transport_cost']),
@@ -809,6 +812,7 @@ class RemoteItineraryDataSource implements ItineraryDataSource {
   @override
   Future<IncurredCostModel> createIncurredCost(
     String itineraryId, {
+    CostType type = CostType.other,
     required String note,
     required double amount,
     String? placeId,
@@ -821,6 +825,7 @@ class RemoteItineraryDataSource implements ItineraryDataSource {
       headers: headers,
       body: jsonEncode({
         'userId': userId,
+        'type': type.toApi(),
         'note': note,
         'amount': amount,
         if (placeId != null) 'placeId': placeId,
@@ -841,6 +846,7 @@ class RemoteItineraryDataSource implements ItineraryDataSource {
   Future<IncurredCostModel> updateIncurredCost(
     String itineraryId,
     String costId, {
+    CostType? type,
     String? note,
     double? amount,
     String? placeId,
@@ -853,6 +859,7 @@ class RemoteItineraryDataSource implements ItineraryDataSource {
       headers: headers,
       body: jsonEncode({
         'userId': userId,
+        if (type != null) 'type': type.toApi(),
         if (note != null) 'note': note,
         if (amount != null) 'amount': amount,
         if (placeId != null) 'placeId': placeId,

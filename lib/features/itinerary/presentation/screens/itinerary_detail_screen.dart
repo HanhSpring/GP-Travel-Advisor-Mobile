@@ -67,7 +67,6 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
   bool _isPublic = true;
   bool _isEditMode = false;
   bool _isMapLoaded = false;
-  bool _showPerPersonCost = false;
   ItineraryDetailEntity? _editSnapshot;
   MapboxMap? _mapController;
   final ScrollController _scrollController = ScrollController();
@@ -318,6 +317,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
         from.longitude!,
         to.latitude!,
         to.longitude!,
+        travelMode: _currentItinerary?.travelMode ?? 'DRIVING',
       ),
     );
     try {
@@ -2154,10 +2154,6 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
             onDiscardTap: _onDiscardChanges,
             isRefreshing: _isRefreshing,
             onRefreshTap: _onRefresh,
-            showPerPersonCost: _showPerPersonCost,
-            onCostScopeChanged: (value) {
-              setState(() => _showPerPersonCost = value);
-            },
             costsByPlace: _costsByPlace,
           ),
         ),
@@ -2357,41 +2353,42 @@ class _DayVisitProgressCard extends StatelessWidget {
 class _DayCostSummaryCard extends StatelessWidget {
   final ItineraryDayEntity day;
   final List<ItineraryActivityEntity> visitActivities;
-  final bool Function(ItineraryActivityEntity activity) isHotelStart;
   final int participantCount;
-  final bool showPerPersonCost;
-  final ValueChanged<bool> onCostScopeChanged;
+  // Chi ph\u00ed l\u01b0u tr\u00fa CHO C\u1ea2 CHUY\u1ebeN (itin.hotelCost, \u0111\u00e3 per-adult) \u2014
+  // backend c\u1ed1 \u00fd ki t\u00ednh 0\u0111 cho hotel-row hi\u1ec3n th\u1ecb theo ng\u00e0y (xem
+  // itinerary.service.ts), n\u00ean kh\u00f4ng th\u1ec3 t\u00ednh l\u1ea1i t\u1eeb activity trong ng\u00e0y.
+  final double tripHotelCost;
+  final int durationDays;
 
   const _DayCostSummaryCard({
     required this.day,
     required this.visitActivities,
-    required this.isHotelStart,
     required this.participantCount,
-    required this.showPerPersonCost,
-    required this.onCostScopeChanged,
+    required this.tripHotelCost,
+    required this.durationDays,
   });
 
   @override
   Widget build(BuildContext context) {
     final formatter = NumberFormat('#,###', 'vi_VN');
-    final hotelCost = day.activities
-        .where(isHotelStart)
-        .fold<double>(0, (sum, activity) => sum + activity.price);
+    final hotelCost = durationDays > 1
+        ? tripHotelCost / (durationDays - 1)
+        : tripHotelCost;
     final placeCost = visitActivities.fold<double>(
       0,
       (sum, activity) => sum + activity.price,
     );
-    final selfDriveCost = day.activities.fold<double>(
-      0,
-      (sum, activity) => sum + activity.transportCost,
-    );
-    final totalCost = placeCost + hotelCost + selfDriveCost;
-
     final people = participantCount.clamp(1, 999);
-    double displayCost(double value) =>
-        showPerPersonCost ? value / people : value;
+    final transportCost =
+        day.activities.fold<double>(
+          0,
+          (sum, activity) => sum + activity.transportCost,
+        ) /
+        people;
+    final totalCost = placeCost + hotelCost + transportCost;
+
     String money(double value) =>
-        '${formatter.format(displayCost(value))} ${day.currency}';
+        '${formatter.format(value)} ${day.currency}';
 
     return Container(
       width: double.infinity,
@@ -2411,35 +2408,15 @@ class _DayCostSummaryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            showPerPersonCost
-                ? 'Chi ph\u00ed trong ng\u00e0y / 1 ng\u01b0\u1eddi'
-                : 'T\u1ed5ng chi ph\u00ed trong ng\u00e0y / $people ng\u01b0\u1eddi',
-            style: const TextStyle(
+          const Text(
+            'Chi ph\u00ed trong ng\u00e0y (m\u1ed7i ng\u01b0\u1eddi l\u1edbn)',
+            style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w800,
               color: Color(0xFF0F172A),
             ),
           ),
-          const SizedBox(height: 10),
-          SegmentedButton<bool>(
-            segments: const [
-              ButtonSegment(value: false, label: Text('T\u1ed5ng nh\u00f3m')),
-              ButtonSegment(value: true, label: Text('1 ng\u01b0\u1eddi')),
-            ],
-            selected: {showPerPersonCost},
-            showSelectedIcon: false,
-            onSelectionChanged: (selection) {
-              onCostScopeChanged(selection.first);
-            },
-          ),
           const SizedBox(height: 12),
-          _DayCostRow(
-            icon: Icons.receipt_long_rounded,
-            label: 'T\u1ed5ng ng\u00e0y',
-            value: money(totalCost),
-            color: const Color(0xFF10B981),
-          ),
           _DayCostRow(
             icon: Icons.place_rounded,
             label: '\u0110\u1ecba \u0111i\u1ec3m & \u0103n u\u1ed1ng',
@@ -2455,8 +2432,14 @@ class _DayCostSummaryCard extends StatelessWidget {
           _DayCostRow(
             icon: Icons.two_wheeler_rounded,
             label: 'X\u0103ng xe/t\u1ef1 t\u00fac',
-            value: money(selfDriveCost),
+            value: money(transportCost),
             color: const Color(0xFF2563EB),
+          ),
+          _DayCostRow(
+            icon: Icons.receipt_long_rounded,
+            label: 'T\u1ed5ng ng\u00e0y',
+            value: money(totalCost),
+            color: const Color(0xFF10B981),
           ),
         ],
       ),
@@ -2732,8 +2715,6 @@ class _ItineraryDetailView extends StatelessWidget {
   final VoidCallback onDiscardTap;
   final bool isRefreshing;
   final VoidCallback onRefreshTap;
-  final bool showPerPersonCost;
-  final ValueChanged<bool> onCostScopeChanged;
   final Map<String, double> costsByPlace;
 
   const _ItineraryDetailView({
@@ -2767,8 +2748,6 @@ class _ItineraryDetailView extends StatelessWidget {
     required this.onDiscardTap,
     required this.isRefreshing,
     required this.onRefreshTap,
-    required this.showPerPersonCost,
-    required this.onCostScopeChanged,
     this.costsByPlace = const {},
   });
 
@@ -2893,6 +2872,7 @@ class _ItineraryDetailView extends StatelessWidget {
                           selectedDay: selectedDay,
                           onMarkerTap: onMarkerTap,
                           onMapCreated: onMapCreated,
+                          travelMode: itin.travelMode,
                         )
                       : _LazyMapPreview(
                           day: currentDayData,
@@ -3127,46 +3107,6 @@ class _ItineraryDetailView extends StatelessWidget {
     }
   }
 
-  DayQualityNoteEntity? _dayQualityNoteFor(
-    ItineraryDetailEntity itin,
-    int dayNumber,
-  ) {
-    for (final note in itin.dayQuality) {
-      if (note.day == dayNumber) return note;
-    }
-    return null;
-  }
-
-  Widget _buildDayQualityBanner(DayQualityNoteEntity note) {
-    final Color background;
-    final Color foreground;
-    switch (note.layer) {
-      case 4:
-        background = const Color(0xFFFEF2F2);
-        foreground = const Color(0xFFB91C1C);
-        break;
-      case 3:
-        background = const Color(0xFFFFF7ED);
-        foreground = const Color(0xFFB45309);
-        break;
-      default:
-        background = const Color(0xFFFFFBEB);
-        foreground = const Color(0xFF92400E);
-    }
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Text(
-        note.message,
-        style: TextStyle(fontSize: 13, color: foreground, height: 1.4),
-      ),
-    );
-  }
-
   Widget _buildContentCard(
     BuildContext context,
     ItineraryDetailEntity itin,
@@ -3266,20 +3206,13 @@ class _ItineraryDetailView extends StatelessWidget {
                 ),
             ],
           ),
-          if (_dayQualityNoteFor(itin, currentDayData.dayNumber) != null) ...[
-            const SizedBox(height: AppSizes.s12),
-            _buildDayQualityBanner(
-              _dayQualityNoteFor(itin, currentDayData.dayNumber)!,
-            ),
-          ],
           const SizedBox(height: AppSizes.s16),
           _DayCostSummaryCard(
             day: currentDayData,
             visitActivities: _visitActivities(currentDayData),
-            isHotelStart: _isHotelStart,
             participantCount: itin.participantCount,
-            showPerPersonCost: showPerPersonCost,
-            onCostScopeChanged: onCostScopeChanged,
+            tripHotelCost: itin.hotelCost,
+            durationDays: itin.durationDays,
           ),
           const SizedBox(height: AppSizes.s12),
           _DayVisitProgressCard(
@@ -3334,8 +3267,6 @@ class _ItineraryDetailView extends StatelessWidget {
                     isFirst: index == 0,
                     isLast: index == activities.length - 1,
                     nextTransportInfo: nextTransport,
-                    participantCount: itin.participantCount,
-                    showPerPersonCost: showPerPersonCost,
                     extraCost: activity.placeId != null
                         ? costsByPlace[activity.placeId]
                         : null,

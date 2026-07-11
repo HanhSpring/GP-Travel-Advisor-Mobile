@@ -236,6 +236,7 @@ class ItineraryRepositoryImpl implements ItineraryRepository {
   @override
   Future<IncurredCostEntity> createIncurredCost(
     String itineraryId, {
+    CostType type = CostType.other,
     required String note,
     required double amount,
     String? placeId,
@@ -243,6 +244,7 @@ class ItineraryRepositoryImpl implements ItineraryRepository {
   }) async {
     final model = await _dataSource.createIncurredCost(
       itineraryId,
+      type: type,
       note: note,
       amount: amount,
       placeId: placeId,
@@ -255,6 +257,7 @@ class ItineraryRepositoryImpl implements ItineraryRepository {
   Future<IncurredCostEntity> updateIncurredCost(
     String itineraryId,
     String costId, {
+    CostType? type,
     String? note,
     double? amount,
     String? placeId,
@@ -263,6 +266,7 @@ class ItineraryRepositoryImpl implements ItineraryRepository {
     final model = await _dataSource.updateIncurredCost(
       itineraryId,
       costId,
+      type: type,
       note: note,
       amount: amount,
       placeId: placeId,

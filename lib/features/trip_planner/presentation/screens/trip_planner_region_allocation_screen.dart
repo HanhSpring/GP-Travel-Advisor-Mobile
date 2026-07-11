@@ -34,13 +34,14 @@ class _TripPlannerRegionAllocationScreenState
   @override
   void initState() {
     super.initState();
-    _days = {for (final r in widget.regions) r: 0};
-    // Mặc định điền sẵn Vùng Trung Tâm (nhiều POI nhất) cho vừa đủ số ngày —
-    // trường hợp phổ biến nhất (chỉ 1 vùng) sẽ tự khớp tổng ngay từ đầu.
-    if (widget.regions.isNotEmpty) {
-      final central = widget.regions.first;
-      _days[central] = central.maxDays.clamp(0, widget.numDays);
-    }
+    // Backend đã tự tính sẵn phân bổ gợi ý (vùng trung tâm trước, mượn từ
+    // vùng kế tiếp gần nhất nếu thiếu — xem geo_clustering.py:detect_regions)
+    // nên điền sẵn TOÀN BỘ vùng, không chỉ vùng trung tâm như trước. Người
+    // dùng chỉ cần bấm "Tạo lịch trình" ngay; ai muốn chỉnh tay mới cần đụng
+    // tới stepper.
+    _days = {
+      for (final r in widget.regions) r: r.suggestedDays.clamp(0, widget.numDays),
+    };
   }
 
   int get _totalAllocated => _days.values.fold(0, (a, b) => a + b);
@@ -78,6 +79,10 @@ class _TripPlannerRegionAllocationScreenState
                   ),
                 ),
                 const SizedBox(height: 20),
+                if (_remoteRegionWarning() != null) ...[
+                  _buildWarningBanner(_remoteRegionWarning()!),
+                  const SizedBox(height: 16),
+                ],
                 ...widget.regions.map(_buildRegionCard),
               ],
             ),
@@ -136,11 +141,13 @@ class _TripPlannerRegionAllocationScreenState
         children: [
           Align(
             alignment: Alignment.centerLeft,
+            // Đã bỏ giới hạn 6 chip đầu tiên (thứ tự trước đây tuỳ thuộc thứ
+            // tự cụm HDBSCAN, có cảm giác "hỏng"/random) — backend giờ trả
+            // place_names đã sort alphabet, hiển thị đủ toàn bộ.
             child: Wrap(
               spacing: 6,
               runSpacing: 6,
               children: region.placeNames
-                  .take(6)
                   .map(
                     (name) => Chip(
                       label: Text(name, style: const TextStyle(fontSize: 12)),
@@ -158,6 +165,11 @@ class _TripPlannerRegionAllocationScreenState
               fontSize: 12,
               color: AppColors.textSecondary,
             ),
+          ),
+          const SizedBox(height: 2),
+          const Text(
+            'Dựa trên thời gian tham quan + di chuyển, không chỉ theo số lượng địa điểm',
+            style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
           ),
           const SizedBox(height: 8),
           Row(
@@ -224,88 +236,58 @@ class _TripPlannerRegionAllocationScreenState
     );
   }
 
-  Future<void> _updateDays(RegionInfo region, int newDays) async {
-    final previous = Map<RegionInfo, int>.from(_days);
-
-    if (newDays > 1 && region.isRemote) {
-      final confirmed = await _confirmWarning(
-        title: 'Vùng ở xa trung tâm',
-        message: _roundTripWarning(region),
-      );
-      if (confirmed != true) return;
-    }
-
+  void _updateDays(RegionInfo region, int newDays) {
     setState(() => _days[region] = newDays);
-
-    final crossWarning = _crossRegionWarning();
-    if (crossWarning != null) {
-      final confirmed = await _confirmWarning(
-        title: 'Cân nhắc trước khi chọn nhiều vùng xa',
-        message: crossWarning,
-      );
-      if (confirmed != true) {
-        setState(() => _days
-          ..clear()
-          ..addAll(previous));
-      }
-    }
   }
 
-  String _roundTripWarning(RegionInfo region) {
-    final oneWayHours = (region.travelMinutesFromCentral / 60).toStringAsFixed(1);
-    final roundTripHours =
-        (region.travelMinutesFromCentral * 2 / 60).toStringAsFixed(1);
-    return 'Vùng này cách khu vực trung tâm khoảng $oneWayHours giờ di chuyển '
-        'một chiều. Hệ thống chỉ hỗ trợ 1 khách sạn duy nhất, nên nếu chọn '
-        'nhiều hơn 1 ngày ở đây, mỗi ngày bạn sẽ phải di chuyển khứ hồi '
-        'khoảng $roundTripHours giờ.';
-  }
-
-  /// Nếu người dùng chọn ≥2 vùng ở xa với số lượng địa điểm không quá chênh
-  /// lệch (không vùng nào áp đảo), việc đặt 1 khách sạn duy nhất sẽ bất lợi
-  /// cho cả 2 — cảnh báo rõ trước khi họ tiếp tục.
-  String? _crossRegionWarning() {
+  /// Cảnh báo hợp nhất — hiển thị như 1 banner tĩnh phản ánh trạng thái hiện
+  /// tại, KHÔNG phải dialog chặn thao tác từng lần tăng/giảm stepper (trước
+  /// đây mỗi lần bấm "+" ở vùng xa lại hiện 1 AlertDialog riêng, rất phiền
+  /// khi người dùng tăng dần từng ngày một).
+  String? _remoteRegionWarning() {
     final selectedRemote = widget.regions
         .where((r) => r.isRemote && (_days[r] ?? 0) > 0)
         .toList();
-    if (selectedRemote.length < 2) return null;
+    if (selectedRemote.isEmpty) return null;
 
-    for (var i = 0; i < selectedRemote.length; i++) {
-      for (var j = i + 1; j < selectedRemote.length; j++) {
-        final countA = selectedRemote[i].placeIds.length;
-        final countB = selectedRemote[j].placeIds.length;
-        if (countA == 0 || countB == 0) continue;
-        final ratio = countA > countB ? countA / countB : countB / countA;
-        if (ratio < 1.5) {
-          return 'Bạn đang chọn nhiều vùng ở xa nhau (${selectedRemote[i].regionName}, '
-              '${selectedRemote[j].regionName}) với số địa điểm gần tương đương — '
-              'không có vùng nào đủ nổi bật để đặt khách sạn thuận tiện cho cả 2. '
-              'Vì hệ thống chỉ hỗ trợ 1 khách sạn duy nhất, việc di chuyển giữa '
-              'khách sạn và cả 2 vùng này có thể khá bất tiện.';
-        }
-      }
+    if (selectedRemote.length == 1) {
+      final region = selectedRemote.first;
+      if ((_days[region] ?? 0) <= 1) return null;
+      final roundTripHours =
+          (region.travelMinutesFromCentral * 2 / 60).toStringAsFixed(1);
+      return '${region.regionName} cách khu vực trung tâm khá xa. Hệ thống chỉ '
+          'hỗ trợ 1 khách sạn duy nhất, nên với ${_days[region]} ngày ở đây, '
+          'mỗi ngày bạn sẽ phải di chuyển khứ hồi khoảng $roundTripHours giờ.';
     }
-    return null;
+
+    final names = selectedRemote.map((r) => r.regionName).join(', ');
+    return 'Bạn đang chọn nhiều vùng ở xa nhau ($names) — vì hệ thống chỉ hỗ '
+        'trợ 1 khách sạn duy nhất, việc di chuyển giữa khách sạn và các vùng '
+        'này có thể khá bất tiện.';
   }
 
-  Future<bool?> _confirmWarning({
-    required String title,
-    required String message,
-  }) {
-    return showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Chỉnh lại'),
+  Widget _buildWarningBanner(String message) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF7ED),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFED7AA)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.info_outline_rounded,
+            size: 18,
+            color: Color(0xFFB45309),
           ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Tôi hiểu, tiếp tục'),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(fontSize: 12.5, color: Color(0xFF9A3412)),
+            ),
           ),
         ],
       ),
@@ -321,15 +303,25 @@ class _TripPlannerRegionAllocationScreenState
         children: [
           Padding(
             padding: const EdgeInsets.only(bottom: 10),
-            child: Text(
-              'Đã phân bổ: $_totalAllocated/${widget.numDays} ngày',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: _canSubmit
-                    ? const Color(0xFF16A34A)
-                    : AppColors.textSecondary,
-              ),
+            child: Builder(
+              builder: (context) {
+                final delta = _totalAllocated - widget.numDays;
+                final label = delta == 0
+                    ? 'Đã phân bổ đủ ${widget.numDays} ngày'
+                    : delta < 0
+                    ? 'Còn thiếu ${-delta} ngày (đã chọn $_totalAllocated/${widget.numDays})'
+                    : 'Đang vượt $delta ngày (đã chọn $_totalAllocated/${widget.numDays})';
+                return Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: delta == 0
+                        ? const Color(0xFF16A34A)
+                        : const Color(0xFFDC2626),
+                  ),
+                );
+              },
             ),
           ),
           ElevatedButton(
