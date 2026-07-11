@@ -1,12 +1,73 @@
 import 'package:dio/dio.dart';
 import 'package:travel_advisor_mobile/core/network/dio_client.dart';
 import 'package:travel_advisor_mobile/core/utils/auth_utils.dart';
+import 'package:travel_advisor_mobile/features/place/domain/entities/place_food_item_entity.dart';
+import 'package:travel_advisor_mobile/features/place/domain/entities/place_review_entity.dart';
 import 'package:travel_advisor_mobile/features/place/data/models/place_detail_model.dart';
+import 'package:travel_advisor_mobile/features/place/data/models/place_food_item_model.dart';
 import 'package:travel_advisor_mobile/features/place/data/models/place_model.dart';
 import 'package:travel_advisor_mobile/features/place/data/models/place_review_model.dart';
 
+class PlaceFoodItemsPage {
+  final String placeId;
+  final String placeName;
+  final List<PlaceFoodItemEntity> items;
+  final int page;
+  final int limit;
+  final int total;
+  final int pages;
+
+  const PlaceFoodItemsPage({
+    required this.placeId,
+    required this.placeName,
+    required this.items,
+    required this.page,
+    required this.limit,
+    required this.total,
+    required this.pages,
+  });
+}
+
+class PlaceReviewsPage {
+  final String placeId;
+  final String placeName;
+  final double average;
+  final int total;
+  final int filteredTotal;
+  final Map<int, int> breakdown;
+  final List<PlaceReviewEntity> items;
+  final int page;
+  final int limit;
+  final int pages;
+
+  const PlaceReviewsPage({
+    required this.placeId,
+    required this.placeName,
+    required this.average,
+    required this.total,
+    required this.filteredTotal,
+    required this.breakdown,
+    required this.items,
+    required this.page,
+    required this.limit,
+    required this.pages,
+  });
+}
+
 abstract class PlaceDataSource {
   Future<PlaceDetailModel> getPlaceDetail(String id);
+  Future<PlaceFoodItemsPage> getPlaceFoodItems(
+    String id, {
+    int page,
+    int limit,
+  });
+  Future<PlaceReviewsPage> getPlaceReviews(
+    String id, {
+    String? touristId,
+    int? rating,
+    int page,
+    int limit,
+  });
 }
 
 class MockPlaceDataSource implements PlaceDataSource {
@@ -38,6 +99,8 @@ class MockPlaceDataSource implements PlaceDataSource {
         isFavorite: true,
         latitude: 10.7752,
         longitude: 106.7041,
+        typeName: 'Khách sạn & Resort',
+        foodItems: const [],
         reviews: [],
         relatedPlaces: [],
       );
@@ -67,6 +130,8 @@ class MockPlaceDataSource implements PlaceDataSource {
       isFavorite: true,
       latitude: 10.7766,
       longitude: 106.7032,
+      typeName: 'Văn hóa - lịch sử',
+      foodItems: const [],
       reviews: [
         PlaceReviewModel(
           id: 'rv-001',
@@ -112,12 +177,78 @@ class MockPlaceDataSource implements PlaceDataSource {
       ],
     );
   }
+
+  @override
+  Future<PlaceFoodItemsPage> getPlaceFoodItems(
+    String id, {
+    int page = 1,
+    int limit = 10,
+  }) async {
+    final detail = await getPlaceDetail(id);
+    final items = detail.foodItems.map((item) => item.toEntity()).toList();
+    final offset = (page - 1) * limit;
+    return PlaceFoodItemsPage(
+      placeId: id,
+      placeName: detail.name,
+      items: items.skip(offset).take(limit).toList(),
+      page: page,
+      limit: limit,
+      total: items.length,
+      pages: items.isEmpty ? 0 : (items.length / limit).ceil(),
+    );
+  }
+
+  @override
+  Future<PlaceReviewsPage> getPlaceReviews(
+    String id, {
+    String? touristId,
+    int? rating,
+    int page = 1,
+    int limit = 10,
+  }) async {
+    final detail = await getPlaceDetail(id);
+    final items = detail.reviews.map((item) => item.toEntity()).toList();
+    final offset = (page - 1) * limit;
+    final breakdown = <int, int>{1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
+    for (final review in items) {
+      final rating = review.rating.round().clamp(1, 5);
+      breakdown[rating] = (breakdown[rating] ?? 0) + 1;
+    }
+    final filteredItems = rating == null
+        ? items
+        : items
+            .where((item) => item.rating.round().clamp(1, 5) == rating)
+            .toList();
+
+    return PlaceReviewsPage(
+      placeId: id,
+      placeName: detail.name,
+      average: items.isEmpty
+        ? detail.rating
+        : items.fold<double>(0.0, (sum, item) => sum + item.rating) /
+          items.length,
+      total: items.length,
+      filteredTotal: filteredItems.length,
+      breakdown: breakdown,
+      items: filteredItems.skip(offset).take(limit).toList(),
+      page: page,
+      limit: limit,
+      pages: filteredItems.isEmpty ? 0 : (filteredItems.length / limit).ceil(),
+    );
+  }
 }
 
 class RemotePlaceDataSource implements PlaceDataSource {
   final DioClient _client;
 
   RemotePlaceDataSource(this._client);
+
+  List<Map<String, dynamic>> _asList(dynamic raw) {
+    if (raw is! List) {
+      return const [];
+    }
+    return raw.whereType<Map<String, dynamic>>().toList();
+  }
 
   @override
   Future<PlaceDetailModel> getPlaceDetail(String id) async {
@@ -155,12 +286,18 @@ class RemotePlaceDataSource implements PlaceDataSource {
             .whereType<Map<String, dynamic>>()
             .map(_mapReview)
             .toList();
+    final reviewBreakdown = _mapBreakdown(reviewInfo['breakdown']);
 
     final related =
         (json['related_places'] as List<dynamic>? ?? const <dynamic>[])
             .whereType<Map<String, dynamic>>()
             .map(_mapRelatedPlace)
             .toList();
+    final foodItems =
+      (json['food_items'] as List<dynamic>? ?? const <dynamic>[])
+        .whereType<Map<String, dynamic>>()
+        .map(_mapFoodItem)
+        .toList();
 
     return PlaceDetailModel(
       id: (json['id'] ?? '').toString(),
@@ -170,9 +307,10 @@ class RemotePlaceDataSource implements PlaceDataSource {
       city: (json['city'] ?? '').toString(),
       rating: ((json['rating'] as num?) ?? 0).toDouble(),
       totalReviews:
-          (reviewInfo['total'] as num?)?.toInt() ??
           (json['review_count'] as num?)?.toInt() ??
+          (reviewInfo['total'] as num?)?.toInt() ??
           0,
+      typeName: json['type_name']?.toString(),
       vibes: _toStringList(json['vibes']),
       images: gallery,
       description: (json['description'] ?? '').toString(),
@@ -180,7 +318,9 @@ class RemotePlaceDataSource implements PlaceDataSource {
       closingHours: (json['close_time'] ?? '').toString(),
       openHourCompressed: json['open_hour_compressed']?.toString(),
       phone: (json['phone'] ?? '').toString(),
+      foodItems: foodItems,
       reviews: reviewList,
+      reviewBreakdown: reviewBreakdown,
       relatedPlaces: related,
       isFavorite: json['is_favorite'] == true,
       latitude: (json['latitude'] as num?)?.toDouble(),
@@ -197,9 +337,43 @@ class RemotePlaceDataSource implements PlaceDataSource {
       userName: (json['user_name'] ?? 'Ẩn danh').toString(),
       userAvatar: 'https://i.pravatar.cc/150?u=$avatarSeed',
       rating: ((json['rating'] as num?) ?? 0).toDouble(),
-      timeAgo: _toTimeAgo((json['created_at'] ?? '').toString()),
+      timeAgo: (json['time_ago'] ?? '').toString().trim().isNotEmpty
+          ? (json['time_ago'] ?? '').toString()
+          : _toTimeAgo((json['created_at'] ?? '').toString()),
       reviewText: (json['content'] ?? '').toString(),
+      provider: (json['provider'] ?? '').toString().trim().isEmpty
+          ? null
+          : (json['provider'] ?? '').toString(),
+      status: (json['status'] ?? 'approved').toString(),
       reviewImages: const <String>[],
+    );
+  }
+
+  Map<int, int> _mapBreakdown(dynamic raw) {
+    final breakdown = <int, int>{1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
+    if (raw is! Map) {
+      return breakdown;
+    }
+
+    for (final entry in raw.entries) {
+      final key = int.tryParse(entry.key.toString());
+      if (key == null) {
+        continue;
+      }
+      breakdown[key] = (entry.value as num?)?.toInt() ?? 0;
+    }
+
+    return breakdown;
+  }
+
+  PlaceFoodItemModel _mapFoodItem(Map<String, dynamic> json) {
+    return PlaceFoodItemModel(
+      id: (json['id'] ?? '').toString(),
+      name: (json['name'] ?? 'Món ăn').toString(),
+      description: (json['description'] ?? '').toString(),
+      price: ((json['price'] as num?) ?? 0).toDouble(),
+      imageUrl: (json['image_url'] ?? '').toString(),
+      category: json['category']?.toString(),
     );
   }
 
@@ -234,15 +408,85 @@ class RemotePlaceDataSource implements PlaceDataSource {
     }
 
     final diff = DateTime.now().difference(date);
-    if (diff.inDays >= 1) {
-      return '${diff.inDays} ngày trước';
+    final days = diff.inDays;
+    if (days <= 0) {
+      return 'Vừa xong';
     }
-    if (diff.inHours >= 1) {
-      return '${diff.inHours} giờ trước';
+    if (days < 30) {
+      return '$days ngày trước';
     }
-    if (diff.inMinutes >= 1) {
-      return '${diff.inMinutes} phút trước';
+    if (days < 365) {
+      return '${(days / 30).floor().clamp(1, 999)} tháng trước';
     }
-    return 'Vừa xong';
+    return '${(days / 365).floor().clamp(1, 999)} năm trước';
+  }
+
+  @override
+  Future<PlaceFoodItemsPage> getPlaceFoodItems(
+    String id, {
+    int page = 1,
+    int limit = 10,
+  }) async {
+    final response = await _client.dio.get(
+      '/places/$id/food-items',
+      queryParameters: {'page': page, 'limit': limit},
+      options: _client.forceRefreshOptions,
+    );
+
+    final data = response.data as Map<String, dynamic>;
+    final place = (data['place'] as Map<String, dynamic>?) ?? const {};
+    final items = _asList(data['items']).map(_mapFoodItem).map((item) => item.toEntity()).toList();
+    final pagination = (data['pagination'] as Map<String, dynamic>?) ?? const {};
+
+    return PlaceFoodItemsPage(
+      placeId: (place['id'] ?? id).toString(),
+      placeName: (place['name'] ?? 'Địa điểm').toString(),
+      items: items,
+      page: (pagination['page'] as num?)?.toInt() ?? page,
+      limit: (pagination['limit'] as num?)?.toInt() ?? limit,
+      total: (pagination['total'] as num?)?.toInt() ?? items.length,
+      pages: (pagination['pages'] as num?)?.toInt() ?? (items.isEmpty ? 0 : (items.length / limit).ceil()),
+    );
+  }
+
+  @override
+  Future<PlaceReviewsPage> getPlaceReviews(
+    String id, {
+    String? touristId,
+    int? rating,
+    int page = 1,
+    int limit = 10,
+  }) async {
+    final response = await _client.dio.get(
+      '/places/$id/reviews',
+      queryParameters: {
+        if (touristId != null && touristId.isNotEmpty) 'tourist_id': touristId,
+        if (rating != null) 'rating': rating,
+        'page': page,
+        'limit': limit,
+      },
+      options: _client.forceRefreshOptions,
+    );
+
+    final data = response.data as Map<String, dynamic>;
+    final place = (data['place'] as Map<String, dynamic>?) ?? const {};
+    final reviewsInfo = (data['reviews'] as Map<String, dynamic>?) ?? const {};
+    final list = _asList(reviewsInfo['list']).map(_mapReview).map((item) => item.toEntity()).toList();
+    final breakdown = _mapBreakdown(reviewsInfo['breakdown']);
+    final pagination = (reviewsInfo['pagination'] as Map<String, dynamic>?) ?? const {};
+    final filteredTotal = (pagination['total'] as num?)?.toInt() ?? list.length;
+
+    return PlaceReviewsPage(
+      placeId: (place['id'] ?? id).toString(),
+      placeName: (place['name'] ?? 'Địa điểm').toString(),
+      average: ((reviewsInfo['average'] as num?) ?? 0).toDouble(),
+      total: (reviewsInfo['total'] as num?)?.toInt() ?? list.length,
+      filteredTotal: filteredTotal,
+      breakdown: breakdown,
+      items: list,
+      page: (pagination['page'] as num?)?.toInt() ?? page,
+      limit: (pagination['limit'] as num?)?.toInt() ?? limit,
+      pages: (pagination['pages'] as num?)?.toInt() ?? (list.isEmpty ? 0 : (list.length / limit).ceil()),
+    );
   }
 }
