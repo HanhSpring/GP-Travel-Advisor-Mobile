@@ -63,8 +63,21 @@ class _ItineraryViewState extends State<_ItineraryView> {
     BuildContext context,
     ItineraryCubit cubit,
     String id,
-    String title,
-  ) async {
+    String title, {
+    bool trackingActive = false,
+  }) async {
+    if (trackingActive) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Lịch trình đang được theo dõi. Vui lòng dừng chuyến đi trước khi xoá.',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -259,8 +272,13 @@ class _ItineraryViewState extends State<_ItineraryView> {
                 return _ItineraryCardWithStart(
                   item: item,
                   onCardTap: onCardTap,
-                  onDelete: () =>
-                      _confirmAndDelete(context, cubit, item.id, item.title),
+                  onDelete: () => _confirmAndDelete(
+                    context,
+                    cubit,
+                    item.id,
+                    item.title,
+                    trackingActive: item.trackingActive,
+                  ),
                 );
               }, childCount: state.itineraries.length + 2),
             ),

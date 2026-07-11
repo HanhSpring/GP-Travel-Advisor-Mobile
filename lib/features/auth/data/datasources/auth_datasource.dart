@@ -302,6 +302,7 @@ class RemoteAuthDataSource implements AuthDataSource {
   Future<void> logout() async {
     await Supabase.instance.client.auth.signOut();
     await _clearStorage();
+    await _client.clearCache();
   }
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
