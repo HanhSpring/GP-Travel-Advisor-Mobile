@@ -103,7 +103,25 @@ class _ItineraryViewState extends State<_ItineraryView> {
       ),
     );
     if (ok == true && context.mounted) {
-      cubit.deleteItem(id);
+      // Hiện loading dialog ngăn người dùng thao tác trong khi đang xóa
+      // ignore: use_build_context_synchronously
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => const Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1A6EBD)),
+          ),
+        ),
+      );
+
+      // Chờ tác vụ xóa hoàn tất
+      await cubit.deleteItem(id);
+
+      // Tắt loading dialog
+      if (context.mounted) {
+        Navigator.pop(context);
+      }
     }
   }
 
