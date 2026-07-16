@@ -45,6 +45,7 @@ import '../widgets/replace_place_sheet.dart';
 import '../widgets/add_place_sheet.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:travel_advisor_mobile/core/utils/map_utils.dart';
+import 'package:travel_advisor_mobile/features/itinerary/domain/utils/day_cost_calculator.dart';
 
 class ItineraryDetailScreen extends StatefulWidget {
   final String itineraryId;
@@ -349,7 +350,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
       MaterialPageRoute(
         builder: (_) => BlocProvider(
           create: (_) => sl<PlaceDetailCubit>(),
-          child: PlaceDetailScreen(placeId: placeId, showRelatedPlaces: false),
+          child: PlaceDetailScreen(placeId: placeId, showRelatedPlaces: true),
         ),
       ),
     );
@@ -2419,45 +2420,70 @@ class _DayVisitProgressCard extends StatelessWidget {
   }
 }
 
-class _DayCostSummaryCard extends StatelessWidget {
+/// Thay thế _DayCostSummaryCard + _HotelCostCard cũ (2 card riêng, khá rối)
+/// bằng 1 card duy nhất kiểu icon-stat, đồng bộ với card ngày ở màn tổng
+/// quan lịch trình (ShortItineraryItem) — km di chuyển, giờ tham quan, số
+/// địa điểm, giờ di chuyển, tổng chi phí ngày đó (cả nhóm, không gồm khách
+/// sạn — khách sạn đã hiển thị đủ ở màn tổng quan, tránh lặp/rối).
+class _DayStatsCard extends StatelessWidget {
   final ItineraryDayEntity day;
-  final List<ItineraryActivityEntity> visitActivities;
-  final int participantCount;
-  // Chi ph\u00ed l\u01b0u tr\u00fa CHO C\u1ea2 CHUY\u1ebeN (itin.hotelCost, \u0111\u00e3 per-adult) \u2014
-  // backend c\u1ed1 \u00fd ki t\u00ednh 0\u0111 cho hotel-row hi\u1ec3n th\u1ecb theo ng\u00e0y (xem
-  // itinerary.service.ts), n\u00ean kh\u00f4ng th\u1ec3 t\u00ednh l\u1ea1i t\u1eeb activity trong ng\u00e0y.
-  final double tripHotelCost;
-  final int durationDays;
+  final ItineraryDetailEntity itin;
 
-  const _DayCostSummaryCard({
+  const _DayStatsCard({
     required this.day,
-    required this.visitActivities,
-    required this.participantCount,
-    required this.tripHotelCost,
-    required this.durationDays,
+    required this.itin,
   });
+
+  static String? _hoursText(int minutes) {
+    if (minutes <= 0) return null;
+    final hours = minutes / 60;
+    return hours.toStringAsFixed(hours.truncateToDouble() == hours ? 0 : 1);
+  }
+
+  Widget _statItem(IconData icon, String text, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: color),
+        const SizedBox(width: 4),
+        Text(
+          text,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF475569),
+          ),
+        ),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final formatter = NumberFormat('#,###', 'vi_VN');
-    final hotelCost = durationDays > 1
-        ? tripHotelCost / (durationDays - 1)
-        : tripHotelCost;
-    final placeCost = visitActivities.fold<double>(
-      0,
-      (sum, activity) => sum + activity.price,
+    final breakdown = DayCostCalculator.computeDaily(
+      day: day,
+      adultCount: itin.adultCount,
+      childCount: itin.childCount,
+      childPriceRatio: itin.childPriceRatio,
     );
-    final people = participantCount.clamp(1, 999);
-    final transportCost =
-        day.activities.fold<double>(
-          0,
-          (sum, activity) => sum + activity.transportCost,
-        ) /
-        people;
-    final totalCost = placeCost + hotelCost + transportCost;
+    final stats = DayCostCalculator.travelStats(day);
+    final locationCount = DayCostCalculator.visitActivities(day).length;
+    final formatter = NumberFormat('#,###', 'vi_VN');
+    final sightseeingText = _hoursText(stats.sightseeingMinutes);
+    final travelText = _hoursText(stats.travelMinutes);
 
-    String money(double value) =>
-        '${formatter.format(value)} ${day.currency}';
+    // Hàng trên: địa điểm + giờ tham quan. Hàng dưới: km + giờ di chuyển.
+    final topRow = <Widget>[
+      _statItem(Icons.place_rounded, '$locationCount địa điểm', const Color(0xFFF59E0B)),
+      if (sightseeingText != null)
+        _statItem(Icons.camera_alt_outlined, '$sightseeingText giờ tham quan', const Color(0xFF10B981)),
+    ];
+    final bottomRow = <Widget>[
+      if (stats.distanceKm > 0)
+        _statItem(Icons.route_rounded, '${stats.distanceKm.toStringAsFixed(1)} km', const Color(0xFF2563EB)),
+      if (travelText != null)
+        _statItem(Icons.directions_car_filled_outlined, '$travelText giờ di chuyển', const Color(0xFF8B5CF6)),
+    ];
 
     return Container(
       width: double.infinity,
@@ -2477,92 +2503,35 @@ class _DayCostSummaryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Chi ph\u00ed trong ng\u00e0y (m\u1ed7i ng\u01b0\u1eddi l\u1edbn)',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF0F172A),
-            ),
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Tổng quan ngày',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+              ),
+              Text(
+                '${formatter.format(breakdown.total)} ${day.currency}',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF10B981),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
-          _DayCostRow(
-            icon: Icons.place_rounded,
-            label: '\u0110\u1ecba \u0111i\u1ec3m & \u0103n u\u1ed1ng',
-            value: money(placeCost),
-            color: const Color(0xFFF59E0B),
-          ),
-          _DayCostRow(
-            icon: Icons.hotel_rounded,
-            label: 'L\u01b0u tr\u00fa',
-            value: money(hotelCost),
-            color: const Color(0xFF0F766E),
-          ),
-          _DayCostRow(
-            icon: Icons.two_wheeler_rounded,
-            label: 'X\u0103ng xe/t\u1ef1 t\u00fac',
-            value: money(transportCost),
-            color: const Color(0xFF2563EB),
-          ),
-          _DayCostRow(
-            icon: Icons.receipt_long_rounded,
-            label: 'T\u1ed5ng ng\u00e0y',
-            value: money(totalCost),
-            color: const Color(0xFF10B981),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DayCostRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color color;
-
-  const _DayCostRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 8),
-      child: Row(
-        children: [
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(9),
-            ),
-            child: Icon(icon, size: 16, color: color),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF475569),
-              ),
-            ),
-          ),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w900,
-              color: Color(0xFF0F172A),
-            ),
-          ),
+          if (topRow.isNotEmpty)
+            Wrap(spacing: 16, runSpacing: 8, children: topRow),
+          if (bottomRow.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Wrap(spacing: 16, runSpacing: 8, children: bottomRow),
+          ],
         ],
       ),
     );
@@ -3183,7 +3152,6 @@ class _ItineraryDetailView extends StatelessWidget {
     List<ItineraryDayEntity> displayDays,
   ) {
     final visibleActivities = _timelineActivities(currentDayData);
-    final destinationCount = _visitActivities(currentDayData).length;
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
@@ -3220,68 +3188,57 @@ class _ItineraryDetailView extends StatelessWidget {
                   .toList(),
             ),
           ),
-          const SizedBox(height: 14),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                '$destinationCount điểm trong ngày',
-                style: AppTextStylesExt.bodyMedium.copyWith(
-                  color: const Color(0xFF0F172A),
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              if (isEditMode)
-                GestureDetector(
-                  onTap: onAddPlaceTap,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 9,
+          // Số địa điểm trong ngày đã hiện trong _DayStatsCard bên dưới rồi
+          // — bỏ dòng "N điểm trong ngày" ở đây để khỏi lặp lại.
+          if (isEditMode) ...[
+            const SizedBox(height: 14),
+            Align(
+              alignment: Alignment.centerRight,
+              child: GestureDetector(
+                onTap: onAddPlaceTap,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 9,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [AppColors.primary, AppColors.accent],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
                     ),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [AppColors.primary, AppColors.accent],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.24),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
                       ),
-                      borderRadius: BorderRadius.circular(18),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.24),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
+                    ],
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.add_rounded, size: 16, color: Colors.white),
+                      SizedBox(width: 5),
+                      Text(
+                        'Thêm địa điểm',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
                         ),
-                      ],
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.add_rounded, size: 16, color: Colors.white),
-                        SizedBox(width: 5),
-                        Text(
-                          'Thêm địa điểm',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
-            ],
-          ),
+              ),
+            ),
+          ],
           const SizedBox(height: AppSizes.s16),
-          _DayCostSummaryCard(
+          _DayStatsCard(
             day: currentDayData,
-            visitActivities: _visitActivities(currentDayData),
-            participantCount: itin.participantCount,
-            tripHotelCost: itin.hotelCost,
-            durationDays: itin.durationDays,
+            itin: itin,
           ),
           const SizedBox(height: AppSizes.s12),
           _DayVisitProgressCard(
