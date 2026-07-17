@@ -471,7 +471,7 @@ class HotelCard extends StatelessWidget {
                       style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary),
                     ),
                     const TextSpan(
-                      text: '/đêm',
+                      text: '/ngày',
                       style: TextStyle(color: Colors.grey, fontSize: 11),
                     ),
                   ],

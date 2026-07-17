@@ -56,7 +56,7 @@ class HotelCard extends StatelessWidget {
             const SizedBox(height: 6),
             const SizedBox(height: 6),
             Text(
-              'Từ ${item.price}/đêm',
+              'Từ ${item.price}/ngày',
               style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
