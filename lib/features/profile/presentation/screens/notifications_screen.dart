@@ -29,7 +29,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   void _showSortOptions() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.premiumBackground,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.r20)),
       ),
@@ -62,7 +62,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.premiumBackground,
       body: SafeArea(
         child: Column(
           children: [
@@ -77,7 +77,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     icon: const Icon(
                       Icons.arrow_back_ios_new,
                       size: 24,
-                      color: Colors.black87,
+                      color: AppColors.premiumNavy,
                     ),
                     onPressed: () => Navigator.pop(context),
                   ),
@@ -87,7 +87,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         'Thông báo',
                         style: AppTextStyles.heading2.copyWith(
                           fontSize: 18,
-                          color: AppColorsExt.textDark,
+                          color: AppColors.premiumNavy,
                         ),
                       ),
                     ),

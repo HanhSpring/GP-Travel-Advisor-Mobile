@@ -815,11 +815,11 @@ class _ExploreViewState extends State<_ExploreView> {
                 ),
                 const SizedBox(height: 16),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  padding: EdgeInsets.zero,
                   child: SizedBox(
                     height: suggestionCardH,
                     child: PageView.builder(
-                      controller: PageController(viewportFraction: 0.92),
+                      controller: PageController(viewportFraction: 0.96),
                       padEnds: true,
                       clipBehavior: Clip.none,
                       itemCount: state.suggestions.take(5).length,
@@ -827,7 +827,7 @@ class _ExploreViewState extends State<_ExploreView> {
                       itemBuilder: (_, i) {
                         final item = state.suggestions[i];
                         return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 7),
                           child: GestureDetector(
                             onTap: () {
                               Navigator.push(
