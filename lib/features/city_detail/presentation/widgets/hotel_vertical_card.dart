@@ -171,7 +171,7 @@ class _HotelVerticalCardState extends State<HotelVerticalCard> {
                       Text(
                         widget.item.price.trim().isNotEmpty &&
                                 widget.item.price != 'Liên hệ'
-                            ? 'Từ ${widget.item.price}'
+                            ? 'Từ ${widget.item.price}/ngày'
                             : 'Liên hệ giá',
                         style: const TextStyle(
                           fontSize: 12,
