@@ -437,7 +437,7 @@ class _ExploreViewState extends State<_ExploreView> {
       context,
       MaterialPageRoute(
         builder: (_) => PaginatedSeeAllScreen<TripSuggestion>(
-          title: 'Lịch trình gợi ý',
+          title: 'Lịch trình nổi bật',
           pageSize: _pageSize,
           initialItems: initial,
           favoriteChanges: sl<FavoriteRemoteDataSource>().changes,
@@ -808,26 +808,26 @@ class _ExploreViewState extends State<_ExploreView> {
               children: [
                 const SizedBox(height: 32),
                 SectionHeader(
-                  eyebrow: 'Dành riêng cho bạn',
+                  eyebrow: 'Cảm hứng du lịch',
                   icon: Icons.auto_awesome_rounded,
-                  title: 'Lịch trình gợi ý',
+                  title: 'Lịch trình nổi bật',
                   onSeeAll: () => _openSuggestionSeeAll(),
                 ),
                 const SizedBox(height: 16),
                 Padding(
-                  padding: const EdgeInsets.only(left: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: SizedBox(
                     height: suggestionCardH,
                     child: PageView.builder(
-                      controller: PageController(viewportFraction: 0.88),
-                      padEnds: false,
+                      controller: PageController(viewportFraction: 0.92),
+                      padEnds: true,
                       clipBehavior: Clip.none,
                       itemCount: state.suggestions.take(5).length,
                       onPageChanged: (i) => setState(() => _suggestionPage = i),
                       itemBuilder: (_, i) {
                         final item = state.suggestions[i];
                         return Padding(
-                          padding: const EdgeInsets.only(right: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
                           child: GestureDetector(
                             onTap: () {
                               Navigator.push(
@@ -854,6 +854,7 @@ class _ExploreViewState extends State<_ExploreView> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 18),
                 PageDots(
                   count: state.suggestions.take(5).length,
                   current: _suggestionPage,
@@ -884,7 +885,7 @@ class _ExploreViewState extends State<_ExploreView> {
                       controller: PageController(viewportFraction: 0.40),
                       padEnds: false,
                       clipBehavior: Clip.none,
-                      itemCount: state.destinations.take(5).length,
+                      itemCount: state.destinations.length,
                       onPageChanged: (i) => setState(() => _activityPage = i),
                       itemBuilder: (_, i) {
                         final item = state.destinations[i];
@@ -911,8 +912,9 @@ class _ExploreViewState extends State<_ExploreView> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 18),
                 PageDots(
-                  count: state.destinations.take(5).length,
+                  count: state.destinations.length,
                   current: _activityPage,
                 ),
               ],
@@ -979,7 +981,7 @@ class _ExploreViewState extends State<_ExploreView> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 18),
                 PageDots(
                   count: state.restaurants.take(5).length,
                   current: _restaurantPage,
@@ -1042,7 +1044,7 @@ class _ExploreViewState extends State<_ExploreView> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 18),
                 PageDots(
                   count: state.hotels.take(5).length,
                   current: _hotelPage,

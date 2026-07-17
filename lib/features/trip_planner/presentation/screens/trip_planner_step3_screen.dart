@@ -125,16 +125,16 @@ class _TripPlannerStep3ScreenState extends State<TripPlannerStep3Screen> {
       },
       builder: (context, state) {
         return Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: AppColors.premiumBackground,
           appBar: AppBar(
-            backgroundColor: AppColors.surface,
+            backgroundColor: AppColors.premiumSurface,
             elevation: 0,
             centerTitle: true,
             leading: Padding(
               padding: const EdgeInsets.only(left: 16, top: 4, bottom: 4),
               child: Container(
                 decoration: const BoxDecoration(
-                  color: AppColors.background,
+                  color: AppColors.premiumSoftBlue,
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(

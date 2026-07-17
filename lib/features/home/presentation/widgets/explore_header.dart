@@ -189,33 +189,7 @@ class ExploreHeader extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Khám phá thế giới',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 27,
-                    height: 1.05,
-                    letterSpacing: -.7,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Những trải nghiệm được chọn riêng cho bạn',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: .72),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 16),
               GestureDetector(
                 onTap: () {
                   Navigator.push(

@@ -288,7 +288,7 @@ class _PaginatedSeeAllScreenState<T> extends State<PaginatedSeeAllScreen<T>> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.premiumBackground,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -322,7 +322,8 @@ class _PaginatedSeeAllScreenState<T> extends State<PaginatedSeeAllScreen<T>> {
   @override
   Widget build(BuildContext context) {
     final display = _displayItems;
-    final hasFilterOrSort = widget.cityExtractor != null ||
+    final hasFilterOrSort =
+        widget.cityExtractor != null ||
         widget.travelTypeExtractor != null ||
         widget.ratingExtractor != null ||
         widget.statusExtractor != null ||
@@ -334,7 +335,18 @@ class _PaginatedSeeAllScreenState<T> extends State<PaginatedSeeAllScreen<T>> {
       body: Column(
         children: [
           Container(
-            color: AppColors.primary,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.premiumNavy,
+                  AppColors.premiumBlue,
+                  AppColors.premiumTeal,
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+            ),
             padding: EdgeInsets.only(
               top: MediaQuery.of(context).padding.top + 12,
               left: 16,
@@ -346,14 +358,15 @@ class _PaginatedSeeAllScreenState<T> extends State<PaginatedSeeAllScreen<T>> {
                 Container(
                   width: 40,
                   height: 40,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: .14),
+                    borderRadius: BorderRadius.circular(13),
+                    border: Border.all(color: Colors.white24),
                   ),
                   child: IconButton(
                     icon: const Icon(
                       Icons.arrow_back_ios_new,
-                      color: AppColors.primary,
+                      color: Colors.white,
                       size: 20,
                     ),
                     onPressed: () => Navigator.pop(context),
@@ -388,8 +401,9 @@ class _PaginatedSeeAllScreenState<T> extends State<PaginatedSeeAllScreen<T>> {
                         child: IconButton(
                           icon: Icon(
                             Icons.tune_rounded,
-                            color:
-                                _hasActiveFilter ? AppColors.primary : Colors.white,
+                            color: _hasActiveFilter
+                                ? AppColors.primary
+                                : Colors.white,
                             size: 22,
                           ),
                           onPressed: _openFilterSheet,
@@ -414,63 +428,67 @@ class _PaginatedSeeAllScreenState<T> extends State<PaginatedSeeAllScreen<T>> {
             ),
           ),
           Expanded(
-            child: Builder(builder: (context) {
-              if (_isInitialLoading) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (_errorMessage != null && _allItems.isEmpty) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 32),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          _errorMessage!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.redAccent),
-                        ),
-                        const SizedBox(height: 12),
-                        ElevatedButton(
-                          onPressed: _loadFirstPage,
-                          child: const Text('Thử lại'),
-                        ),
-                      ],
+            child: Builder(
+              builder: (context) {
+                if (_isInitialLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (_errorMessage != null && _allItems.isEmpty) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _errorMessage!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: Colors.redAccent),
+                          ),
+                          const SizedBox(height: 12),
+                          ElevatedButton(
+                            onPressed: _loadFirstPage,
+                            child: const Text('Thử lại'),
+                          ),
+                        ],
+                      ),
                     ),
+                  );
+                }
+                if (display.isEmpty) {
+                  return Center(
+                    child: Text(
+                      _hasActiveFilter
+                          ? 'Không có kết quả phù hợp với bộ lọc'
+                          : widget.emptyMessage,
+                      style: TextStyle(color: Colors.grey.shade600),
+                      textAlign: TextAlign.center,
+                    ),
+                  );
+                }
+                return ListView.separated(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 24,
                   ),
+                  itemCount: display.length + (_isLoadingMore ? 1 : 0),
+                  separatorBuilder: (_, index) =>
+                      index == display.length - 1 && _isLoadingMore
+                      ? const SizedBox(height: 12)
+                      : SizedBox(height: widget.separatorHeight),
+                  itemBuilder: (context, index) {
+                    if (index >= display.length) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
+                    return widget.itemBuilder(context, display[index]);
+                  },
                 );
-              }
-              if (display.isEmpty) {
-                return Center(
-                  child: Text(
-                    _hasActiveFilter
-                        ? 'Không có kết quả phù hợp với bộ lọc'
-                        : widget.emptyMessage,
-                    style: TextStyle(color: Colors.grey.shade600),
-                    textAlign: TextAlign.center,
-                  ),
-                );
-              }
-              return ListView.separated(
-                controller: _scrollController,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-                itemCount: display.length + (_isLoadingMore ? 1 : 0),
-                separatorBuilder: (_, index) =>
-                    index == display.length - 1 && _isLoadingMore
-                        ? const SizedBox(height: 12)
-                        : SizedBox(height: widget.separatorHeight),
-                itemBuilder: (context, index) {
-                  if (index >= display.length) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      child: Center(child: CircularProgressIndicator()),
-                    );
-                  }
-                  return widget.itemBuilder(context, display[index]);
-                },
-              );
-            }),
+              },
+            ),
           ),
         ],
       ),
@@ -681,7 +699,7 @@ class _FilterSortSheetState<T> extends State<_FilterSortSheet<T>> {
                       value: _openNowOnly,
                       onChanged: (value) =>
                           setState(() => _openNowOnly = value),
-                      activeColor: AppColors.primary,
+                      activeThumbColor: AppColors.primary,
                       contentPadding: EdgeInsets.zero,
                       dense: true,
                       title: const Text(
@@ -829,13 +847,13 @@ class _FilterSortSheetState<T> extends State<_FilterSortSheet<T>> {
   }
 
   Widget _sectionLabel(String label) => Text(
-        label,
-        style: const TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textSecondary,
-        ),
-      );
+    label,
+    style: const TextStyle(
+      fontSize: 13,
+      fontWeight: FontWeight.w600,
+      color: AppColors.textSecondary,
+    ),
+  );
 
   Widget _dropdownField<V>({
     required V value,
