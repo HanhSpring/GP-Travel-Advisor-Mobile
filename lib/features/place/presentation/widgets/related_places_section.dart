@@ -28,7 +28,11 @@ class RelatedPlacesSection extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: 20),
             child: Text(
               'Có thể bạn sẽ thích',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: AppColors.premiumNavy,
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -39,7 +43,8 @@ class RelatedPlacesSection extends StatelessWidget {
               scrollDirection: Axis.horizontal,
               itemCount: relatedPlaces.length,
               separatorBuilder: (context, index) => const SizedBox(width: 14),
-              itemBuilder: (context, index) => _placeCard(context, relatedPlaces[index]),
+              itemBuilder: (context, index) =>
+                  _placeCard(context, relatedPlaces[index]),
             ),
           ),
         ],
@@ -67,14 +72,23 @@ class RelatedPlacesSection extends StatelessWidget {
           width: 170,
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFF1F5F9)),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppColors.premiumBorder),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.premiumNavy.withValues(alpha: .08),
+                blurRadius: 16,
+                offset: const Offset(0, 7),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(16),
+                ),
                 child: NetImage(
                   url: place.imageUrl,
                   height: 100,
@@ -104,12 +118,18 @@ class RelatedPlacesSection extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           place.rating.toString(),
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const Spacer(),
                         Text(
                           place.district,
-                          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textSecondary,
+                          ),
                         ),
                       ],
                     ),
