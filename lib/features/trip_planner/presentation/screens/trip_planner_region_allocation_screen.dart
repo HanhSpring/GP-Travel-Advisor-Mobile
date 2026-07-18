@@ -40,7 +40,8 @@ class _TripPlannerRegionAllocationScreenState
     // dùng chỉ cần bấm "Tạo lịch trình" ngay; ai muốn chỉnh tay mới cần đụng
     // tới stepper.
     _days = {
-      for (final r in widget.regions) r: r.suggestedDays.clamp(0, widget.numDays),
+      for (final r in widget.regions)
+        r: r.suggestedDays.clamp(0, widget.numDays),
     };
   }
 
@@ -51,14 +52,14 @@ class _TripPlannerRegionAllocationScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.premiumBackground,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.premiumBackground,
         elevation: 0,
         title: const Text(
           'Phân bổ vùng tham quan',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: AppColors.premiumNavy,
             fontSize: 16,
             fontWeight: FontWeight.w700,
           ),
@@ -98,9 +99,16 @@ class _TripPlannerRegionAllocationScreenState
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.premiumSurface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
+        border: Border.all(color: AppColors.premiumBorder),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.premiumNavy.withValues(alpha: .06),
+            blurRadius: 16,
+            offset: const Offset(0, 7),
+          ),
+        ],
       ),
       child: ExpansionTile(
         title: Row(
@@ -117,10 +125,7 @@ class _TripPlannerRegionAllocationScreenState
             ),
             if (region.isRemote)
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 3,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFF7ED),
                   borderRadius: BorderRadius.circular(8),
@@ -253,8 +258,8 @@ class _TripPlannerRegionAllocationScreenState
     if (selectedRemote.length == 1) {
       final region = selectedRemote.first;
       if ((_days[region] ?? 0) <= 1) return null;
-      final roundTripHours =
-          (region.travelMinutesFromCentral * 2 / 60).toStringAsFixed(1);
+      final roundTripHours = (region.travelMinutesFromCentral * 2 / 60)
+          .toStringAsFixed(1);
       return '${region.regionName} cách khu vực trung tâm khá xa. Hệ thống chỉ '
           'hỗ trợ 1 khách sạn duy nhất, nên với ${_days[region]} ngày ở đây, '
           'mỗi ngày bạn sẽ phải di chuyển khứ hồi khoảng $roundTripHours giờ.';
@@ -326,17 +331,18 @@ class _TripPlannerRegionAllocationScreenState
           ),
           ElevatedButton(
             onPressed: _canSubmit
-                ? () => context.read<TripPlannerCubit>().submitRegionAllocations(
-                      widget.regions
-                          .where((r) => (_days[r] ?? 0) > 0)
-                          .map(
-                            (r) => RegionAllocationInput(
-                              placeIds: r.placeIds,
-                              days: _days[r] ?? 0,
-                            ),
-                          )
-                          .toList(),
-                    )
+                ? () =>
+                      context.read<TripPlannerCubit>().submitRegionAllocations(
+                        widget.regions
+                            .where((r) => (_days[r] ?? 0) > 0)
+                            .map(
+                              (r) => RegionAllocationInput(
+                                placeIds: r.placeIds,
+                                days: _days[r] ?? 0,
+                              ),
+                            )
+                            .toList(),
+                      )
                 : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,

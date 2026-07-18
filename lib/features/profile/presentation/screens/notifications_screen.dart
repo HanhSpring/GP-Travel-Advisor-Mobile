@@ -131,7 +131,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               ),
             ),
             const SizedBox(height: AppSizes.s12),
-            const Divider(height: 1),
+            const SizedBox(height: AppSizes.s4),
             Expanded(
               child: BlocBuilder<NotificationCubit, NotificationState>(
                 builder: (context, state) {
