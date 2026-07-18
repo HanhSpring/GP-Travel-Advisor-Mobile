@@ -331,7 +331,7 @@ class _PaginatedSeeAllScreenState<T> extends State<PaginatedSeeAllScreen<T>> {
         (widget.sortOptions?.isNotEmpty ?? false);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.premiumBackground,
       body: Column(
         children: [
           Container(

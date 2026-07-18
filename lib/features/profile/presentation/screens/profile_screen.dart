@@ -145,7 +145,6 @@ class ProfileScreen extends StatelessWidget {
                   );
                 },
               ),
-              const Divider(height: 1),
               _buildMenuItem(
                 icon: Icons.notifications,
                 title: 'Thông báo',
@@ -163,7 +162,6 @@ class ProfileScreen extends StatelessWidget {
                   );
                 },
               ),
-              const Divider(height: 1),
               _buildMenuItem(
                 icon: Icons.language,
                 title: 'Ngôn ngữ',
@@ -189,7 +187,6 @@ class ProfileScreen extends StatelessWidget {
                   );
                 },
               ),
-              const Divider(height: 1),
               _buildMenuItem(
                 icon: Icons.lock_outline_rounded,
                 title: 'Đổi mật khẩu',
@@ -205,7 +202,6 @@ class ProfileScreen extends StatelessWidget {
                   );
                 },
               ),
-              const Divider(height: 1),
               _buildMenuItem(
                 icon: Icons.help_outline,
                 title: 'Hỗ trợ',
@@ -218,7 +214,6 @@ class ProfileScreen extends StatelessWidget {
                   );
                 },
               ),
-              const Divider(height: 1),
 
               const SizedBox(height: AppSizes.s48),
 

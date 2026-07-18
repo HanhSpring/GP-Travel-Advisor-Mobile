@@ -448,16 +448,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
             style: AppTextStyles.caption.copyWith(
-              color: Colors.black,
+              color: AppColors.premiumNavy,
               fontWeight: FontWeight.w600,
               fontSize: 14,
             ),
@@ -497,16 +494,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Giới tính',
             style: AppTextStyles.caption.copyWith(
-              color: Colors.black,
+              color: AppColors.premiumNavy,
               fontWeight: FontWeight.w600,
               fontSize: 14,
             ),
@@ -570,9 +564,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -581,7 +572,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               Text(
                 label,
                 style: AppTextStyles.caption.copyWith(
-                  color: Colors.black,
+                  color: AppColors.premiumNavy,
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
                 ),

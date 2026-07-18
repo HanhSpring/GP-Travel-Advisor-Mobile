@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:travel_advisor_mobile/core/di/injection_container.dart';
+import 'package:travel_advisor_mobile/core/theme/app_colors.dart';
 import 'package:travel_advisor_mobile/core/utils/auth_utils.dart';
 import 'package:travel_advisor_mobile/features/itinerary/domain/entities/incurred_cost_entity.dart';
 import 'package:travel_advisor_mobile/features/itinerary/domain/entities/itinerary_detail_entity.dart';
@@ -56,9 +57,7 @@ class _IncurredCostsScreenState extends State<IncurredCostsScreen> {
       if (!mounted) return;
       setState(() {
         _currentUserId = userId;
-        _isOwner = widget.members.any(
-          (m) => m.id == userId && m.isOwner,
-        );
+        _isOwner = widget.members.any((m) => m.id == userId && m.isOwner);
         _costs = results[0] as List<IncurredCostEntity>;
         _breakdown = results[1] as CostBreakdownEntity;
         _isLoading = false;
@@ -105,7 +104,9 @@ class _IncurredCostsScreenState extends State<IncurredCostsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Xoá khoản chi phí?'),
-        content: Text('Xoá "${cost.note}" (${_formatter.format(cost.amount)}đ)?'),
+        content: Text(
+          'Xoá "${cost.note}" (${_formatter.format(cost.amount)}đ)?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -133,11 +134,11 @@ class _IncurredCostsScreenState extends State<IncurredCostsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.premiumBackground,
       appBar: AppBar(
         title: const Text('Quản lý chi phí'),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF0F172A),
+        backgroundColor: AppColors.premiumBackground,
+        foregroundColor: AppColors.premiumNavy,
         elevation: 0,
       ),
       floatingActionButton: widget.isCompleted
@@ -167,12 +168,19 @@ class _IncurredCostsScreenState extends State<IncurredCostsScreen> {
                       ),
                       child: const Row(
                         children: [
-                          Icon(Icons.lock_rounded, size: 18, color: Color(0xFFB45309)),
+                          Icon(
+                            Icons.lock_rounded,
+                            size: 18,
+                            color: Color(0xFFB45309),
+                          ),
                           SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               'Lịch trình đã hoàn thành — không thể thêm/sửa/xoá chi phí nữa.',
-                              style: TextStyle(fontSize: 13, color: Color(0xFFB45309)),
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFFB45309),
+                              ),
                             ),
                           ),
                         ],
@@ -215,7 +223,11 @@ class _IncurredCostsScreenState extends State<IncurredCostsScreen> {
         '$count × ${_formatter.format(unitPrice)}đ = '
         '${_formatter.format(count * unitPrice)}đ';
 
-    Widget breakdownRow(String label, double value, {String? caption}) => Padding(
+    Widget breakdownRow(
+      String label,
+      double value, {
+      String? caption,
+    }) => Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -225,7 +237,10 @@ class _IncurredCostsScreenState extends State<IncurredCostsScreen> {
               Expanded(
                 child: Text(
                   label,
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF94A3B8),
+                  ),
                 ),
               ),
               Text(
@@ -381,7 +396,8 @@ class _IncurredCostsScreenState extends State<IncurredCostsScreen> {
               placeCost: breakdown.placeCostPerChild,
               hotelCost: breakdown.hotelCostPerChild,
               transportCost: breakdown.transportPerAdult,
-              contingency: breakdown.roundedCostPerChild -
+              contingency:
+                  breakdown.roundedCostPerChild -
                   breakdown.estimatedCostPerChild,
               adultPlaceCost: breakdown.placeCostPerAdult,
               adultHotelCost: breakdown.hotelCostPerAdult,
@@ -496,20 +512,29 @@ class _IncurredCostsScreenState extends State<IncurredCostsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(cost.note, style: const TextStyle(fontWeight: FontWeight.w600)),
+                Text(
+                  cost.note,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
                 if (cost.placeName != null && cost.placeName!.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: 2),
                     child: Text(
                       cost.placeName!,
-                      style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF64748B),
+                      ),
                     ),
                   ),
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
                   child: Text(
                     chargedLabel,
-                    style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF94A3B8),
+                    ),
                   ),
                 ),
               ],
@@ -534,7 +559,11 @@ class _IncurredCostsScreenState extends State<IncurredCostsScreen> {
                     ),
                     const SizedBox(width: 8),
                     IconButton(
-                      icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                      icon: const Icon(
+                        Icons.delete_outline,
+                        size: 18,
+                        color: Colors.red,
+                      ),
                       onPressed: () => _delete(cost),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
