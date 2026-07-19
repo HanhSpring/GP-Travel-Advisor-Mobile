@@ -58,11 +58,15 @@ class SavedItineraryCard extends StatelessWidget {
                   color: Colors.grey,
                 ),
                 const SizedBox(width: 4),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 2),
-                  child: Text(
-                    item.location,
-                    style: const TextStyle(fontSize: 11, color: Colors.grey),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 2),
+                    child: Text(
+                      item.location,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 11, color: Colors.grey),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -76,8 +80,16 @@ class SavedItineraryCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                const Icon(Icons.favorite, size: 12, color: Colors.redAccent),
+                const Icon(Icons.star_rounded, size: 14, color: Color(0xFFFFB547)),
                 const SizedBox(width: 4),
+                Text(
+                  item.rating > 0 ? item.rating.toStringAsFixed(1) : 'Chưa có',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.premiumMuted,
+                  ),
+                ),
               ],
             ),
           ],

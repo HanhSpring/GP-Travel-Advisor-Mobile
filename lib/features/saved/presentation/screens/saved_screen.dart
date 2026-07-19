@@ -217,6 +217,8 @@ class _SavedScreenState extends State<SavedScreen> {
                                     id: favPlace.id,
                                     name: favPlace.name,
                                     imageUrl: favPlace.image,
+                                    averageRating: favPlace.rating,
+                                    reviewCount: favPlace.reviewCount,
                                   );
                                   return DestinationCard(item: destination);
                                 },

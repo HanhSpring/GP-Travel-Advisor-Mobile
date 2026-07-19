@@ -154,10 +154,10 @@ class _ActivityVerticalCardState extends State<ActivityVerticalCard> {
                               widget.item.name,
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                                fontSize: 14,
                                 color: AppColors.premiumNavy,
                               ),
-                              maxLines: 1,
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),

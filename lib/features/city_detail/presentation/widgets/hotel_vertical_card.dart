@@ -143,10 +143,10 @@ class _HotelVerticalCardState extends State<HotelVerticalCard> {
                               widget.item.name,
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                                fontSize: 14,
                                 color: AppColors.premiumNavy,
                               ),
-                              maxLines: 1,
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -175,7 +175,8 @@ class _HotelVerticalCardState extends State<HotelVerticalCard> {
                       // thì "Từ ...", chưa có data giá thì "Liên hệ giá".
                       const SizedBox(height: 4),
                       Text(
-                        widget.item.price.trim().isNotEmpty &&
+                        widget.item.priceValue > 0 &&
+                                widget.item.price.trim().isNotEmpty &&
                                 widget.item.price != 'Liên hệ'
                             ? 'Từ ${widget.item.price}/ngày'
                             : 'Liên hệ giá',

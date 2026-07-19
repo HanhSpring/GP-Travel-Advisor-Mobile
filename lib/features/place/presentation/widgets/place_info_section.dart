@@ -6,12 +6,14 @@ class PlaceInfoSection extends StatelessWidget {
   final String name;
   final double rating;
   final List<String> vibes;
+  final double? minimumHotelPrice;
 
   const PlaceInfoSection({
     super.key,
     required this.name,
     required this.rating,
     required this.vibes,
+    this.minimumHotelPrice,
   });
 
   @override
@@ -44,6 +46,29 @@ class PlaceInfoSection extends StatelessWidget {
               _ratingBadge(rating),
             ],
           ),
+          if (minimumHotelPrice != null && minimumHotelPrice! > 0) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                const Icon(
+                  Icons.payments_outlined,
+                  size: 18,
+                  color: AppColors.premiumBlue,
+                ),
+                const SizedBox(width: 7),
+                Flexible(
+                  child: Text(
+                    'Từ ${_formatPrice(minimumHotelPrice!)}/đêm',
+                    style: const TextStyle(
+                      color: AppColors.premiumBlue,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
           if (vibes.isNotEmpty) ...[
             const SizedBox(height: 14),
             Wrap(
@@ -108,5 +133,13 @@ class PlaceInfoSection extends StatelessWidget {
 
   String _formatRating(double value) {
     return value.toStringAsFixed(1);
+  }
+
+  String _formatPrice(double value) {
+    final digits = value.round().toString();
+    return '${digits.replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
+      (_) => '.',
+    )}đ';
   }
 }
