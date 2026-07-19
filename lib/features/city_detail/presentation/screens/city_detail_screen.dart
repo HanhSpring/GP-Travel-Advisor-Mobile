@@ -356,7 +356,7 @@ class _OverviewTabContent extends StatelessWidget {
           Padding(
             padding: EdgeInsets.zero,
             child: SizedBox(
-              height: screenW * 0.96 * (9 / 16) + 142,
+              height: screenW * 0.96 * (9 / 16) + 100,
               child: PageView.builder(
                 controller: itineraryController,
                 padEnds: true,
@@ -400,7 +400,7 @@ class _OverviewTabContent extends StatelessWidget {
 
         // ── HOẠT ĐỘNG THAM QUAN & GIẢI TRÍ ────────────────────────
         SectionHeader(
-          title: 'Hoạt động tham quan & giải trí',
+          title: 'Tham quan & giải trí',
           onSeeAll: () => onTabSelected(2),
         ),
         const SizedBox(height: 12),

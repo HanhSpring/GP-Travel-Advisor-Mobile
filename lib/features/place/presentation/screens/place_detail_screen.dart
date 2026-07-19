@@ -219,6 +219,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                       name: place.name,
                       rating: place.rating,
                       vibes: place.vibes,
+                      minimumHotelPrice: place.minimumHotelPrice,
                     ),
 
                     // 3. Image Gallery

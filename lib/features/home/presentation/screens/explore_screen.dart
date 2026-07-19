@@ -438,7 +438,9 @@ class _ExploreViewState extends State<_ExploreView> {
       MaterialPageRoute(
         builder: (_) => PaginatedSeeAllScreen<TripSuggestion>(
           title: 'Lịch trình nổi bật',
+          itemCountLabel: 'lịch trình',
           pageSize: _pageSize,
+          maxItems: 50,
           initialItems: initial,
           favoriteChanges: sl<FavoriteRemoteDataSource>().changes,
           favoriteMapper: (item, event) =>
@@ -487,9 +489,10 @@ class _ExploreViewState extends State<_ExploreView> {
       MaterialPageRoute(
         builder: (_) => PaginatedSeeAllScreen<Destination>(
           title: 'Điểm đến nổi bật',
+          itemCountLabel: 'địa điểm',
           pageSize: _pageSize,
           initialItems: initial,
-          separatorHeight: 12,
+          separatorHeight: 0,
           pageLoader: (page, limit) => context
               .read<ExploreCubit>()
               .loadDestinationsPage(page: page, limit: limit),
@@ -555,7 +558,9 @@ class _ExploreViewState extends State<_ExploreView> {
       MaterialPageRoute(
         builder: (_) => PaginatedSeeAllScreen<CityRestaurant>(
           title: 'Nhà hàng tiêu biểu',
+          itemCountLabel: 'địa điểm',
           pageSize: _pageSize,
+          maxItems: 50,
           initialItems: initial,
           separatorHeight: 0,
           favoriteChanges: sl<FavoriteRemoteDataSource>().changes,
@@ -613,7 +618,9 @@ class _ExploreViewState extends State<_ExploreView> {
       MaterialPageRoute(
         builder: (_) => PaginatedSeeAllScreen<CityHotel>(
           title: 'Khách sạn nổi bật',
+          itemCountLabel: 'địa điểm',
           pageSize: _pageSize,
+          maxItems: 50,
           initialItems: initial,
           separatorHeight: 0,
           favoriteChanges: sl<FavoriteRemoteDataSource>().changes,
