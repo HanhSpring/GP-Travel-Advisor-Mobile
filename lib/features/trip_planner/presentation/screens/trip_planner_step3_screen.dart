@@ -378,6 +378,12 @@ class _TripPlannerStep3ScreenState extends State<TripPlannerStep3Screen> {
     );
   }
 
+  // Chỉ còn 1 lựa chọn: dùng mức đề xuất. Trước đây có thêm nút "Tiếp tục
+  // với ngân sách hiện tại" — bỏ vì mức đề xuất chỉ tính được SAU KHI đã
+  // chạy 1 lượt lập lịch trình đầy đủ (không phải ước tính trước), nên
+  // không có cách nào cho người dùng tự nhập 1 ngân sách "chắc chắn đủ"
+  // ngay từ đầu — cho phép "cứ tiếp tục" ở đây đồng nghĩa cố tình tạo ra
+  // lịch trình mà chính hệ thống vừa xác nhận là vượt ngân sách họ khai.
   void _showBudgetConfirmationDialog(
     BuildContext context, {
     required String message,
@@ -394,13 +400,6 @@ class _TripPlannerStep3ScreenState extends State<TripPlannerStep3Screen> {
           '$message\n\nMức ngân sách đề xuất: ${formatter.format(recommendedBudget)} VNĐ.',
         ),
         actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              cubit.proceedWithCurrentBudget();
-            },
-            child: const Text('Tiếp tục với ngân sách hiện tại'),
-          ),
           FilledButton(
             onPressed: () {
               Navigator.of(dialogContext).pop();

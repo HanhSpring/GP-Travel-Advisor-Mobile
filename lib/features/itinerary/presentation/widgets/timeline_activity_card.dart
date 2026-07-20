@@ -840,6 +840,47 @@ class TimelineActivityCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
+                  // Không hiện banner note cho dòng khách sạn — notes ở đó
+                  // chỉ là chú thích nội bộ ("chi phí ước tính cho cả đoàn"),
+                  // không phải cảnh báo cần chú ý như "thiếu quán ăn trưa".
+                  if (activity.placeType != 'hotel' &&
+                      activity.notes != null &&
+                      activity.notes!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppSizes.s8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF7ED),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFFED7AA)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(
+                              Icons.info_outline_rounded,
+                              size: 14,
+                              color: Color(0xFFB45309),
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                activity.notes!,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Color(0xFF9A3412),
+                                  height: 1.3,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   if (extraCost != null && extraCost! > 0)
                     Padding(
                       padding: const EdgeInsets.only(top: AppSizes.s8),
