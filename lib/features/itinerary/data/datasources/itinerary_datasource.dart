@@ -89,16 +89,22 @@ abstract class ItineraryDataSource {
   Future<List<IncurredCostModel>> getIncurredCosts(
     String itineraryId, {
     String? placeId,
+    int? dayNumber,
     String? filterUserId,
   });
   Future<List<EligiblePlaceModel>> getEligiblePlaces(String itineraryId);
   Future<CostBreakdownModel> getCostBreakdown(String itineraryId);
+  Future<DayCostBreakdownModel> getDayCostBreakdown(
+    String itineraryId,
+    int dayNumber,
+  );
   Future<IncurredCostModel> createIncurredCost(
     String itineraryId, {
     CostType type = CostType.other,
     required String note,
     required double amount,
     String? placeId,
+    int? dayNumber,
     List<String>? chargedTo,
   });
   Future<IncurredCostModel> updateIncurredCost(
@@ -108,9 +114,15 @@ abstract class ItineraryDataSource {
     String? note,
     double? amount,
     String? placeId,
+    int? dayNumber,
     List<String>? chargedTo,
   });
   Future<void> deleteIncurredCost(String itineraryId, String costId);
+  Future<IncurredCostModel> updatePlaceEffectivePrice(
+    String itineraryId,
+    String placeId,
+    double amount,
+  );
 }
 
 class RemoteItineraryDataSource implements ItineraryDataSource {
@@ -412,7 +424,17 @@ class RemoteItineraryDataSource implements ItineraryDataSource {
     );
 
     if (res.statusCode != 200) {
-      throw Exception('Không thể cập nhật lịch trình');
+      String message = 'Không thể cập nhật lịch trình';
+      try {
+        final errorBody = jsonDecode(res.body);
+        final rawMessage = errorBody['message'];
+        if (rawMessage is Map && rawMessage['message'] != null) {
+          message = rawMessage['message'].toString();
+        } else if (rawMessage != null) {
+          message = rawMessage.toString();
+        }
+      } catch (_) {}
+      throw Exception(message);
     }
   }
 
@@ -742,6 +764,7 @@ class RemoteItineraryDataSource implements ItineraryDataSource {
   Future<List<IncurredCostModel>> getIncurredCosts(
     String itineraryId, {
     String? placeId,
+    int? dayNumber,
     String? filterUserId,
   }) async {
     final headers = await _authHeaders();
@@ -751,6 +774,7 @@ class RemoteItineraryDataSource implements ItineraryDataSource {
         queryParameters: {
           'user_id': userId,
           if (placeId != null) 'place_id': placeId,
+          if (dayNumber != null) 'day_number': dayNumber.toString(),
           if (filterUserId != null) 'filter_user_id': filterUserId,
         },
       ),
@@ -810,12 +834,35 @@ class RemoteItineraryDataSource implements ItineraryDataSource {
   }
 
   @override
+  Future<DayCostBreakdownModel> getDayCostBreakdown(
+    String itineraryId,
+    int dayNumber,
+  ) async {
+    final headers = await _authHeaders();
+    final res = await http.get(
+      Uri.parse(
+        '$baseUrl/itinerary/$itineraryId/incurred-costs/day-breakdown',
+      ).replace(queryParameters: {'day_number': dayNumber.toString()}),
+      headers: headers,
+    );
+    if (res.statusCode != 200) {
+      throw Exception(
+        _extractErrorMessage(res, 'Không thể tải chi phí theo ngày'),
+      );
+    }
+    return DayCostBreakdownModel.fromJson(
+      jsonDecode(res.body) as Map<String, dynamic>,
+    );
+  }
+
+  @override
   Future<IncurredCostModel> createIncurredCost(
     String itineraryId, {
     CostType type = CostType.other,
     required String note,
     required double amount,
     String? placeId,
+    int? dayNumber,
     List<String>? chargedTo,
   }) async {
     final headers = await _authHeaders();
@@ -829,6 +876,7 @@ class RemoteItineraryDataSource implements ItineraryDataSource {
         'note': note,
         'amount': amount,
         if (placeId != null) 'placeId': placeId,
+        if (dayNumber != null) 'dayNumber': dayNumber,
         if (chargedTo != null) 'chargedTo': chargedTo,
       }),
     );
@@ -850,6 +898,7 @@ class RemoteItineraryDataSource implements ItineraryDataSource {
     String? note,
     double? amount,
     String? placeId,
+    int? dayNumber,
     List<String>? chargedTo,
   }) async {
     final headers = await _authHeaders();
@@ -863,6 +912,7 @@ class RemoteItineraryDataSource implements ItineraryDataSource {
         if (note != null) 'note': note,
         if (amount != null) 'amount': amount,
         if (placeId != null) 'placeId': placeId,
+        if (dayNumber != null) 'dayNumber': dayNumber,
         if (chargedTo != null) 'chargedTo': chargedTo,
       }),
     );
@@ -891,5 +941,26 @@ class RemoteItineraryDataSource implements ItineraryDataSource {
         _extractErrorMessage(res, 'Không thể xoá chi phí phát sinh'),
       );
     }
+  }
+
+  @override
+  Future<IncurredCostModel> updatePlaceEffectivePrice(
+    String itineraryId,
+    String placeId,
+    double amount,
+  ) async {
+    final headers = await _authHeaders();
+    final userId = await AuthUtils.requireCurrentUserId();
+    final res = await http.patch(
+      Uri.parse('$baseUrl/itinerary/$itineraryId/incurred-costs/place-price'),
+      headers: headers,
+      body: jsonEncode({'userId': userId, 'placeId': placeId, 'amount': amount}),
+    );
+    if (res.statusCode != 200) {
+      throw Exception(_extractErrorMessage(res, 'Không thể sửa giá địa điểm'));
+    }
+    return IncurredCostModel.fromJson(
+      jsonDecode(res.body) as Map<String, dynamic>,
+    );
   }
 }

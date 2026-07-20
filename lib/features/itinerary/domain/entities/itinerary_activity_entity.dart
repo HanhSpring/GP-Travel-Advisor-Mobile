@@ -26,6 +26,10 @@ class ItineraryActivityEntity with _$ItineraryActivityEntity {
     int? transitDurationMinutes,
     @Default(false) bool isFree,
     String? category, // e.g. "Cà phê", "Tham quan"
+    // travel.places.slot_type — cùng nguồn phân loại dùng lúc tạo lịch trình
+    // (attraction | restaurant | cafe | entertainment | ...), dùng để nhận diện
+    // địa điểm ăn trưa kết hợp với khung giờ, thay vì đoán qua từ khóa category.
+    String? placeType,
 
     // Geographical coordinates
     double? latitude,
@@ -38,5 +42,9 @@ class ItineraryActivityEntity with _$ItineraryActivityEntity {
     // Status
     @Default(ActivityStatus.chuaDi) ActivityStatus status,
     String? openHourCompressed,
+    // Hệ thống tự ghi (VD: ngày không có quán ăn phù hợp gần lịch trình) —
+    // khác với ghi chú người dùng tự nhập, hiện dưới dạng banner cảnh báo
+    // trên card hoạt động thay vì ghi chú thông thường.
+    String? notes,
   }) = _ItineraryActivityEntity;
 }

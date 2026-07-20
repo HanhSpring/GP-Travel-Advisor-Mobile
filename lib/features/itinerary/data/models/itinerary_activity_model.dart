@@ -30,6 +30,8 @@ class ItineraryActivityModel {
   @JsonKey(name: 'is_free')
   final bool isFree;
   final String? category;
+  @JsonKey(name: 'place_type')
+  final String? placeType;
   final double? latitude;
   final double? longitude;
   final double? rating;
@@ -38,6 +40,7 @@ class ItineraryActivityModel {
   final String? status;
   @JsonKey(name: 'open_hour_compressed')
   final String? openHourCompressed;
+  final String? notes;
 
   const ItineraryActivityModel({
     required this.id,
@@ -56,12 +59,14 @@ class ItineraryActivityModel {
     this.transitDurationMinutes,
     this.isFree = false,
     this.category,
+    this.placeType,
     this.latitude,
     this.longitude,
     this.rating,
     this.reviewCount,
     this.status,
     this.openHourCompressed,
+    this.notes,
   });
 
   factory ItineraryActivityModel.fromJson(Map<String, dynamic> json) {
@@ -99,6 +104,7 @@ class ItineraryActivityModel {
           json['isFree'] ??
           (json['priceLabel'] == 'MIỄN PHÍ'),
       category: json['category'],
+      placeType: json['placeType']?.toString() ?? json['place_type']?.toString(),
       latitude: json['latitude'] != null
           ? (json['latitude'] as num).toDouble()
           : (json['lat'] != null ? (json['lat'] as num).toDouble() : null),
@@ -118,6 +124,7 @@ class ItineraryActivityModel {
           ? 'completed'
           : json['status']?.toString(),
       openHourCompressed: json['open_hour_compressed']?.toString(),
+      notes: json['notes']?.toString(),
     );
   }
 
@@ -165,12 +172,14 @@ class ItineraryActivityModel {
       transitDurationMinutes: transitDurationMinutes,
       isFree: isFree,
       category: category,
+      placeType: placeType,
       latitude: latitude,
       longitude: longitude,
       rating: rating,
       reviewCount: reviewCount,
       status: entityStatus,
       openHourCompressed: openHourCompressed,
+      notes: notes,
     );
   }
 }

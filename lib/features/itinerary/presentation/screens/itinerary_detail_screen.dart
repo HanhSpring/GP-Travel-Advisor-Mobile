@@ -23,9 +23,11 @@ import 'package:travel_advisor_mobile/features/itinerary/tracking/data/models/tr
 import 'package:travel_advisor_mobile/features/itinerary/tracking/presentation/widgets/tracking_section.dart';
 import 'package:travel_advisor_mobile/features/itinerary/tracking/tracking_config.dart';
 import 'package:travel_advisor_mobile/features/itinerary/domain/entities/itinerary_detail_entity.dart';
+import 'package:travel_advisor_mobile/features/itinerary/domain/entities/incurred_cost_entity.dart';
 import 'package:travel_advisor_mobile/features/itinerary/domain/repositories/itinerary_repository.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/cubit/itinerary_cubit.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/cubit/itinerary_state.dart';
+import 'package:travel_advisor_mobile/features/itinerary/presentation/screens/incurred_costs_screen.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/day_selector_chip.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/conflict_resolution_sheet.dart';
 import 'package:travel_advisor_mobile/features/itinerary/presentation/widgets/timeline_activity_card.dart';
@@ -83,8 +85,18 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
 
   /// Tổng chi phí phát sinh (mục 1.6) theo từng place_id — chỉ hiển thị bên
   /// cạnh giá, không có hành động thêm/sửa ở màn này (xem "Quản lý chi phí"
-  /// ở tổng quan lịch trình).
+  /// ở tổng quan lịch trình). Chỉ gồm chi phí AD-HOC (không phải baseline) —
+  /// dòng "Chi phí kế hoạch" tách riêng ở _baselineCostsByPlace vì per-adult,
+  /// cần nhân số người khi cộng tổng ngày (xem _DayStatsCard).
   Map<String, double> _costsByPlace = {};
+  // Dòng "Chi phí kế hoạch" (tự động khi check-in) theo place_id — per-adult,
+  // KHÔNG cộng chung với _costsByPlace để tránh nhân sai (ad-hoc là số tuyệt
+  // đối, baseline là per-adult cần nhân adultCount/childCount×childPriceRatio).
+  Map<String, double> _baselineCostsByPlace = {};
+  // Chi phí phát sinh KHÔNG gắn địa điểm nhưng có chọn ngày (vd "Chi phí
+  // khác" ghi trực tiếp theo ngày) — cộng vào "Tổng quan ngày" bên cạnh
+  // tổng theo địa điểm ở trên, để con số ngày đầy đủ hơn.
+  Map<int, double> _extraCostsByDay = {};
 
   ItineraryDetailEntity? get _currentItinerary {
     final state = context.read<ItineraryCubit>().state;
@@ -104,8 +116,9 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
     _loadCostsByPlace();
   }
 
-  /// Chỉ để hiển thị badge "+chi phí" bên cạnh giá — lỗi ở đây không được
-  /// làm hỏng màn hình chi tiết lịch trình.
+  /// Chỉ để hiển thị badge "+chi phí" bên cạnh giá và "++ phát sinh" ở
+  /// "Tổng quan ngày" — lỗi ở đây không được làm hỏng màn hình chi tiết
+  /// lịch trình.
   Future<void> _loadCostsByPlace() async {
     try {
       final costs = await sl<ItineraryRepository>().getIncurredCosts(
@@ -113,12 +126,31 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
       );
       if (!mounted) return;
       final byPlace = <String, double>{};
+      final baselineByPlace = <String, double>{};
+      final byDay = <int, double>{};
       for (final cost in costs) {
         final placeId = cost.placeId;
-        if (placeId == null || placeId.isEmpty) continue;
-        byPlace[placeId] = (byPlace[placeId] ?? 0) + cost.amount;
+        final dayNumber = cost.dayNumber;
+        if (placeId != null && placeId.isNotEmpty) {
+          // "Chi phí kế hoạch" là per-adult (cần nhân số người khi cộng tổng
+          // ngày) — tách riêng khỏi ad-hoc (số tuyệt đối, không nhân).
+          if (cost.type == CostType.baselinePlan) {
+            baselineByPlace[placeId] = (baselineByPlace[placeId] ?? 0) + cost.amount;
+          } else {
+            byPlace[placeId] = (byPlace[placeId] ?? 0) + cost.amount;
+          }
+        } else if (dayNumber != null) {
+          // Chi phí không gắn địa điểm nhưng có chọn ngày (vd "Chi phí
+          // khác" ghi trực tiếp theo ngày) — cộng thẳng vào tổng ngày đó,
+          // KHÔNG cộng vào badge theo địa điểm (placeId null).
+          byDay[dayNumber] = (byDay[dayNumber] ?? 0) + cost.amount;
+        }
       }
-      setState(() => _costsByPlace = byPlace);
+      setState(() {
+        _costsByPlace = byPlace;
+        _baselineCostsByPlace = baselineByPlace;
+        _extraCostsByDay = byDay;
+      });
     } catch (_) {
       // Bỏ qua — badge chi phí phát sinh chỉ là hiển thị phụ.
     }
@@ -133,10 +165,12 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
     String? proposedVisitTime;
     List<String> existingIds = [];
     String? destinationCity;
+    String? itineraryId;
 
     if (state is ItineraryLoaded && state.selectedItinerary != null) {
       final itin = state.selectedItinerary!;
       destinationCity = itin.destination;
+      itineraryId = itin.id;
       for (final day in itin.days) {
         for (final act in day.activities) {
           final String id = act.placeId ?? act.id;
@@ -195,6 +229,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
       visitDate: visitDate,
       proposedVisitTime: proposedVisitTime,
       destinationCity: destinationCity,
+      itineraryId: itineraryId,
       onAdd: (place) async {
         final success = await context.read<ItineraryCubit>().addActivityToDay(
           _selectedDay,
@@ -221,7 +256,12 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
         }
 
         if (success != null && !success.isFull) {
-          _handleSuccessAdd(context, success, place);
+          _handleSuccessAdd(
+            context,
+            success,
+            place,
+            reorderNotes: success.reorderNotes,
+          );
           return;
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -442,10 +482,26 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
       );
 
       if (confirmSave == true && mounted) {
-        await context.read<ItineraryCubit>().confirmUpdateItinerary(
-          widget.itineraryId,
-        );
+        final saveResult = await context
+            .read<ItineraryCubit>()
+            .confirmUpdateItinerary(widget.itineraryId);
         if (!mounted) return;
+        if (!saveResult.success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                saveResult.error ??
+                    'Không thể lưu lịch trình. Vui lòng thử lại.',
+              ),
+              backgroundColor: Colors.redAccent,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppSizes.r12),
+              ),
+            ),
+          );
+          return;
+        }
         setState(() {
           _isEditMode = false;
           _editSnapshot = null;
@@ -774,6 +830,22 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
           return;
         }
       }
+
+      final proposedStartTime = isStart ? newTime : activity.startTime;
+      final proposedEndTime = isStart ? activity.endTime : newTime;
+      final itineraryCubit = context.read<ItineraryCubit>();
+      if (itineraryCubit.isLunchActivity(activity) &&
+          !itineraryCubit.isWithinLunchWindow(
+            proposedStartTime,
+            proposedEndTime,
+          )) {
+        await showTimeError(
+          'Địa điểm ăn trưa phải bắt đầu từ 10:30 và kết thúc trước hoặc lúc 14:00.\n\n'
+          'Vui lòng chọn thời gian trong khung 10:30 - 14:00.',
+        );
+        return;
+      }
+
       // ── Validate giờ mở/đóng cửa của địa điểm ─────────────────────────────────
       if (activity.openHourCompressed != null) {
         final visitDate = _visitDateForDay(_selectedDay);
@@ -1001,23 +1073,24 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
                         ),
                       );
 
-                      final error = await cubit.optimizeEditedDay(
+                      final optimizeResult = await cubit.optimizeEditedDay(
                         dayNumber: _selectedDay,
                         editedActivityId: activity.id,
                       );
-                      
-                      if (error != null && mounted) {
+
+                      if (optimizeResult.error != null && mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(error),
+                            content: Text(optimizeResult.error!),
                             backgroundColor: Colors.redAccent,
                           ),
                         );
-                        // Revert the time shift locally if it failed
-                        cubit.updateActivityTimesWithShift(
-                          activityId: activity.id,
-                          deltaMinutes: -deltaMin,
-                          shiftStartTimeOnly: isStart,
+                        cubit.discardChanges(itin);
+                      } else if (mounted &&
+                          optimizeResult.reorderNotes.isNotEmpty) {
+                        _showReduceTimeNotesDialog(
+                          context,
+                          optimizeResult.reorderNotes,
                         );
                       }
                     }
@@ -1056,11 +1129,11 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
                           );
                           if (mounted) {
                             if (pinResult.lunchWasPinned) {
-                              _handleLunchPinnedOptimization(
+                              await _handleLunchPinnedOptimization(
                                 cubit,
-                                activity.id,
                                 pinResult.lunchActivityId!,
                                 pinResult.lunchActivityTitle ?? 'Ăn trưa',
+                                itin,
                               );
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -1096,7 +1169,9 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
                             final notes = await cubit.applyOptimizedDay(
                               _selectedDay,
                               true,
-                              lockedActivityId: activity.id,
+                              lockedActivityId: pinResult.lunchWasPinned
+                                  ? null
+                                  : activity.id,
                               pinnedLunchActivityId: pinResult.lunchWasPinned ? pinResult.lunchActivityId : null,
                             );
                             if (mounted) {
@@ -1132,13 +1207,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
                               }
                             }
                           } catch (e) {
-                            // Revert the local shift because the API failed
-                            cubit.updateActivityTimesWithShift(
-                              activityId: activity.id,
-                              deltaMinutes: -deltaMin,
-                              shiftStartTimeOnly: isStart,
-                              protectLunchWindow: false,
-                            );
+                            cubit.discardChanges(itin);
                             if (mounted) {
                               final errorMsg = e.toString().replaceAll(
                                 'Exception: ',
@@ -1156,17 +1225,23 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
               }
             }
 
+            final snapshotState = cubit.state;
+            if (snapshotState is! ItineraryLoaded ||
+                snapshotState.selectedItinerary == null) {
+              return;
+            }
+            final shiftSnapshot = snapshotState.selectedItinerary!;
             final pinResult = cubit.updateActivityTimesWithShift(
               activityId: activity.id,
               deltaMinutes: deltaMin,
               shiftStartTimeOnly: isStart,
             );
             if (mounted && pinResult.lunchWasPinned) {
-              _handleLunchPinnedOptimization(
+              await _handleLunchPinnedOptimization(
                 cubit,
-                activity.id,
                 pinResult.lunchActivityId!,
                 pinResult.lunchActivityTitle ?? 'Ăn trưa',
+                shiftSnapshot,
               );
             }
             return;
@@ -1338,11 +1413,11 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
     );
   }
 
-  void _handleLunchPinnedOptimization(
+  Future<void> _handleLunchPinnedOptimization(
     ItineraryCubit cubit,
-    String lockedActivityId,
     String pinnedLunchActivityId,
     String lunchTitle,
+    ItineraryDetailEntity snapshot,
   ) async {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -1360,7 +1435,6 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
       final notes = await cubit.applyOptimizedDay(
         _selectedDay,
         true,
-        lockedActivityId: lockedActivityId,
         pinnedLunchActivityId: pinnedLunchActivityId,
       );
       if (mounted && notes.isNotEmpty) {
@@ -1384,7 +1458,35 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
           _showOptimizationNotes(context, mappedNotes);
         }
       }
-    } catch (_) {}
+    } catch (_) {
+      cubit.discardChanges(snapshot);
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text('Không thể sắp xếp lịch trình'),
+          content: Text(
+            'Không thể áp dụng thay đổi mà vẫn giữ bữa trưa "$lunchTitle" trong khung 10:30 - 14:00. '
+            'Lịch trình đã được khôi phục. Vui lòng chọn giờ khác hoặc giảm thời gian tham quan.',
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+              ),
+              child: const Text(
+                'Đã hiểu',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   double _calcDistance(double lat1, double lng1, double lat2, double lng2) {
@@ -1405,9 +1507,11 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
 
     List<String> existingIds = [];
     String? destinationCity;
+    String? itineraryId;
     final state = context.read<ItineraryCubit>().state;
     if (state is ItineraryLoaded && state.selectedItinerary != null) {
       destinationCity = state.selectedItinerary!.destination;
+      itineraryId = state.selectedItinerary!.id;
       for (final day in state.selectedItinerary!.days) {
         for (final act in day.activities) {
           final String id = act.placeId ?? act.id;
@@ -1425,6 +1529,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
       activity: activity,
       existingIds: existingIds,
       destinationCity: destinationCity,
+      itineraryId: itineraryId,
       onReplace: (place) async {
         final oldLat = activity.latitude;
         final oldLng = activity.longitude;
@@ -1943,6 +2048,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
     dynamic success,
     dynamic place, {
     bool extendTime = false,
+    List<String> reorderNotes = const [],
   }) {
     final addedDayNumber = success.dayNumber as int?;
     final newActivityId = success.activityId as String?;
@@ -2001,7 +2107,9 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
             ),
           ],
         ),
-      );
+      ).then((_) {
+        if (mounted) _showReduceTimeNotesDialog(this.context, reorderNotes);
+      });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -2017,6 +2125,13 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
           ),
         ),
       );
+
+      if (reorderNotes.isNotEmpty) {
+        // Đợi snackbar bắt đầu hiện rồi mới hiện dialog, tránh chồng UI ngay lập tức
+        Future.delayed(const Duration(milliseconds: 400), () {
+          if (mounted) _showReduceTimeNotesDialog(this.context, reorderNotes);
+        });
+      }
     }
 
     Future.delayed(const Duration(milliseconds: 300), () {
@@ -2024,6 +2139,81 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
         _scrollToActivity(newActivityId);
       }
     });
+  }
+
+  /// Hiển thị dialog liệt kê các thay đổi (giảm giờ tham quan, dời giờ...)
+  /// mà AI optimizer đã tự động thực hiện khi người dùng chọn "Giảm giờ".
+  void _showReduceTimeNotesDialog(BuildContext context, List<String> notes) {
+    if (notes.isEmpty) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSizes.r16),
+        ),
+        title: Row(
+          children: [
+            Icon(Icons.timer_outlined, color: AppColors.primary, size: 22),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text(
+                'Đã điều chỉnh thời gian',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: notes
+                .map(
+                  (note) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.only(top: 2),
+                          child: Icon(
+                            Icons.circle,
+                            size: 6,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            note,
+                            style: const TextStyle(fontSize: 13, height: 1.4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppSizes.r8),
+              ),
+              elevation: 0,
+            ),
+            child: const Text(
+              'Đã hiểu',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showAddActivityConflictResolutionSheet(
@@ -2076,6 +2266,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
               retrySuccess,
               place,
               extendTime: extendTime,
+              reorderNotes: retrySuccess.reorderNotes,
             );
           } else {
             _showAddActivityConflictResolutionSheet(
@@ -2225,6 +2416,8 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
             isRefreshing: _isRefreshing,
             onRefreshTap: _onRefresh,
             costsByPlace: _costsByPlace,
+            baselineCostsByPlace: _baselineCostsByPlace,
+            extraCostsByDay: _extraCostsByDay,
           ),
         ),
       ),
@@ -2428,10 +2621,23 @@ class _DayVisitProgressCard extends StatelessWidget {
 class _DayStatsCard extends StatelessWidget {
   final ItineraryDayEntity day;
   final ItineraryDetailEntity itin;
+  // Chi phí phát sinh AD-HOC (không phải "Chi phí kế hoạch") theo địa điểm —
+  // đã là số tuyệt đối thật sự đã chi, KHÔNG nhân theo số người.
+  final Map<String, double> costsByPlace;
+  // Dòng "Chi phí kế hoạch" (tự động khi check-in) theo địa điểm — per-adult,
+  // PHẢI nhân theo adultCount/childCount×childPriceRatio trước khi cộng vào
+  // "Đã chi", khác costsByPlace ở trên.
+  final Map<String, double> baselineByPlace;
+  // Chi phí phát sinh không gắn địa điểm nhưng có chọn ngày — cộng thêm vào
+  // cùng tổng "Đã chi" ở trên cho đủ, cũng là số tuyệt đối không nhân.
+  final Map<int, double> extraCostsByDay;
 
   const _DayStatsCard({
     required this.day,
     required this.itin,
+    this.costsByPlace = const {},
+    this.baselineByPlace = const {},
+    this.extraCostsByDay = const {},
   });
 
   static String? _hoursText(int minutes) {
@@ -2469,16 +2675,35 @@ class _DayStatsCard extends StatelessWidget {
     final stats = DayCostCalculator.travelStats(day);
     final locationCount = DayCostCalculator.visitActivities(day).length;
     final formatter = NumberFormat('#,###', 'vi_VN');
+    // "Chi phí kế hoạch" (baseline) là per-adult — phải nhân theo số người
+    // như breakdown.total ở trên (DayCostCalculator.computeDaily) để 2 con
+    // số không lệch ý nghĩa. Ad-hoc (costsByPlace/extraCostsByDay) đã là số
+    // tuyệt đối thật sự đã chi, KHÔNG nhân thêm.
+    final baselineRaw = day.activities.fold<double>(
+      0,
+      (sum, a) =>
+          sum + (a.placeId != null ? (baselineByPlace[a.placeId] ?? 0) : 0),
+    );
+    final baselineGroupTotal =
+        baselineRaw * itin.adultCount +
+        baselineRaw * itin.childPriceRatio * itin.childCount;
+    final adhocTotal =
+        day.activities.fold<double>(
+          0,
+          (sum, a) =>
+              sum + (a.placeId != null ? (costsByPlace[a.placeId] ?? 0) : 0),
+        ) +
+        (extraCostsByDay[day.dayNumber] ?? 0);
+    final dayIncurredTotal = baselineGroupTotal + adhocTotal;
     final sightseeingText = _hoursText(stats.sightseeingMinutes);
     final travelText = _hoursText(stats.travelMinutes);
 
     // Hàng trên: địa điểm + giờ tham quan. Hàng dưới: km + giờ di chuyển.
-    final topRow = <Widget>[
+    // 4 chỉ số gộp thành 1 cột dọc duy nhất (thay vì 2 hàng Wrap trước đây).
+    final statColumn = <Widget>[
       _statItem(Icons.place_rounded, '$locationCount địa điểm', const Color(0xFFF59E0B)),
       if (sightseeingText != null)
         _statItem(Icons.camera_alt_outlined, '$sightseeingText giờ tham quan', const Color(0xFF10B981)),
-    ];
-    final bottomRow = <Widget>[
       if (stats.distanceKm > 0)
         _statItem(Icons.route_rounded, '${stats.distanceKm.toStringAsFixed(1)} km', const Color(0xFF2563EB)),
       if (travelText != null)
@@ -2500,21 +2725,67 @@ class _DayStatsCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Tổng quan ngày',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF0F172A),
-                  ),
+          // Cột trái: tiêu đề + icon sổ, rồi 4 chỉ số xếp dọc.
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Tổng quan ngày',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    // Đi thẳng vào chi tiết ngày này trong Sổ chi tiêu —
+                    // mỗi người bao nhiêu + xăng xe, xem incurred_costs_screen.dart.
+                    InkWell(
+                      borderRadius: BorderRadius.circular(20),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => IncurredCostsScreen(
+                            itineraryId: itin.id,
+                            members: itin.members,
+                            isCompleted:
+                                itin.status.toUpperCase() == 'COMPLETED',
+                            initialDayNumber: day.dayNumber,
+                            days: itin.days,
+                          ),
+                        ),
+                      ),
+                      child: const Padding(
+                        padding: EdgeInsets.all(4),
+                        child: Icon(
+                          Icons.menu_book_rounded,
+                          size: 16,
+                          // Đồng bộ icon/màu với "Sổ chi tiêu" ở Tổng quan
+                          // lịch trình (itinerary_summary_screen.dart).
+                          color: Color(0xFFF59E0B),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
+                const SizedBox(height: 10),
+                ...statColumn
+                    .expand((w) => [w, const SizedBox(height: 8)])
+                    .take(statColumn.isEmpty ? 0 : statColumn.length * 2 - 1),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Cột phải: Tổng chi phí + Đã chi.
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
               Text(
                 '${formatter.format(breakdown.total)} ${day.currency}',
                 style: const TextStyle(
@@ -2523,15 +2794,27 @@ class _DayStatsCard extends StatelessWidget {
                   color: Color(0xFF10B981),
                 ),
               ),
+              const Text(
+                'Tổng chi phí',
+                style: TextStyle(fontSize: 10.5, color: Color(0xFF94A3B8)),
+              ),
+              if (dayIncurredTotal > 0) ...[
+                const SizedBox(height: 8),
+                Text(
+                  '${formatter.format(dayIncurredTotal)} ${day.currency}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFFF59E0B),
+                  ),
+                ),
+                const Text(
+                  'Đã chi',
+                  style: TextStyle(fontSize: 10.5, color: Color(0xFF94A3B8)),
+                ),
+              ],
             ],
           ),
-          const SizedBox(height: 12),
-          if (topRow.isNotEmpty)
-            Wrap(spacing: 16, runSpacing: 8, children: topRow),
-          if (bottomRow.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Wrap(spacing: 16, runSpacing: 8, children: bottomRow),
-          ],
         ],
       ),
     );
@@ -2754,6 +3037,8 @@ class _ItineraryDetailView extends StatelessWidget {
   final bool isRefreshing;
   final VoidCallback onRefreshTap;
   final Map<String, double> costsByPlace;
+  final Map<String, double> baselineCostsByPlace;
+  final Map<int, double> extraCostsByDay;
 
   const _ItineraryDetailView({
     required this.selectedDay,
@@ -2787,6 +3072,8 @@ class _ItineraryDetailView extends StatelessWidget {
     required this.isRefreshing,
     required this.onRefreshTap,
     this.costsByPlace = const {},
+    this.baselineCostsByPlace = const {},
+    this.extraCostsByDay = const {},
   });
 
   @override
@@ -3239,6 +3526,9 @@ class _ItineraryDetailView extends StatelessWidget {
           _DayStatsCard(
             day: currentDayData,
             itin: itin,
+            costsByPlace: costsByPlace,
+            baselineByPlace: baselineCostsByPlace,
+            extraCostsByDay: extraCostsByDay,
           ),
           const SizedBox(height: AppSizes.s12),
           _DayVisitProgressCard(
@@ -3295,6 +3585,21 @@ class _ItineraryDetailView extends StatelessWidget {
                     nextTransportInfo: nextTransport,
                     extraCost: activity.placeId != null
                         ? costsByPlace[activity.placeId]
+                        : null,
+                    onExtraCostTap: activity.placeId != null
+                        ? () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => IncurredCostsScreen(
+                                itineraryId: itin.id,
+                                members: itin.members,
+                                isCompleted:
+                                    itin.status.toUpperCase() == 'COMPLETED',
+                                initialPlaceId: activity.placeId,
+                                initialPlaceName: activity.title,
+                                days: itin.days,
+                              ),
+                            ),
+                          )
                         : null,
                     onAddTap: itin.isOwner ? onAddPlaceTap : null,
                     onEditTap: itin.isOwner

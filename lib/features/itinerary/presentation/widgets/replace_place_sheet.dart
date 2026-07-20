@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:travel_advisor_mobile/core/constants/app_colors.dart';
 import 'package:travel_advisor_mobile/core/constants/app_sizes.dart';
 import 'package:travel_advisor_mobile/core/constants/app_text_styles.dart';
 import 'package:travel_advisor_mobile/core/widgets/net_image.dart';
 import 'package:travel_advisor_mobile/features/itinerary/domain/entities/itinerary_activity_entity.dart';
+import 'package:travel_advisor_mobile/features/place/presentation/cubit/place_detail_cubit.dart';
+import 'package:travel_advisor_mobile/features/place/presentation/screens/place_detail_screen.dart';
 
 import '../../data/datasources/nearby_places_api.dart';
 import '../../../../core/di/injection_container.dart';
@@ -18,6 +21,8 @@ class ReplacePlaceSheet extends StatefulWidget {
   final Future<void> Function(NearbyPlaceModel place) onReplace;
   final List<String>? existingIds;
   final String? destinationCity;
+  /// Null skips AI suggestions and goes straight to nearby search.
+  final String? itineraryId;
 
   const ReplacePlaceSheet({
     super.key,
@@ -25,6 +30,7 @@ class ReplacePlaceSheet extends StatefulWidget {
     required this.onReplace,
     this.existingIds,
     this.destinationCity,
+    this.itineraryId,
   });
 
   static void show(
@@ -33,6 +39,7 @@ class ReplacePlaceSheet extends StatefulWidget {
     required Future<void> Function(NearbyPlaceModel place) onReplace,
     List<String>? existingIds,
     String? destinationCity,
+    String? itineraryId,
   }) {
     showModalBottomSheet(
       context: context,
@@ -43,6 +50,7 @@ class ReplacePlaceSheet extends StatefulWidget {
         onReplace: onReplace,
         existingIds: existingIds,
         destinationCity: destinationCity,
+        itineraryId: itineraryId,
       ),
     );
   }
@@ -73,17 +81,38 @@ class _ReplacePlaceSheetState extends State<ReplacePlaceSheet> {
   Future<void> _loadNearbyPlaces({String? q}) async {
     setState(() => _isLoading = true);
     try {
-      final lat = widget.currentActivity.latitude ?? 16.047079;
-      final lng = widget.currentActivity.longitude ?? 108.206230;
-      final places = await NearbyPlacesApi.getNearbyPlaces(
-        lat,
-        lng,
-        excludeIds: widget.existingIds,
-        preferCategory: (q != null && q.isNotEmpty) ? null : widget.currentActivity.category,
-        radius: q != null && q.isNotEmpty ? 50 : 15,
-        limit: q != null && q.isNotEmpty ? 30 : 10,
-        q: q,
-      );
+      final isDefaultFeed = q == null || q.isEmpty;
+      var places = <NearbyPlaceModel>[];
+
+      // Falls through to nearby search below if empty (AI error or no itineraryId).
+      if (isDefaultFeed && widget.itineraryId != null) {
+        places = await NearbyPlacesApi.getReplaceSuggestions(
+          widget.itineraryId!,
+          widget.currentActivity.id,
+        );
+      }
+
+      if (places.isEmpty) {
+        final lat = widget.currentActivity.latitude ?? 16.047079;
+        final lng = widget.currentActivity.longitude ?? 108.206230;
+        places = await NearbyPlacesApi.getNearbyPlaces(
+          lat,
+          lng,
+          excludeIds: widget.existingIds,
+          preferCategory: isDefaultFeed ? widget.currentActivity.category : null,
+          radius: isDefaultFeed ? 15 : 50,
+          limit: isDefaultFeed ? 10 : 30,
+          q: q,
+        );
+      }
+
+      // Hotels are never a valid replacement, regardless of category match.
+      places = places.where((p) {
+        final cat = p.category.toLowerCase();
+        return !cat.contains('khách sạn') &&
+            !cat.contains('hotel') &&
+            !cat.contains('lưu trú');
+      }).toList();
 
       if (mounted) {
         setState(() {
@@ -200,6 +229,20 @@ class _ReplacePlaceSheetState extends State<ReplacePlaceSheet> {
     await widget.onReplace(place);
   }
 
+  Future<void> _openPlaceDetail(NearbyPlaceModel place) async {
+    final placeId = place.id.trim();
+    if (placeId.isEmpty) return;
+
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => BlocProvider(
+          create: (_) => sl<PlaceDetailCubit>(),
+          child: PlaceDetailScreen(placeId: placeId),
+        ),
+      ),
+    );
+  }
+
   (String, String)? _openSlotForDay(String jsonStr, DateTime date) {
     try {
       const dayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
@@ -231,6 +274,7 @@ class _ReplacePlaceSheetState extends State<ReplacePlaceSheet> {
       separatorBuilder: (_, __) => const SizedBox(height: AppSizes.s12),
       itemBuilder: (_, i) => _ListCard(
         place: places[i],
+        onViewDetail: () => _openPlaceDetail(places[i]),
         onSelect: () => _onSelect(places[i]),
         fmt: _fmt,
         fmtPrice: _fmtPrice,
@@ -302,7 +346,7 @@ class _ReplacePlaceSheetState extends State<ReplacePlaceSheet> {
                           _SectionTitle(
                             icon: Icons.location_on_rounded,
                             iconColor: AppColors.primary,
-                            title: 'Gợi ý gần đây',
+                            title: 'Gợi ý',
                           ),
                           _buildList(otherPlaces),
                         ],
@@ -649,6 +693,7 @@ class _SectionTitle extends StatelessWidget {
 
 class _ListCard extends StatelessWidget {
   final NearbyPlaceModel place;
+  final VoidCallback onViewDetail;
   final VoidCallback onSelect;
   final String Function(int) fmt;
   final String Function(double) fmtPrice;
@@ -656,6 +701,7 @@ class _ListCard extends StatelessWidget {
 
   const _ListCard({
     required this.place,
+    required this.onViewDetail,
     required this.onSelect,
     required this.fmt,
     required this.fmtPrice,
@@ -664,19 +710,22 @@ class _ListCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppSizes.r16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onViewDetail,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AppSizes.r16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
         children: [
           // Thumbnail
           NetImage(
@@ -790,6 +839,7 @@ class _ListCard extends StatelessWidget {
             ),
           ),
         ],
+        ),
       ),
     );
   }

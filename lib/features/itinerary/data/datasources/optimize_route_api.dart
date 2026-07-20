@@ -36,6 +36,7 @@ class OptimizeRouteApi {
 
           return {
             'id':                a.id,
+            'placeId':           a.placeId,
             'title':             a.title,
             'startTime':         a.startTime,
             'endTime':           a.endTime,
@@ -102,11 +103,14 @@ class OptimizeRouteApi {
       
       return (optimized: mappedOptimized, reorderNotes: reorderNotes);
     } catch (e) {
-      if (e is DioException && e.response?.statusCode == 400 && e.response?.data?['message'] == 'SCHEDULE_FULL') {
-        throw Exception('SCHEDULE_FULL');
+      if (e is DioException && e.response?.statusCode == 400) {
+        final message = e.response?.data?['message']?.toString() ?? '';
+        if (message.contains('SCHEDULE_FULL')) {
+          throw Exception('SCHEDULE_FULL');
+        }
       }
       print('Error optimizing route: $e');
-      return (optimized: activities, reorderNotes: <String>[]);
+      throw Exception('Không thể kết nối dịch vụ tối ưu lịch trình');
     }
   }
 }
