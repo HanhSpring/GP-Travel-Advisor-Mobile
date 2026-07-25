@@ -16,6 +16,8 @@ import 'package:travel_advisor_mobile/features/itinerary/domain/entities/incurre
 import 'package:travel_advisor_mobile/features/itinerary/domain/entities/itinerary_day_entity.dart';
 import 'package:travel_advisor_mobile/core/error/conflict_exception.dart';
 import 'package:travel_advisor_mobile/core/error/budget_confirmation_required_exception.dart';
+import 'package:travel_advisor_mobile/core/error/budget_too_low_exception.dart';
+import 'package:travel_advisor_mobile/core/error/itinerary_infeasible_exception.dart';
 import 'package:travel_advisor_mobile/core/error/region_allocation_required_exception.dart';
 import 'package:travel_advisor_mobile/features/trip_planner/domain/usecases/create_itinerary_usecase.dart';
 
@@ -40,9 +42,7 @@ abstract class ItineraryDataSource {
   Future<void> deleteItinerary(String id);
   Future<void> toggleVisibility(String id, bool isPublic);
   Future<void> shareItinerary(String id, String recipient);
-  Future<List<ItineraryShareRecipientData>> searchShareRecipients(
-    String query,
-  );
+  Future<List<ItineraryShareRecipientData>> searchShareRecipients(String query);
   Future<ItineraryShareLinkData> createShareLink(String id);
   Future<void> updateItineraryTitle(String id, String title);
   Future<void> updateActivity(
@@ -59,7 +59,9 @@ abstract class ItineraryDataSource {
   Future<void> deleteActivity(String itineraryId, String activityId);
 
   /// Gọi POST /itinerary/plan → trả về CreateItineraryResult (có gaItineraryId khi compare).
-  Future<CreateItineraryResult> createItinerary(CreateItineraryRequestModel request);
+  Future<CreateItineraryResult> createItinerary(
+    CreateItineraryRequestModel request,
+  );
   Future<void> updateItineraryActivities(
     String id,
     List<ItineraryDayEntity> days,
@@ -227,29 +229,30 @@ class RemoteItineraryDataSource implements ItineraryDataSource {
     final headers = await _authHeaders();
     final userId = await AuthUtils.requireCurrentUserId();
     final res = await http.get(
-      Uri.parse('$baseUrl/itinerary/share/recipients').replace(
-        queryParameters: {
-          'q': trimmed,
-          'senderUserId': userId,
-        },
-      ),
+      Uri.parse(
+        '$baseUrl/itinerary/share/recipients',
+      ).replace(queryParameters: {'q': trimmed, 'senderUserId': userId}),
       headers: headers,
     );
 
     if (res.statusCode == 200) {
       final data = jsonDecode(res.body) as Map<String, dynamic>;
       final users = (data['users'] as List?) ?? const [];
-      return users.whereType<Map<String, dynamic>>().map((item) {
-        return (
-          id: (item['id'] ?? '').toString(),
-          fullName: (item['fullName'] ?? '').toString(),
-          email: (item['email'] ?? '').toString(),
-          phoneNumber: item['phoneNumber']?.toString(),
-        );
-      }).where((item) => item.id.isNotEmpty).toList();
+      return users
+          .whereType<Map<String, dynamic>>()
+          .map((item) {
+            return (
+              id: (item['id'] ?? '').toString(),
+              fullName: (item['fullName'] ?? '').toString(),
+              email: (item['email'] ?? '').toString(),
+              phoneNumber: item['phoneNumber']?.toString(),
+            );
+          })
+          .where((item) => item.id.isNotEmpty)
+          .toList();
     }
 
-    var message = 'KhÃ´ng thá»ƒ tÃ¬m ngÆ°á»i dÃ¹ng';
+    var message = 'Không thể tìm người dùng';
     try {
       final data = jsonDecode(res.body) as Map<String, dynamic>;
       final raw = data['message'];
@@ -373,16 +376,19 @@ class RemoteItineraryDataSource implements ItineraryDataSource {
       },
     );
 
-    print('DETAIL API STATUS: ${res.statusCode}');
-    print('DETAIL API BODY: ${res.body}');
+    if (kDebugMode) {
+      debugPrint('DETAIL API STATUS: ${res.statusCode}');
+    }
 
     if (res.statusCode == 200) {
       final data = jsonDecode(res.body);
       try {
         return ItineraryDetailModel.fromJson(data as Map<String, dynamic>);
       } catch (e, stack) {
-        print('DETAIL PARSE ERROR: $e');
-        print('DETAIL PARSE STACK: $stack');
+        if (kDebugMode) {
+          debugPrint('DETAIL PARSE ERROR: $e');
+          debugPrintStack(stackTrace: stack);
+        }
         rethrow;
       }
     } else {
@@ -397,6 +403,7 @@ class RemoteItineraryDataSource implements ItineraryDataSource {
     String id,
     List<ItineraryDayEntity> days,
   ) async {
+    final headers = await _authHeaders();
     final List<Map<String, dynamic>> daysJson = days.map((day) {
       return {
         'dayNumber': day.dayNumber,
@@ -419,7 +426,7 @@ class RemoteItineraryDataSource implements ItineraryDataSource {
 
     final res = await http.patch(
       Uri.parse('$baseUrl/itinerary/$id/activities'),
-      headers: {'Content-Type': 'application/json'},
+      headers: headers,
       body: jsonEncode({'days': daysJson}),
     );
 
@@ -458,7 +465,9 @@ class RemoteItineraryDataSource implements ItineraryDataSource {
       final executionTimeSeconds = data['executionTimeSeconds'];
       final warning = data['warning'];
       if (executionTimeSeconds != null) {
-        debugPrint('Itinerary generation completed in ${executionTimeSeconds}s');
+        debugPrint(
+          'Itinerary generation completed in ${executionTimeSeconds}s',
+        );
       }
       if (warning is String && warning.isNotEmpty) {
         debugPrint('Itinerary generation warning: $warning');
@@ -481,6 +490,12 @@ class RemoteItineraryDataSource implements ItineraryDataSource {
         }
         if (errBody['code'] == 'REGION_ALLOCATION_REQUIRED') {
           throw RegionAllocationRequiredException.fromJson(errBody);
+        }
+        if (errBody['code'] == 'ITINERARY_INFEASIBLE') {
+          throw ItineraryInfeasibleException.fromJson(errBody);
+        }
+        if (errBody['code'] == 'BUDGET_TOO_LOW') {
+          throw BudgetTooLowException.fromJson(errBody);
         }
       } on FormatException {
         // fall through to the generic error below
@@ -793,9 +808,7 @@ class RemoteItineraryDataSource implements ItineraryDataSource {
   }
 
   @override
-  Future<List<EligiblePlaceModel>> getEligiblePlaces(
-    String itineraryId,
-  ) async {
+  Future<List<EligiblePlaceModel>> getEligiblePlaces(String itineraryId) async {
     final headers = await _authHeaders();
     final userId = await AuthUtils.requireCurrentUserId();
     final res = await http.get(
@@ -819,8 +832,13 @@ class RemoteItineraryDataSource implements ItineraryDataSource {
   @override
   Future<CostBreakdownModel> getCostBreakdown(String itineraryId) async {
     final headers = await _authHeaders();
+    // Backend giờ bắt buộc user_id để kiểm tra quyền (chỉ chủ lịch trình/
+    // thành viên được share mới xem được tổng chi tiêu của nhóm).
+    final userId = await AuthUtils.requireCurrentUserId();
     final res = await http.get(
-      Uri.parse('$baseUrl/itinerary/$itineraryId/incurred-costs/breakdown'),
+      Uri.parse(
+        '$baseUrl/itinerary/$itineraryId/incurred-costs/breakdown',
+      ).replace(queryParameters: {'user_id': userId}),
       headers: headers,
     );
     if (res.statusCode != 200) {
@@ -839,10 +857,16 @@ class RemoteItineraryDataSource implements ItineraryDataSource {
     int dayNumber,
   ) async {
     final headers = await _authHeaders();
+    final userId = await AuthUtils.requireCurrentUserId();
     final res = await http.get(
       Uri.parse(
         '$baseUrl/itinerary/$itineraryId/incurred-costs/day-breakdown',
-      ).replace(queryParameters: {'day_number': dayNumber.toString()}),
+      ).replace(
+        queryParameters: {
+          'day_number': dayNumber.toString(),
+          'user_id': userId,
+        },
+      ),
       headers: headers,
     );
     if (res.statusCode != 200) {
@@ -954,7 +978,11 @@ class RemoteItineraryDataSource implements ItineraryDataSource {
     final res = await http.patch(
       Uri.parse('$baseUrl/itinerary/$itineraryId/incurred-costs/place-price'),
       headers: headers,
-      body: jsonEncode({'userId': userId, 'placeId': placeId, 'amount': amount}),
+      body: jsonEncode({
+        'userId': userId,
+        'placeId': placeId,
+        'amount': amount,
+      }),
     );
     if (res.statusCode != 200) {
       throw Exception(_extractErrorMessage(res, 'Không thể sửa giá địa điểm'));
