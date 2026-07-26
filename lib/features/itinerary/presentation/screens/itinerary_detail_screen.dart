@@ -11,6 +11,7 @@ import 'activity_edit_screen.dart';
 
 import 'package:travel_advisor_mobile/core/constants/app_colors.dart';
 import 'package:travel_advisor_mobile/core/constants/app_sizes.dart';
+import 'package:travel_advisor_mobile/core/constants/cost_ui_labels.dart';
 import 'package:travel_advisor_mobile/core/constants/app_text_styles.dart';
 import 'package:travel_advisor_mobile/core/di/injection_container.dart';
 import 'package:travel_advisor_mobile/features/food/presentation/screens/food_menu_screen.dart';
@@ -2944,7 +2945,7 @@ class _DayStatsCard extends StatelessWidget {
                 ],
               ),
               const Text(
-                'Tổng chi phí',
+                CostUiLabels.dayTotalCost,
                 style: TextStyle(
                   fontSize: 10.5,
                   color: AppColors.costTextMuted,
@@ -2961,7 +2962,7 @@ class _DayStatsCard extends StatelessWidget {
                   ),
                 ),
                 const Text(
-                  'Đã chi',
+                  CostUiLabels.daySpent,
                   style: TextStyle(
                     fontSize: 10.5,
                     color: AppColors.costTextMuted,
