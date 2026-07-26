@@ -2517,7 +2517,7 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
         reviewCount: 0,
         onOrderTap: () {
           Navigator.pop(ctx);
-          ctx.read<TrackingCubit>().dismissNearbyRestaurant();
+          ctx.read<TrackingCubit>().dismissNearbyRestaurant(detailId: detailId);
           Navigator.push(
             ctx,
             MaterialPageRoute(
@@ -2531,13 +2531,16 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen> {
         },
         onSkipTap: () {
           Navigator.pop(ctx);
-          ctx.read<TrackingCubit>().dismissNearbyRestaurant();
+          ctx.read<TrackingCubit>().dismissNearbyRestaurant(detailId: detailId);
         },
       ),
     ).then((_) {
       // Đóng popup → dismiss để không hiện lại ngay
       if (ctx.mounted) {
-        ctx.read<TrackingCubit>().dismissNearbyRestaurant();
+        ctx.read<TrackingCubit>().dismissNearbyRestaurant(
+          detailId: detailId,
+          evaluateNext: true,
+        );
       }
     });
   }
